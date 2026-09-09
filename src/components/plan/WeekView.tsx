@@ -53,7 +53,8 @@ export function WeekView() {
   const selection = picked?.selection ?? overview;
   const hasStops = selection.kind !== "DAY" || selection.stops.length > 0;
   const startable = selection.kind === "LEG" && selection.route && selection.route.durationMinutes > 0 ? selection : undefined;
-  const destinationLabel = startable ? (startable.to.buildingCode ?? startable.to.name) : "";
+  // "Lazaridis Hall" fits on the button; "William G. Davis Computer Research Centre" does not.
+  const destinationLabel = !startable ? "" : startable.to.name.length <= 18 ? startable.to.name : (startable.to.buildingCode ?? startable.to.name);
 
   const mapBlock = (
     <div className="space-y-2">

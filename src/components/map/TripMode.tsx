@@ -36,24 +36,37 @@ function TripCamera({ path, to, userPos, follow }: { path: Point[]; to: CampusLo
     return () => { lineRef.current?.setMap(null); lineRef.current = undefined; };
   }, [map, path]);
 
-  // Frame the whole trip once, tilted, so the student sees where they are going.
+  // Frame the whole trip, tilted and aimed along the route. Re-runs on container resize:
+  // the fullscreen panel settles its layout after the map mounts, and a map that missed
+  // that change paints tiles for its old, smaller box and leaves the rest blank.
   useEffect(() => {
     if (!map || path.length < 2) return;
-    const bounds = new google.maps.LatLngBounds();
-    for (const p of path) bounds.extend(p);
-    map.fitBounds(bounds, 80);
-    map.setTilt(55);
-    map.setHeading(bearing({ latitude: path[0].lat, longitude: path[0].lng }, to));
+    const frame = () => {
+      google.maps.event.trigger(map, "resize");
+      const bounds = new google.maps.LatLngBounds();
+      for (const p of path) bounds.extend(p);
+      map.fitBounds(bounds, 80);
+      // Tilt and heading are vector-only; on a raster map id these are no-ops, not errors.
+      if (map.getRenderingType?.() === google.maps.RenderingType.VECTOR) {
+        map.setTilt(55);
+        map.setHeading(bearing({ latitude: path[0].lat, longitude: path[0].lng }, to));
+      }
+    };
+    frame();
+    const settle = setTimeout(frame, 350);
+    const ro = new ResizeObserver(frame);
+    ro.observe(map.getDiv());
+    return () => { clearTimeout(settle); ro.disconnect(); };
   }, [map, path, to]);
 
   // Follow mode: sit behind the student, pointed at the destination.
   useEffect(() => {
     if (!map || !follow || !userPos) return;
+    const vector = map.getRenderingType?.() === google.maps.RenderingType.VECTOR;
     map.moveCamera({
       center: userPos,
       zoom: 18,
-      tilt: 60,
-      heading: bearing({ latitude: userPos.lat, longitude: userPos.lng }, to),
+      ...(vector ? { tilt: 60, heading: bearing({ latitude: userPos.lat, longitude: userPos.lng }, to) } : {}),
     });
   }, [map, follow, userPos, to]);
 
