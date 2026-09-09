@@ -16,9 +16,9 @@ npm run dev
 
 Open http://localhost:3000, paste a Quest schedule (Quest → Class Schedule → List View → Select All → Copy), choose where you live, and press **Build my routes**.
 
-Every leg of the day (home → first class, class → class, class → home, and the optional trip home during a gap) gets its own map card with the pathway drawn on it, plus an **Open in Google Maps** link that hands the same origin and destination to the Google Maps app.
+The plan screen leads with the next class: course, room, floor, how long the trip takes and the exact time to leave, counting down live. Below it is one interactive Google map. Tapping any class or any trip in the timeline retargets the map to that place or that route; "Show whole day" pins every stop of the day including home. Desktop keeps the map beside the timeline; mobile stacks them.
 
-Without Google keys the app still runs in **estimate mode**: walking times are straight-line estimates (clearly labelled), transit is unavailable, the embedded maps are hidden (the Open in Google Maps links still work, they need no key), and custom addresses cannot be geocoded. Residence presets work.
+Without Google keys the app still runs in **estimate mode**: walking times are straight-line estimates (clearly labelled), transit is unavailable, the embedded map is hidden, and custom addresses cannot be geocoded. Residence presets and the "Open in Google Maps" links still work.
 
 ## Google Maps Platform setup
 
@@ -27,13 +27,13 @@ Create one Google Cloud project with billing enabled and turn on three APIs: **R
 | Key | Env var | Application restriction | API restriction | Used for |
 |---|---|---|---|---|
 | Server key | `GOOGLE_MAPS_SERVER_KEY` | none (or your server IPs if self-hosting) | Routes API, Geocoding API | `/api/routes` (walking + transit) and `/api/geocode` (custom home address). Never shipped to the browser. |
-| Browser key | `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` | HTTP referrers: `https://your-domain/*`, `http://localhost:3000/*` | Maps JavaScript API | Rendering the per-leg maps. Inlined into the client bundle at build time. With only this key (no server key) the maps show a dashed straight line between the two buildings instead of a real path. |
+| Browser key | `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` | HTTP referrers: `https://your-domain/*`, `http://localhost:3000/*`, `http://localhost:3010/*` | Maps JavaScript API | Rendering the embedded map. Inlined into the client bundle at build time. With only this key (no server key) the map shows a dashed straight line between buildings instead of a real path. |
 
 Optional: `NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID` (a Map ID from Map Management) for styled Advanced Markers; without it the demo map id is used.
 
 Why a server proxy for routing: a raw browser `fetch` to the Routes API cannot be protected by HTTP-referrer restrictions (browsers strip the Referer on cross-origin requests), so route calls go through `src/app/api/routes/route.ts` with the server key.
 
-Costs (verified September 2026): Compute Routes Essentials covers both WALK and TRANSIT at $5.00 per 1,000 after 10,000 free requests per month; Dynamic Maps is $7.00 per 1,000 map loads after 10,000 free. Walking routes are cached per building pair for 30 days (the maximum Google's terms allow) and transit itineraries for 10 minutes. Each leg map on the visible day counts as one map load (typically 2–5 per day view); gap "home trip" maps load only when expanded. See DATA_SOURCES.md for the cost model.
+Costs (verified September 2026): Compute Routes Essentials covers both WALK and TRANSIT at $5.00 per 1,000 after 10,000 free requests per month; Dynamic Maps is $7.00 per 1,000 map loads after 10,000 free. Walking routes are cached per building pair for 30 days (the maximum Google's terms allow) and transit itineraries for 10 minutes. The screen holds a single map instance, so changing the selection re-frames that map rather than billing another load. See DATA_SOURCES.md for the cost model.
 
 ## What leaves the browser
 
@@ -43,7 +43,7 @@ Costs (verified September 2026): Compute Routes Essentials covers both WALK and 
 | Building coordinates + departure/arrival times | Yes | `/api/routes` → Google Routes API |
 | Home coordinate | Yes, for legs to/from home | same |
 | Custom home address text | Once | `/api/geocode` → Google Geocoding API |
-| Map viewport | When a leg map is shown | Google Maps JavaScript API |
+| Map viewport | While the map is on screen | Google Maps JavaScript API |
 | Origin + destination coordinates | Only if you tap "Open in Google Maps" | google.com/maps (a plain link, no key) |
 
 The server handlers keep no logs of request bodies. There is no analytics.
@@ -82,5 +82,5 @@ See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). UW building coordinates co
 
 - Laurier schedules must be added by hand; LORIS has no paste import yet.
 - Floors are shown only where the numbering rule is verified (Laurier buildings, UW PSE). UW MC is shown as "unconfirmed"; other UW buildings say "Floor unknown".
-- Several Laurier buildings (Peters, Science Building, Willison Hall) have no coordinates yet and cannot be routed.
+- Three Laurier buildings (Music, 202 Regina, University Place) have no coordinates yet and cannot be routed. The rest of the Waterloo campus is covered.
 - Alternating-week labs and satellite campuses (Cambridge, Kitchener, Stratford) are not handled.
