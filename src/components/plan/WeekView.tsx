@@ -6,6 +6,7 @@ import type { DayOfWeek } from "@/domain/types";
 import { DAY_LABELS, DAYS_IN_ORDER } from "@/domain/types";
 import { useStore } from "@/lib/store";
 import { defaultWeekStart, usePlan } from "@/lib/usePlan";
+import { MAPS_AVAILABLE } from "@/lib/mapsLinks";
 import { formatISODate, mondayOfWeek, todayISO, torontoDate, weekdayOf } from "@/time/toronto";
 import { DayTimeline } from "./DayTimeline";
 import { SettingsSheet } from "./SettingsSheet";
@@ -59,6 +60,9 @@ export function WeekView() {
       <section className="px-4 pt-4">
         {plan?.usesEstimates && (
           <div className="mb-3 rounded-xl bg-warn-soft p-3 text-sm text-warn">Travel times are straight-line estimates: no routing API key is configured on this server. Transit options are unavailable in this mode.</div>
+        )}
+        {plan && !MAPS_AVAILABLE && (
+          <div className="mb-3 rounded-xl bg-canvas p-3 text-sm text-ink-muted">Map previews are off: no browser map key is configured. Each leg still has an “Open in Google Maps” link.</div>
         )}
         {error && <div className="mb-3 rounded-xl bg-bad-soft p-3 text-sm text-bad">{error}</div>}
         {loading && !dayPlan && <p className="py-10 text-center text-ink-muted">Building your routes…</p>}

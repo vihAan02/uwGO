@@ -144,8 +144,8 @@ All wall-clock construction goes through `torontoDate(dateISO, minutesOfDay): TZ
 ## 8. Frontend structure (`src/app`, `src/components`)
 
 - `/` — onboarding when no schedule is stored: paste box (clipboard-only textarea), parse preview with warnings, WLU manual add, home picker, buffer picker, "Build my routes".
-- `/plan` — weekly tabs (Mon–Fri), daily timeline of cards, per-transition "Show map" toggle, settings sheet (home, buffer, hidden classes, re-paste).
-- `components/timeline/*` render `DayPlanItem`s only. `components/map/TransitionMap.tsx` uses `@vis.gl/react-google-maps` with `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY`; loaded lazily and only when expanded.
+- `/plan` — weekly tabs (Mon–Fri), daily timeline of cards, one map card per leg (numbered "Leg n of N · A → B"), settings sheet (home, buffer, hidden classes, re-paste).
+- `components/plan/*` render `DayPlanItem`s only. `components/map/LegMap.tsx` uses `@vis.gl/react-google-maps` with `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY`; loaded lazily, open by default for legs between classes and collapsed for optional gap "home trip" legs. Without a route polyline it draws a dashed geodesic line. `lib/mapsLinks.ts` builds keyless Google Maps URLs (`/maps/dir/?api=1`) so every leg is openable in the Google Maps app even with no keys configured.
 - State: a small store (`src/lib/store.ts`) around a versioned localStorage envelope `{ schemaVersion, schedule, home, config }`; migrations in `src/lib/migrations.ts`.
 - PWA: `public/manifest.webmanifest` + minimal service worker (no offline caching of routes).
 

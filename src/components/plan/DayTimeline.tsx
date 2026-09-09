@@ -1,11 +1,12 @@
 "use client";
 import { useState } from "react";
 import dynamic from "next/dynamic";
-import type { ClassTransition, DayPlan, HomeReturnAnalysis, RouteOption, ScheduledClass, UserHome } from "@/domain/types";
+import type { CampusLocation, ClassTransition, DayPlan, DayPlanItem, HomeReturnAnalysis, RouteOption, ScheduledClass, UserHome } from "@/domain/types";
 import type { PlannerConfig } from "@/domain/config";
 import { formatClock, formatDuration } from "@/time/toronto";
+import { MAPS_AVAILABLE, googleMapsDirectionsUrl, travelModeFor } from "@/lib/mapsLinks";
 
-const TransitionMap = dynamic(() => import("../map/TransitionMap").then((m) => m.TransitionMap), { ssr: false, loading: () => <div className="h-56 animate-pulse rounded-xl bg-line" /> });
+const LegMap = dynamic(() => import("../map/LegMap").then((m) => m.LegMap), { ssr: false, loading: () => <div className="h-64 animate-pulse rounded-xl bg-line" /> });
 
 function Time({ at }: { at: Date }) {
   return <time className="w-20 shrink-0 pt-0.5 text-right font-mono text-sm font-semibold tabular-nums">{formatClock(at)}</time>;
@@ -43,15 +44,43 @@ function TransitSteps({ route }: { route: RouteOption }) {
   );
 }
 
-function LeaveRow({ t }: { t: ClassTransition }) {
-  const [showMap, setShowMap] = useState(false);
+/**
+ * The map for one trip leg plus an "Open in Google Maps" link.
+ * The embedded map needs the browser key; the link works with no keys at all.
+ */
+function LegMapPanel({ from, to, route, defaultOpen, label, linkText = "Open in Google Maps" }: { from: CampusLocation; to: CampusLocation; route?: RouteOption; defaultOpen: boolean; label: string; linkText?: string }) {
+  const [open, setOpen] = useState(defaultOpen);
+  const sameSpot = from.latitude === to.latitude && from.longitude === to.longitude;
+  if (sameSpot) return null;
+  const href = googleMapsDirectionsUrl(from, to, travelModeFor(route));
+  return (
+    <div className="mt-2">
+      <div className="flex items-center justify-between gap-2 text-sm">
+        {MAPS_AVAILABLE ? (
+          <button className="font-medium text-brand" onClick={() => setOpen((v) => !v)} aria-expanded={open}>{open ? "Hide map" : "Show map"}</button>
+        ) : <span />}
+        <a className="font-medium text-brand" href={href} target="_blank" rel="noopener noreferrer" aria-label={`${linkText}: ${label}`}>{linkText} ↗</a>
+      </div>
+      {MAPS_AVAILABLE && open && (
+        <div className="mt-2">
+          <LegMap from={from} to={to} route={route} />
+          {!route?.polyline && <p className="mt-1 text-xs text-ink-muted">Dashed line: straight-line estimate, not a walking path. Configure the Routes API key for real pathways.</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LeaveRow({ t, legNumber, legCount, fromLabel, toLabel }: { t: ClassTransition; legNumber: number; legCount: number; fromLabel: string; toLabel: string }) {
   const rec = t.recommendedRoute!;
   const alt = rec.mode === "WALK" ? t.transitRoute : t.walkingRoute;
+  const legLabel = `${fromLabel} → ${toLabel}`;
   return (
     <li className="flex gap-3">
       <Time at={t.recommendedDeparture!} />
       <div className="card flex-1 p-3">
-        <div className="flex items-start justify-between gap-2">
+        <div className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Leg {legNumber} of {legCount} · {legLabel}</div>
+        <div className="mt-1 flex items-start justify-between gap-2">
           <div>
             <div className="font-semibold">Leave {t.from.name}</div>
             <div className="text-sm text-ink-muted">{routeSummary(rec)}{t.hasDeadline && t.expectedArrival ? ` · arrive ${formatClock(t.expectedArrival)}` : ""}</div>
@@ -65,10 +94,7 @@ function LeaveRow({ t }: { t: ClassTransition }) {
           </div>
         )}
         {t.feasibility === "LIKELY_LATE" && <p className="mt-2 text-sm text-bad">Only {t.availableMinutes} min between classes; this trip needs more.</p>}
-        {(t.walkingRoute?.polyline || t.transitRoute?.polyline) && (
-          <button className="mt-2 text-sm font-medium text-brand" onClick={() => setShowMap((v) => !v)}>{showMap ? "Hide map" : "Show map"}</button>
-        )}
-        {showMap && <div className="mt-2"><TransitionMap transition={t} /></div>}
+        <LegMapPanel from={t.from} to={t.to} route={rec} defaultOpen label={legLabel} />
       </div>
     </li>
   );
@@ -98,10 +124,11 @@ function ClassRow({ c }: { c: ScheduledClass }) {
   );
 }
 
-function HomeCard({ h, home }: { h: HomeReturnAnalysis; home: UserHome | undefined }) {
+function HomeCard({ h, home, from, to }: { h: HomeReturnAnalysis; home: UserHome | undefined; from?: CampusLocation; to?: CampusLocation }) {
   const verdict = h.recommendation === "WORTH_IT" ? { icon: "✅", text: "Worth going home", cls: "bg-ok-soft text-ok" }
     : h.recommendation === "POSSIBLE" ? { icon: "⚠️", text: `Possible, but only ~${formatDuration(h.usableHomeMinutes)} at home`, cls: "bg-warn-soft text-warn" }
     : { icon: "❌", text: h.possible ? `Not worth it: ~${formatDuration(h.usableHomeMinutes)} at home` : "Not enough time to go home", cls: "bg-bad-soft text-bad" };
+  const homeLoc: CampusLocation | undefined = home ? { id: "home", name: home.name, latitude: home.latitude, longitude: home.longitude, kind: "HOME" } : undefined;
   return (
     <div className={`mt-2 rounded-xl p-3 ${verdict.cls}`}>
       <div className="font-semibold">{verdict.icon} {verdict.text}</div>
@@ -115,12 +142,38 @@ function HomeCard({ h, home }: { h: HomeReturnAnalysis; home: UserHome | undefin
           <dt className="text-ink-muted">Next class</dt><dd>{formatClock(h.nextClassStart)}</dd>
         </dl>
       )}
+      {h.possible && homeLoc && from && to && (
+        <div className="mt-2 rounded-lg bg-surface/70 px-2 py-1 text-ink">
+          <div className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Home trip</div>
+          <LegMapPanel from={from} to={homeLoc} route={h.routeHome} defaultOpen={false} label={`${from.name} → ${homeLoc.name}`} linkText="Route home in Google Maps" />
+          <LegMapPanel from={homeLoc} to={to} route={h.routeBack} defaultOpen={false} label={`${homeLoc.name} → ${to.name}`} linkText="Route back in Google Maps" />
+        </div>
+      )}
     </div>
   );
 }
 
+/** Short label for a leg endpoint: "Home" or "CS 135 (MC)". */
+function endpointLabel(loc: CampusLocation, cls: ScheduledClass | undefined): string {
+  if (loc.kind === "HOME") return "Home";
+  if (!cls) return loc.name;
+  const bld = cls.meeting.location.kind === "ROOM" ? cls.meeting.location.buildingCode : loc.buildingCode;
+  return bld ? `${cls.meeting.courseCode} (${bld})` : cls.meeting.courseCode;
+}
+
+/** For each LEAVE item, the class it departs from (previous CLASS item) and the one it heads to (next CLASS item). */
+function neighbouringClasses(items: DayPlanItem[], index: number): { prev?: ScheduledClass; next?: ScheduledClass } {
+  let prev: ScheduledClass | undefined;
+  let next: ScheduledClass | undefined;
+  for (let i = index - 1; i >= 0; i--) { const it = items[i]; if (it.kind === "CLASS") { prev = it.scheduledClass; break; } }
+  for (let i = index + 1; i < items.length; i++) { const it = items[i]; if (it.kind === "CLASS") { next = it.scheduledClass; break; } }
+  return { prev, next };
+}
+
 export function DayTimeline({ plan, home, config, busy }: { plan: DayPlan; home: UserHome | undefined; config: PlannerConfig; busy: boolean }) {
   if (plan.classes.length === 0) return <p className="py-10 text-center text-ink-muted">No classes on this day.</p>;
+  const leaveIndexes = plan.items.map((it, i) => (it.kind === "LEAVE" ? i : -1)).filter((i) => i >= 0);
+  const legCount = leaveIndexes.length;
   return (
     <div className={busy ? "opacity-60" : ""}>
       {plan.warnings.length > 0 && (
@@ -129,7 +182,11 @@ export function DayTimeline({ plan, home, config, busy }: { plan: DayPlan; home:
       <ol className="space-y-3">
         {plan.items.map((item, i) => {
           switch (item.kind) {
-            case "LEAVE": return <LeaveRow key={i} t={item.transition} />;
+            case "LEAVE": {
+              const { prev, next } = neighbouringClasses(plan.items, i);
+              const t = item.transition;
+              return <LeaveRow key={i} t={t} legNumber={leaveIndexes.indexOf(i) + 1} legCount={legCount} fromLabel={endpointLabel(t.from, prev)} toLabel={endpointLabel(t.to, next)} />;
+            }
             case "ARRIVE": return (
               <li key={i} className="flex gap-3">
                 <Time at={item.at} />
@@ -137,16 +194,19 @@ export function DayTimeline({ plan, home, config, busy }: { plan: DayPlan; home:
               </li>
             );
             case "CLASS": return <ClassRow key={i} c={item.scheduledClass} />;
-            case "GAP": return (
-              <li key={i} className="flex gap-3">
-                <div className="w-20 shrink-0" />
-                <div className="card flex-1 border-dashed p-3">
-                  <div className="font-semibold">You have {formatDuration(item.minutes)} free</div>
-                  <div className="text-sm text-ink-muted">{formatClock(item.from)} – {formatClock(item.to)}</div>
-                  {item.homeReturn ? <HomeCard h={item.homeReturn} home={home} /> : home ? <p className="mt-1 text-sm text-ink-muted">Home route unavailable.</p> : <p className="mt-1 text-sm text-ink-muted">Set where you live to see if you can go home.</p>}
-                </div>
-              </li>
-            );
+            case "GAP": {
+              const { prev, next } = neighbouringClasses(plan.items, i);
+              return (
+                <li key={i} className="flex gap-3">
+                  <div className="w-20 shrink-0" />
+                  <div className="card flex-1 border-dashed p-3">
+                    <div className="font-semibold">You have {formatDuration(item.minutes)} free</div>
+                    <div className="text-sm text-ink-muted">{formatClock(item.from)} – {formatClock(item.to)}</div>
+                    {item.homeReturn ? <HomeCard h={item.homeReturn} home={home} from={prev?.location} to={next?.location} /> : home ? <p className="mt-1 text-sm text-ink-muted">Home route unavailable.</p> : <p className="mt-1 text-sm text-ink-muted">Set where you live to see if you can go home.</p>}
+                  </div>
+                </li>
+              );
+            }
             case "NOTE": return <li key={i} className="pl-24 text-sm text-ink-muted">{item.text}</li>;
           }
         })}

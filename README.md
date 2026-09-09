@@ -16,7 +16,9 @@ npm run dev
 
 Open http://localhost:3000, paste a Quest schedule (Quest → Class Schedule → List View → Select All → Copy), choose where you live, and press **Build my routes**.
 
-Without Google keys the app still runs in **estimate mode**: walking times are straight-line estimates (clearly labelled), transit is unavailable, the map is hidden, and custom addresses cannot be geocoded. Residence presets work.
+Every leg of the day (home → first class, class → class, class → home, and the optional trip home during a gap) gets its own map card with the pathway drawn on it, plus an **Open in Google Maps** link that hands the same origin and destination to the Google Maps app.
+
+Without Google keys the app still runs in **estimate mode**: walking times are straight-line estimates (clearly labelled), transit is unavailable, the embedded maps are hidden (the Open in Google Maps links still work, they need no key), and custom addresses cannot be geocoded. Residence presets work.
 
 ## Google Maps Platform setup
 
@@ -25,13 +27,13 @@ Create one Google Cloud project with billing enabled and turn on three APIs: **R
 | Key | Env var | Application restriction | API restriction | Used for |
 |---|---|---|---|---|
 | Server key | `GOOGLE_MAPS_SERVER_KEY` | none (or your server IPs if self-hosting) | Routes API, Geocoding API | `/api/routes` (walking + transit) and `/api/geocode` (custom home address). Never shipped to the browser. |
-| Browser key | `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` | HTTP referrers: `https://your-domain/*`, `http://localhost:3000/*` | Maps JavaScript API | Rendering the map for a transition. Inlined into the client bundle at build time. |
+| Browser key | `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` | HTTP referrers: `https://your-domain/*`, `http://localhost:3000/*` | Maps JavaScript API | Rendering the per-leg maps. Inlined into the client bundle at build time. With only this key (no server key) the maps show a dashed straight line between the two buildings instead of a real path. |
 
 Optional: `NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID` (a Map ID from Map Management) for styled Advanced Markers; without it the demo map id is used.
 
 Why a server proxy for routing: a raw browser `fetch` to the Routes API cannot be protected by HTTP-referrer restrictions (browsers strip the Referer on cross-origin requests), so route calls go through `src/app/api/routes/route.ts` with the server key.
 
-Costs (verified September 2026): Compute Routes Essentials covers both WALK and TRANSIT at $5.00 per 1,000 after 10,000 free requests per month; Dynamic Maps is $7.00 per 1,000 map loads after 10,000 free. Walking routes are cached per building pair for 30 days (the maximum Google's terms allow), transit itineraries for 10 minutes, and the map only loads when a student expands it. See DATA_SOURCES.md for the cost model.
+Costs (verified September 2026): Compute Routes Essentials covers both WALK and TRANSIT at $5.00 per 1,000 after 10,000 free requests per month; Dynamic Maps is $7.00 per 1,000 map loads after 10,000 free. Walking routes are cached per building pair for 30 days (the maximum Google's terms allow) and transit itineraries for 10 minutes. Each leg map on the visible day counts as one map load (typically 2–5 per day view); gap "home trip" maps load only when expanded. See DATA_SOURCES.md for the cost model.
 
 ## What leaves the browser
 
@@ -41,7 +43,8 @@ Costs (verified September 2026): Compute Routes Essentials covers both WALK and 
 | Building coordinates + departure/arrival times | Yes | `/api/routes` → Google Routes API |
 | Home coordinate | Yes, for legs to/from home | same |
 | Custom home address text | Once | `/api/geocode` → Google Geocoding API |
-| Map viewport | Only when the map is expanded | Google Maps JavaScript API |
+| Map viewport | When a leg map is shown | Google Maps JavaScript API |
+| Origin + destination coordinates | Only if you tap "Open in Google Maps" | google.com/maps (a plain link, no key) |
 
 The server handlers keep no logs of request bodies. There is no analytics.
 

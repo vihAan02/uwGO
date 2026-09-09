@@ -30,6 +30,10 @@ Phases are small and each ends with tests passing. Status is updated as work lan
 - Commits: one logical change each. Nothing is pushed unless the owner asks.
 - No fake API output in production code paths. The estimate provider is labeled as such in data and UI.
 
+## Per-leg maps (2026-09-09)
+
+Every LEAVE item renders as a leg card ("Leg n of N · Home → PMATH 432 (E2)") with its own map and an Open in Google Maps link; gap cards add collapsed "Route home / Route back" panels. Verified keyless in the browser: 4 legs on a Wednesday, same-building leg shows no map, 7 links with correct coordinates and travel mode, no console errors. **Embedded maps (browser key) and real polylines (server key) are not yet verified live**; the dashed-estimate path and the polyline path in `LegMap.tsx` need a run with both keys.
+
 ## Verified in the browser (2026-09-08)
 
 Pasted a Fall 2026 List View schedule (incl. a continuation row and an online row), added a Laurier class by hand, chose UW Place, built the plan. Wednesday timeline: leave UWP 8:08 for MATH 135 at 8:30 (12 min est. walk + 10 min buffer), MC → DC flagged Tight (3 min walk in a 10 min gap), 2 hr 40 min gap flagged Worth going home with leave-home-by 12:41 PM. Monday: UWP → Lazaridis Hall cross-campus leg. Estimate mode banner shown because no Google key was configured.
