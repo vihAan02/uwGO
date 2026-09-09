@@ -1,15 +1,23 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { addDays } from "date-fns";
-import type { DayOfWeek } from "@/domain/types";
+import type { CampusLocation, DayOfWeek } from "@/domain/types";
 import { DAY_LABELS, DAYS_IN_ORDER } from "@/domain/types";
 import { useStore } from "@/lib/store";
 import { defaultWeekStart, usePlan } from "@/lib/usePlan";
-import { MAPS_AVAILABLE } from "@/lib/mapsLinks";
+import { findNextUp } from "@/lib/nextClass";
 import { formatISODate, mondayOfWeek, todayISO, torontoDate, weekdayOf } from "@/time/toronto";
 import { DayTimeline } from "./DayTimeline";
+import { NextClassCard } from "./NextClassCard";
 import { SettingsSheet } from "./SettingsSheet";
+import type { MapSelection } from "../map/MapPanel";
+
+const MapPanel = dynamic(() => import("../map/MapPanel").then((m) => m.MapPanel), {
+  ssr: false,
+  loading: () => <div className="h-64 animate-pulse rounded-xl bg-line lg:h-[70vh]" />,
+});
 
 export function WeekView() {
   const router = useRouter();
@@ -18,6 +26,7 @@ export function WeekView() {
   const [weekOverride, setWeekStart] = useState<string | undefined>();
   const [day, setDay] = useState<DayOfWeek>(() => { const d = weekdayOf(todayISO()); return d === "S" || d === "Su" ? "M" : d; });
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [picked, setPicked] = useState<{ id: string; selection: MapSelection } | undefined>();
 
   useEffect(() => {
     if (hydrated && !meetings?.length) router.replace("/");
@@ -28,17 +37,39 @@ export function WeekView() {
   const visibleDays = useMemo(() => DAYS_IN_ORDER.filter((d) => ["M", "T", "W", "Th", "F"].includes(d) || (plan?.days[d]?.classes.length ?? 0) > 0), [plan]);
   const dayPlan = plan?.days[day];
   const isThisWeek = monday === mondayOfWeek(todayISO());
+  const next = useMemo(() => findNextUp(plan, new Date(), dayPlan), [plan, dayPlan]);
+
+  /** Everywhere the student has to be on the selected day, home included. */
+  const overview = useMemo<MapSelection>(() => {
+    const stops: { at: CampusLocation; label: string }[] = [];
+    if (state.home) stops.push({ at: { id: "home", name: state.home.name, latitude: state.home.latitude, longitude: state.home.longitude, kind: "HOME" }, label: "Home" });
+    for (const c of dayPlan?.classes ?? []) stops.push({ at: c.location, label: c.meeting.courseCode });
+    return { kind: "DAY", label: `${DAY_LABELS[day]} · ${stops.length} place${stops.length === 1 ? "" : "s"}`, stops };
+  }, [dayPlan, state.home, day]);
+
+  const selection = picked?.selection ?? overview;
+  const hasStops = selection.kind !== "DAY" || selection.stops.length > 0;
+
+  const mapBlock = (
+    <div className="space-y-2">
+      {hasStops && <MapPanel selection={selection} heightClass="h-64 lg:h-[calc(100vh-11rem)]" />}
+      <div className="flex items-center justify-between gap-2 text-sm">
+        <span className="min-w-0 truncate font-medium text-ink">{selection.label}</span>
+        {picked && <button className="shrink-0 text-brand" onClick={() => setPicked(undefined)}>Show whole day</button>}
+      </div>
+    </div>
+  );
 
   return (
-    <main className="mx-auto w-full max-w-xl pb-16">
+    <main className="mx-auto w-full max-w-6xl pb-16">
       <header className="sticky top-0 z-10 border-b border-line bg-canvas/95 backdrop-blur">
         <div className="flex items-center justify-between px-4 pt-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-brand">UW GO</p>
-            <div className="flex items-center gap-2 text-sm text-ink-muted">
-              <button aria-label="Previous week" className="rounded-lg px-2 py-1 hover:bg-line" onClick={() => setWeekStart(formatISODate(addDays(torontoDate(monday, 12), -7)))}>‹</button>
+            <div className="flex items-center gap-1 text-sm text-ink-muted">
+              <button aria-label="Previous week" className="rounded-lg px-2 py-1 hover:bg-line" onClick={() => setWeekStart(formatISODate(addDays(torontoDate(monday, 12), -7)))}>&lsaquo;</button>
               <span>Week of {monday}{isThisWeek ? " · this week" : ""}</span>
-              <button aria-label="Next week" className="rounded-lg px-2 py-1 hover:bg-line" onClick={() => setWeekStart(formatISODate(addDays(torontoDate(monday, 12), 7)))}>›</button>
+              <button aria-label="Next week" className="rounded-lg px-2 py-1 hover:bg-line" onClick={() => setWeekStart(formatISODate(addDays(torontoDate(monday, 12), 7)))}>&rsaquo;</button>
             </div>
           </div>
           <button className="btn btn-secondary px-3 py-2 min-h-0 text-sm" onClick={() => setSettingsOpen(true)}>Settings</button>
@@ -48,7 +79,7 @@ export function WeekView() {
             const count = plan?.days[d]?.classes.length ?? 0;
             const active = d === day;
             return (
-              <button key={d} onClick={() => setDay(d)} className={`flex min-w-16 flex-1 flex-col items-center rounded-xl px-2 py-2 ${active ? "bg-ink text-white" : "bg-surface text-ink border border-line"}`}>
+              <button key={d} onClick={() => { setDay(d); setPicked(undefined); }} className={`flex min-w-16 flex-1 flex-col items-center rounded-xl px-2 py-2 ${active ? "bg-ink text-white" : "bg-surface text-ink border border-line"}`}>
                 <span className="text-sm font-semibold">{DAY_LABELS[d]}</span>
                 <span className={`text-xs ${active ? "text-white/70" : "text-ink-muted"}`}>{count ? `${count} class${count > 1 ? "es" : ""}` : "free"}</span>
               </button>
@@ -57,25 +88,36 @@ export function WeekView() {
         </nav>
       </header>
 
-      <section className="px-4 pt-4">
-        {plan?.usesEstimates && (
-          <div className="mb-3 rounded-xl bg-warn-soft p-3 text-sm text-warn">Travel times are straight-line estimates: no routing API key is configured on this server. Transit options are unavailable in this mode.</div>
-        )}
-        {plan && !MAPS_AVAILABLE && (
-          <div className="mb-3 rounded-xl bg-canvas p-3 text-sm text-ink-muted">Map previews are off: no browser map key is configured. Each leg still has an “Open in Google Maps” link.</div>
-        )}
-        {error && <div className="mb-3 rounded-xl bg-bad-soft p-3 text-sm text-bad">{error}</div>}
-        {loading && !dayPlan && <p className="py-10 text-center text-ink-muted">Building your routes…</p>}
-        {dayPlan && <DayTimeline plan={dayPlan} home={state.home} config={state.config} busy={loading} />}
-        {plan && plan.skipped.length > 0 && (
-          <details className="mt-6 text-sm text-ink-muted">
-            <summary className="cursor-pointer">{plan.skipped.length} meeting{plan.skipped.length > 1 ? "s" : ""} not on the map</summary>
-            <ul className="mt-2 space-y-1">
-              {plan.skipped.map((s) => <li key={s.meeting.id}>{s.meeting.courseCode} {s.meeting.component}: {s.reason}</li>)}
-            </ul>
-          </details>
-        )}
-      </section>
+      <div className="px-4 pt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-6">
+        <section className="min-w-0 space-y-3">
+          {plan && <NextClassCard next={next} onSelect={() => {
+            const t = next.transition;
+            if (t?.recommendedRoute) setPicked({ id: "next", selection: { kind: "LEG", label: `Next: ${t.from.name} → ${t.to.name}`, from: t.from, to: t.to, route: t.recommendedRoute } });
+            else if (next.scheduledClass) setPicked({ id: "next", selection: { kind: "PLACE", label: `${next.scheduledClass.meeting.courseCode}`, at: next.scheduledClass.location } });
+          }} />}
+
+          <div className="lg:hidden">{mapBlock}</div>
+
+          {plan?.usesEstimates && (
+            <div className="rounded-xl bg-warn-soft p-3 text-sm text-warn">Travel times are straight-line estimates: no <code className="font-mono">GOOGLE_MAPS_SERVER_KEY</code> is configured. Transit options are unavailable in this mode.</div>
+          )}
+          {error && <div className="rounded-xl bg-bad-soft p-3 text-sm text-bad">{error}</div>}
+          {loading && !dayPlan && <p className="py-10 text-center text-ink-muted">Building your routes&hellip;</p>}
+          {dayPlan && <DayTimeline plan={dayPlan} home={state.home} config={state.config} busy={loading} sel={{ selectedId: picked?.id, onSelect: (id, s) => setPicked({ id, selection: s }) }} />}
+          {plan && plan.skipped.length > 0 && (
+            <details className="mt-6 text-sm text-ink-muted">
+              <summary className="cursor-pointer">{plan.skipped.length} meeting{plan.skipped.length > 1 ? "s" : ""} not on the map</summary>
+              <ul className="mt-2 space-y-1">
+                {plan.skipped.map((s) => <li key={s.meeting.id}>{s.meeting.courseCode} {s.meeting.component}: {s.reason}</li>)}
+              </ul>
+            </details>
+          )}
+        </section>
+
+        <aside className="hidden lg:block">
+          <div className="sticky top-32">{mapBlock}</div>
+        </aside>
+      </div>
 
       {settingsOpen && <SettingsSheet onClose={() => setSettingsOpen(false)} />}
     </main>
