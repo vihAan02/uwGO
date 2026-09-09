@@ -69,6 +69,9 @@ export function WeekView() {
             <div className="flex items-center gap-1 text-sm text-ink-muted">
               <button aria-label="Previous week" className="rounded-lg px-2 py-1 hover:bg-line" onClick={() => setWeekStart(formatISODate(addDays(torontoDate(monday, 12), -7)))}>&lsaquo;</button>
               <span>Week of {monday}{isThisWeek ? " · this week" : ""}</span>
+              {!isThisWeek && (
+                <button className="rounded-lg px-2 py-1 font-medium text-brand hover:bg-line" onClick={() => { setWeekStart(mondayOfWeek(todayISO())); const d = weekdayOf(todayISO()); setDay(d === "S" || d === "Su" ? "M" : d); setPicked(undefined); }}>Today</button>
+              )}
               <button aria-label="Next week" className="rounded-lg px-2 py-1 hover:bg-line" onClick={() => setWeekStart(formatISODate(addDays(torontoDate(monday, 12), 7)))}>&rsaquo;</button>
             </div>
           </div>
