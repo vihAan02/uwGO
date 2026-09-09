@@ -36,13 +36,13 @@ function TripCamera({ path, to, userPos, follow }: { path: Point[]; to: CampusLo
     return () => { lineRef.current?.setMap(null); lineRef.current = undefined; };
   }, [map, path]);
 
-  // Frame the whole trip, tilted and aimed along the route. Re-runs on container resize:
-  // the fullscreen panel settles its layout after the map mounts, and a map that missed
-  // that change paints tiles for its old, smaller box and leaves the rest blank.
+  // Frame the whole trip, tilted and aimed along the route. The fullscreen panel settles
+  // its layout after the map mounts, so re-fit once the container has its real size and
+  // again whenever it changes (rotation, keyboard). Maps JS repaints on its own; calling
+  // the legacy resize event here made it drop its tiles instead.
   useEffect(() => {
     if (!map || path.length < 2) return;
     const frame = () => {
-      google.maps.event.trigger(map, "resize");
       const bounds = new google.maps.LatLngBounds();
       for (const p of path) bounds.extend(p);
       map.fitBounds(bounds, 80);
@@ -54,9 +54,10 @@ function TripCamera({ path, to, userPos, follow }: { path: Point[]; to: CampusLo
     };
     frame();
     const settle = setTimeout(frame, 350);
-    const ro = new ResizeObserver(frame);
+    let debounce: ReturnType<typeof setTimeout> | undefined;
+    const ro = new ResizeObserver(() => { clearTimeout(debounce); debounce = setTimeout(frame, 200); });
     ro.observe(map.getDiv());
-    return () => { clearTimeout(settle); ro.disconnect(); };
+    return () => { clearTimeout(settle); clearTimeout(debounce); ro.disconnect(); };
   }, [map, path, to]);
 
   // Follow mode: sit behind the student, pointed at the destination.
