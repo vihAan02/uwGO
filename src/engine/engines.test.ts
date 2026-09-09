@@ -99,9 +99,19 @@ describe("transit comparison", () => {
   });
   it("UW -> Laurier: bus beats a 24 min walk when it arrives 12 min earlier", () => {
     // leave DC at 14:20, class at 15:00. Walk 24 -> arrive 14:44 if leaving now. Bus: dep 14:29 arr 14:41.
+    // Walk leaves 14:26 and arrives 14:50; the bus leaves 14:29 and arrives 14:41.
+    // Later departure and an earlier arrival: the bus is simply better.
     const c = chooseRoute({ departAfter: t(14, 20), arriveBy: t(15), hasDeadline: true, walking: walk(24), transit: transit(t(14, 29), t(14, 41)) }, CFG);
-    // saving = 14:44 - 14:41 = 3 < 5 -> walking wins (no wait risk)
-    expect(c.recommended!.mode).toBe("WALK");
+    expect(c.recommended!.mode).toBe("TRANSIT");
+
+    // A bus that leaves earlier and is slower door to door is not worth catching.
+    const early = chooseRoute({ departAfter: t(14, 20), arriveBy: t(15), hasDeadline: true, walking: walk(24), transit: transit(t(14, 20), t(14, 50)) }, CFG);
+    expect(early.recommended!.mode).toBe("WALK");
+
+    // Home -> class, where both are forced to leave at the same time by the class deadline:
+    // the 19 min bus beats the 31 min walk instead of losing to it.
+    const home = chooseRoute({ departAfter: torontoDate(D, 0), arriveBy: t(10), hasDeadline: true, walking: walk(31), transit: transit(t(9, 19), t(9, 38)) }, CFG);
+    expect(home.recommended!.mode).toBe("TRANSIT");
     const c2 = chooseRoute({ departAfter: t(14, 20), arriveBy: t(15), hasDeadline: true, walking: walk(24), transit: transit(t(14, 24), t(14, 32)) }, CFG);
     expect(c2.recommended!.mode).toBe("TRANSIT");
     expect(formatClock(c2.departure!)).toBe("2:24 PM");

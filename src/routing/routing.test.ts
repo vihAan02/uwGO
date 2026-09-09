@@ -124,7 +124,8 @@ describe("Google provider mapping", () => {
     expect(h["X-Goog-FieldMask"]).not.toContain("routes.legs.startTime"); // not a valid Routes API path
     const body = JSON.parse(String(calls[0].init.body));
     expect(body.travelMode).toBe("WALK");
-    expect(body.origin.location.latLng).toEqual(MC);
+    // A CampusLocation carries extra fields; Google rejects unknown fields, so only the pair is sent.
+    expect(body.origin.location.latLng).toEqual({ latitude: MC.latitude, longitude: MC.longitude });
     expect(body.departureTime).toBeUndefined();
   });
 
@@ -132,7 +133,9 @@ describe("Google provider mapping", () => {
     const { impl, calls } = fetchFor(transitResponse);
     const p = new GoogleRoutingProvider("k", impl);
     const dep = new Date("2026-09-14T18:20:00Z");
-    const r = (await p.getTransitRoute(MC, LH, { departureTime: dep }))!;
+    // Callers hand in CampusLocations, which carry id/name/kind on top of the coordinates.
+    const mcBuilding = { ...MC, id: "UW:MC", name: "Mathematics & Computer Building", kind: "BUILDING", university: "UW", buildingCode: "MC" } as unknown as typeof MC;
+    const r = (await p.getTransitRoute(mcBuilding, LH, { departureTime: dep }))!;
     expect(r.mode).toBe("TRANSIT");
     // Board 18:29 minus the 4 min walk to the stop; alight 18:33 plus the 8 min walk after.
     expect(r.departureTime!.toISOString()).toBe("2026-09-14T18:25:00.000Z");
@@ -145,6 +148,7 @@ describe("Google provider mapping", () => {
     expect(body.travelMode).toBe("TRANSIT");
     expect(body.departureTime).toBe(dep.toISOString());
     expect(body.transitPreferences.allowedTravelModes).toContain("LIGHT_RAIL");
+    expect(Object.keys(body.origin.location.latLng).sort()).toEqual(["latitude", "longitude"]);
   });
 
   it("uses arrivalTime when asked and treats a walking-only itinerary as no transit option", async () => {

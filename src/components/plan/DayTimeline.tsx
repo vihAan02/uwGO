@@ -90,7 +90,10 @@ function LeaveRow({ t, id, sel, label }: { t: ClassTransition; id: string; sel: 
         {rec.mode === "TRANSIT" && <TransitSteps route={rec} />}
         {alt && (
           <div className="mt-2 rounded-lg border border-dashed border-line px-2 py-1 text-sm text-ink-muted">
-            Also: {modeIcon(alt)} {routeSummary(alt)}{alt.mode === "TRANSIT" && alt.arrivalTime ? ` · arrive ${formatClock(alt.arrivalTime)}` : ""}
+            Also: {modeIcon(alt)} {routeSummary(alt)}
+            {alt.mode === "TRANSIT" && alt.departureTime && alt.arrivalTime
+              ? ` · leave ${formatClock(alt.departureTime)}, arrive ${formatClock(alt.arrivalTime)}`
+              : ""}
           </div>
         )}
         {t.feasibility === "LIKELY_LATE" && <p className="mt-2 text-sm text-bad">Only {t.availableMinutes} min between classes; this trip needs more.</p>}

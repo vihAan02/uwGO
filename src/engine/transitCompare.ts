@@ -22,8 +22,10 @@ export function shouldConsiderTransit(crossCampus: boolean, walkingMinutes: numb
  * Pick walking vs transit by expected arrival time.
  * Walking is evaluated at the latest safe departure (never before `departAfter`).
  * Transit is evaluated at the itinerary Google returned for the same window.
- * If both arrive on time (>= buffer before class), walking wins unless transit saves the
- * student at least `minTransitSavingMinutes` of travel.
+ * If both arrive on time, transit has to earn the switch on one number: the door-to-door
+ * time it saves, minus any time it forces the student to set off earlier than they would
+ * have walked. Catching a bus 30 min early to save 6 min of travel is a loss, so that
+ * subtraction matters. Ties go to walking, which has no wait and no bus to miss.
  */
 export function chooseRoute(
   args: { departAfter: Date; arriveBy: Date; hasDeadline: boolean; walking?: RouteOption; transit?: RouteOption },
@@ -63,11 +65,12 @@ export function chooseRoute(
   if (w.onTime && !t.onTime) return finish(w, "Walking arrives on time; transit does not.");
   if (!w.onTime && t.onTime) return finish(t, "Transit arrives on time; walking would be late.");
   if (w.onTime && t.onTime) {
-    // Both fine: compare door-to-door travel time when leaving as early as possible.
-    const walkIfLeaveNow = expectedArrival(departAfter, w.route.durationMinutes);
-    const saving = minutesBetween(t.arrival, walkIfLeaveNow);
-    if (saving >= minTransitSavingMinutes) return finish(t, `Transit arrives ${saving} min earlier than walking.`);
-    return finish(w, "Walking is as fast as transit and has no wait.");
+    const transitMinutes = minutesBetween(t.departure, t.arrival);
+    const travelSaving = w.route.durationMinutes - transitMinutes;
+    const leaveEarlier = Math.max(0, minutesBetween(t.departure, w.departure)); // time given up at the origin
+    const net = travelSaving - leaveEarlier;
+    if (net >= minTransitSavingMinutes) return finish(t, `Transit saves ${net} min door to door.`);
+    return finish(w, "Walking is as good as transit here, and has no wait.");
   }
   // Neither on time: least late wins; ties go to walking.
   return t.arrival.getTime() < w.arrival.getTime()

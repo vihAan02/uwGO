@@ -64,7 +64,14 @@ function markersFor(selection: MapSelection) {
       { at: selection.to, label: "B", color: selection.route?.mode === "TRANSIT" ? "#6d28d9" : "#1d4ed8" },
     ];
     case "PLACE": return [{ at: selection.at, label: "", color: "#1d4ed8" }];
-    case "DAY": return selection.stops.map((s, i) => ({ at: s.at, label: s.at.kind === "HOME" ? "H" : String(i + 1), color: s.at.kind === "HOME" ? "#0f172a" : "#1d4ed8" }));
+    case "DAY": {
+      // Classes are numbered 1..n in the order they happen; home is always "H", not a number.
+      let n = 0;
+      return selection.stops.map((s) => {
+        const isHome = s.at.kind === "HOME";
+        return { at: s.at, label: isHome ? "H" : String(++n), color: isHome ? "#0f172a" : "#1d4ed8" };
+      });
+    }
   }
 }
 

@@ -43,6 +43,14 @@ function toMinutes(s: string | undefined): number {
   return Math.ceil(seconds(s) / 60);
 }
 
+/**
+ * Callers pass richer objects (a CampusLocation carries id/name/university/...), and the
+ * Routes API rejects any field it does not know, so send exactly the two numbers.
+ */
+function latLng(p: LatLng): { latitude: number; longitude: number } {
+  return { latitude: p.latitude, longitude: p.longitude };
+}
+
 export class GoogleRoutingProvider implements RoutingProvider {
   readonly id = "google-routes";
   constructor(private readonly apiKey: string, private readonly fetchImpl: FetchLike = fetch, private readonly now: () => Date = () => new Date()) {}
@@ -60,8 +68,8 @@ export class GoogleRoutingProvider implements RoutingProvider {
 
   async getWalkingRoute(from: LatLng, to: LatLng): Promise<RouteOption | undefined> {
     const route = await this.compute({
-      origin: { location: { latLng: from } },
-      destination: { location: { latLng: to } },
+      origin: { location: { latLng: latLng(from) } },
+      destination: { location: { latLng: latLng(to) } },
       travelMode: "WALK",
       polylineQuality: "HIGH_QUALITY",
       languageCode: "en-CA",
@@ -88,8 +96,8 @@ export class GoogleRoutingProvider implements RoutingProvider {
 
   async getTransitRoute(from: LatLng, to: LatLng, opts: TransitOptions): Promise<RouteOption | undefined> {
     const body: Record<string, unknown> = {
-      origin: { location: { latLng: from } },
-      destination: { location: { latLng: to } },
+      origin: { location: { latLng: latLng(from) } },
+      destination: { location: { latLng: latLng(to) } },
       travelMode: "TRANSIT",
       polylineQuality: "HIGH_QUALITY",
       languageCode: "en-CA",
