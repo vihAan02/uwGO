@@ -1,8 +1,10 @@
 import type { CampusLocation, RouteOption } from "@/domain/types";
 import { HttpRoutingProvider } from "@/routing/HttpRoutingProvider";
 
-/** A transit result older than this is refetched before a trip starts. */
+/** A transit result computed longer ago than this is refetched before a trip starts. */
 export const TRANSIT_STALE_MINUTES = 3;
+/** Starting a trip means leaving now, so a departure further off than this is not "now". */
+export const TRANSIT_USABLE_WINDOW_MINUTES = 45;
 
 /** Bypasses the route cache on purpose: a trip starting now needs a bus that has not left. */
 const live = new HttpRoutingProvider();
@@ -16,9 +18,18 @@ export interface TripRoute {
   note?: string;
 }
 
+/**
+ * Whether the planned transit option still describes a trip starting right now.
+ * The weekly plan works out departures for the whole week, so a perfectly valid plan
+ * can name a bus that left this morning or one that does not run until tomorrow.
+ * Either way it is not the bus to catch now.
+ */
 function isStale(route: RouteOption, now: Date): boolean {
   if (route.mode !== "TRANSIT") return false;
-  if (route.departureTime && route.departureTime.getTime() <= now.getTime()) return true;
+  const dep = route.departureTime?.getTime();
+  if (dep === undefined) return true;
+  if (dep <= now.getTime()) return true; // already gone
+  if (dep - now.getTime() > TRANSIT_USABLE_WINDOW_MINUTES * 60_000) return true; // a different trip
   const computed = Date.parse(route.computedAt);
   return Number.isFinite(computed) && now.getTime() - computed > TRANSIT_STALE_MINUTES * 60_000;
 }
@@ -45,7 +56,7 @@ export async function resolveTripRoute(
       return {
         route: fresh,
         status: "REFRESHED",
-        note: missed ? "That bus has gone. This is the next one." : undefined,
+        note: missed ? "That departure has gone. This is the next one." : "Updated for leaving now.",
       };
     }
   } catch {
