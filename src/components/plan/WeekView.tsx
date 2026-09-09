@@ -91,35 +91,39 @@ export function WeekView() {
         </nav>
       </header>
 
-      <div className="px-4 pt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-6">
-        <section className="min-w-0 space-y-3">
+      {/*
+        One map instance only. A second, CSS-hidden copy would double the Dynamic Maps
+        billing and, worse, compute its zoom from a zero-size box: fitBounds on a hidden
+        map leaves the pins off screen when it later becomes visible on a phone.
+        So the map is placed by grid position, not duplicated.
+      */}
+      <div className="px-4 pt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-start lg:gap-6">
+        <div className="lg:col-start-1 lg:row-start-1">
           {plan && <NextClassCard next={next} onSelect={() => {
             const t = next.transition;
-            if (t?.recommendedRoute) setPicked({ id: "next", selection: { kind: "LEG", label: `Next: ${t.from.name} → ${t.to.name}`, from: t.from, to: t.to, route: t.recommendedRoute } });
-            else if (next.scheduledClass) setPicked({ id: "next", selection: { kind: "PLACE", label: `${next.scheduledClass.meeting.courseCode}`, at: next.scheduledClass.location } });
+            if (t?.recommendedRoute) setPicked({ id: "next", selection: { kind: "LEG", label: `Next: ${t.from.name} \u2192 ${t.to.name}`, from: t.from, to: t.to, route: t.recommendedRoute } });
+            else if (next.scheduledClass) setPicked({ id: "next", selection: { kind: "PLACE", label: next.scheduledClass.meeting.courseCode, at: next.scheduledClass.location } });
           }} />}
+        </div>
 
-          <div className="lg:hidden">{mapBlock}</div>
+        <div className="mt-3 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:mt-0 lg:sticky lg:top-32">{mapBlock}</div>
 
+        <section className="mt-3 min-w-0 space-y-3 lg:col-start-1 lg:row-start-2 lg:mt-4">
           {plan?.usesEstimates && (
             <div className="rounded-xl bg-warn-soft p-3 text-sm text-warn">Travel times are straight-line estimates: no <code className="font-mono">GOOGLE_MAPS_SERVER_KEY</code> is configured. Transit options are unavailable in this mode.</div>
           )}
           {error && <div className="rounded-xl bg-bad-soft p-3 text-sm text-bad">{error}</div>}
           {loading && !dayPlan && <p className="py-10 text-center text-ink-muted">Building your routes&hellip;</p>}
-          {dayPlan && <DayTimeline plan={dayPlan} home={state.home} config={state.config} busy={loading} sel={{ selectedId: picked?.id, onSelect: (id, s) => setPicked({ id, selection: s }) }} />}
+          {dayPlan && <DayTimeline plan={dayPlan} home={state.home} config={state.config} busy={loading} sel={{ selectedId: picked?.id, onSelect: (id, sl) => setPicked({ id, selection: sl }) }} />}
           {plan && plan.skipped.length > 0 && (
             <details className="mt-6 text-sm text-ink-muted">
               <summary className="cursor-pointer">{plan.skipped.length} meeting{plan.skipped.length > 1 ? "s" : ""} not on the map</summary>
               <ul className="mt-2 space-y-1">
-                {plan.skipped.map((s) => <li key={s.meeting.id}>{s.meeting.courseCode} {s.meeting.component}: {s.reason}</li>)}
+                {plan.skipped.map((sk) => <li key={sk.meeting.id}>{sk.meeting.courseCode} {sk.meeting.component}: {sk.reason}</li>)}
               </ul>
             </details>
           )}
         </section>
-
-        <aside className="hidden lg:block">
-          <div className="sticky top-32">{mapBlock}</div>
-        </aside>
       </div>
 
       {settingsOpen && <SettingsSheet onClose={() => setSettingsOpen(false)} />}
