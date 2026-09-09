@@ -12,8 +12,6 @@ const FIELD_MASK = [
   "routes.staticDuration",
   "routes.distanceMeters",
   "routes.polyline.encodedPolyline",
-  "routes.legs.startTime",
-  "routes.legs.endTime",
   "routes.legs.steps.travelMode",
   "routes.legs.steps.staticDuration",
   "routes.legs.steps.distanceMeters",
@@ -30,7 +28,7 @@ interface GTransitDetails {
   transitLine?: { name?: string; nameShort?: string; color?: string; vehicle?: { type?: string; name?: { text?: string } } };
 }
 interface GStep { travelMode?: string; staticDuration?: string; distanceMeters?: number; navigationInstruction?: { instructions?: string }; transitDetails?: GTransitDetails }
-interface GRoute { duration?: string; staticDuration?: string; distanceMeters?: number; polyline?: { encodedPolyline?: string }; legs?: { startTime?: string; endTime?: string; steps?: GStep[] }[] }
+interface GRoute { duration?: string; staticDuration?: string; distanceMeters?: number; polyline?: { encodedPolyline?: string }; legs?: { steps?: GStep[] }[] }
 interface GResponse { routes?: GRoute[]; error?: { message?: string; status?: string } }
 
 export type FetchLike = (input: string, init: RequestInit) => Promise<Response>;
@@ -104,7 +102,8 @@ export class GoogleRoutingProvider implements RoutingProvider {
     const leg = route?.legs?.[0];
     if (!route || !leg) return undefined;
 
-    const steps: RouteStep[] = (leg.steps ?? []).map((s) => {
+    const raw = leg.steps ?? [];
+    const steps: RouteStep[] = raw.map((s) => {
       const td = s.transitDetails;
       if (s.travelMode === "TRANSIT" && td) {
         return {
@@ -118,8 +117,8 @@ export class GoogleRoutingProvider implements RoutingProvider {
             headsign: td.headsign,
             departureStop: td.stopDetails?.departureStop?.name ?? "",
             arrivalStop: td.stopDetails?.arrivalStop?.name ?? "",
-            departureTime: new Date(td.stopDetails?.departureTime ?? leg.startTime ?? 0),
-            arrivalTime: new Date(td.stopDetails?.arrivalTime ?? leg.endTime ?? 0),
+            departureTime: new Date(td.stopDetails?.departureTime ?? 0),
+            arrivalTime: new Date(td.stopDetails?.arrivalTime ?? 0),
             stopCount: td.stopCount,
             color: td.transitLine?.color,
           },
@@ -129,8 +128,16 @@ export class GoogleRoutingProvider implements RoutingProvider {
     });
     const transitSteps = steps.filter((s) => s.mode === "TRANSIT");
     if (transitSteps.length === 0) return undefined; // Google returned a walking-only itinerary; not a transit option.
-    const departureTime = leg.startTime ? new Date(leg.startTime) : undefined;
-    const arrivalTime = leg.endTime ? new Date(leg.endTime) : undefined;
+
+    // A RouteLeg carries no times of its own, so door-to-door times are the boarding and
+    // alighting times pushed out by the walk to the first stop and from the last one.
+    const firstAt = raw.findIndex((s) => s.travelMode === "TRANSIT");
+    const lastAt = raw.length - 1 - [...raw].reverse().findIndex((s) => s.travelMode === "TRANSIT");
+    const walkSeconds = (from: number, to: number) => raw.slice(from, to).reduce((sum, s) => sum + seconds(s.staticDuration), 0);
+    const board = raw[firstAt]?.transitDetails?.stopDetails?.departureTime;
+    const alight = raw[lastAt]?.transitDetails?.stopDetails?.arrivalTime;
+    const departureTime = board ? new Date(new Date(board).getTime() - walkSeconds(0, firstAt) * 1000) : undefined;
+    const arrivalTime = alight ? new Date(new Date(alight).getTime() + walkSeconds(lastAt + 1, raw.length) * 1000) : undefined;
     return {
       mode: "TRANSIT",
       durationMinutes: departureTime && arrivalTime ? Math.ceil((arrivalTime.getTime() - departureTime.getTime()) / 60000) : toMinutes(route.duration),

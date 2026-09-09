@@ -95,8 +95,9 @@ describe("Google provider mapping", () => {
   const transitResponse = {
     routes: [{
       duration: "1080s", distanceMeters: 2400, polyline: { encodedPolyline: "xyz" },
+      // A real RouteLeg carries no startTime/endTime; door-to-door times come from the
+      // transit stop times plus the walk on either end.
       legs: [{
-        startTime: "2026-09-14T18:24:00Z", endTime: "2026-09-14T18:41:00Z",
         steps: [
           { travelMode: "WALK", staticDuration: "240s", distanceMeters: 300 },
           { travelMode: "TRANSIT", staticDuration: "240s", distanceMeters: 1800, transitDetails: { stopDetails: { departureStop: { name: "University Ave. / University of Waterloo" }, departureTime: "2026-09-14T18:29:00Z", arrivalStop: { name: "University Ave. / Wilfrid Laurier University" }, arrivalTime: "2026-09-14T18:33:00Z" }, headsign: "Conestoga Station", stopCount: 1, transitLine: { name: "iXpress University", nameShort: "202", color: "#0055aa", vehicle: { type: "BUS", name: { text: "Bus" } } } } },
@@ -120,6 +121,7 @@ describe("Google provider mapping", () => {
     const h = calls[0].init.headers as Record<string, string>;
     expect(h["X-Goog-Api-Key"]).toBe("k");
     expect(h["X-Goog-FieldMask"]).toContain("routes.legs.steps.transitDetails");
+    expect(h["X-Goog-FieldMask"]).not.toContain("routes.legs.startTime"); // not a valid Routes API path
     const body = JSON.parse(String(calls[0].init.body));
     expect(body.travelMode).toBe("WALK");
     expect(body.origin.location.latLng).toEqual(MC);
@@ -132,9 +134,10 @@ describe("Google provider mapping", () => {
     const dep = new Date("2026-09-14T18:20:00Z");
     const r = (await p.getTransitRoute(MC, LH, { departureTime: dep }))!;
     expect(r.mode).toBe("TRANSIT");
-    expect(r.departureTime!.toISOString()).toBe("2026-09-14T18:24:00.000Z");
+    // Board 18:29 minus the 4 min walk to the stop; alight 18:33 plus the 8 min walk after.
+    expect(r.departureTime!.toISOString()).toBe("2026-09-14T18:25:00.000Z");
     expect(r.arrivalTime!.toISOString()).toBe("2026-09-14T18:41:00.000Z");
-    expect(r.durationMinutes).toBe(17);
+    expect(r.durationMinutes).toBe(16);
     expect(r.transferCount).toBe(0);
     expect(r.steps!.map((s) => s.mode)).toEqual(["WALK", "TRANSIT", "WALK"]);
     expect(r.steps![1].transit).toMatchObject({ line: "iXpress University", lineShort: "202", vehicle: "Bus", headsign: "Conestoga Station", stopCount: 1, departureStop: "University Ave. / University of Waterloo" });
