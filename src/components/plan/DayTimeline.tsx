@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useRef } from "react";
 import type { CampusLocation, ClassTransition, DayPlan, DayPlanItem, HomeReturnAnalysis, RouteOption, ScheduledClass, UserHome } from "@/domain/types";
 import type { PlannerConfig } from "@/domain/config";
 import { formatClock, formatDuration } from "@/time/toronto";
@@ -103,14 +104,14 @@ function LeaveRow({ t, id, sel, label }: { t: ClassTransition; id: string; sel: 
   );
 }
 
-function ClassRow({ c, id, sel }: { c: ScheduledClass; id: string; sel: Selectable }) {
+function ClassRow({ c, id, sel, focusRef }: { c: ScheduledClass; id: string; sel: Selectable; focusRef?: (el: HTMLLIElement | null) => void }) {
   const m = c.meeting;
   const roomLabel = m.location.kind === "ROOM" ? `${m.location.buildingCode} ${m.location.roomNumber}` : "";
   const floor = c.room.floor === "unknown" ? "Floor unknown" : `Floor ${c.room.floor}${c.room.floorConfidence === "likely" ? " (unconfirmed)" : ""}`;
   const isWlu = m.university === "WLU";
   const select = () => sel.onSelect(id, { kind: "PLACE", label: `${m.courseCode} · ${roomLabel}`, at: c.location });
   return (
-    <li className="flex gap-2 sm:gap-3">
+    <li ref={focusRef} className="flex gap-2 sm:gap-3">
       <div className="w-16 shrink-0 pt-0.5 text-right font-mono text-xs tabular-nums sm:w-20 sm:text-sm">
         <div className="font-semibold">{formatClock(c.start)}</div>
         <div className="text-ink-muted">{formatClock(c.end)}</div>
@@ -177,7 +178,20 @@ function neighbouringClasses(items: DayPlanItem[], index: number): { prev?: Sche
   return { prev, next };
 }
 
-export function DayTimeline({ plan, home, config, busy, sel }: { plan: DayPlan; home: UserHome | undefined; config: PlannerConfig; busy: boolean; sel: Selectable }) {
+export function DayTimeline({ plan, home, config, busy, sel, focusClassId }: { plan: DayPlan; home: UserHome | undefined; config: PlannerConfig; busy: boolean; sel: Selectable; focusClassId?: string }) {
+  const focusEl = useRef<HTMLLIElement | null>(null);
+  const scrolledFor = useRef<string | undefined>(undefined);
+
+  // Bring the class that matters into view once, when today is opened. Tracking the id
+  // it last scrolled for means a student who then scrolls away is left alone.
+  useEffect(() => {
+    if (!focusClassId || scrolledFor.current === focusClassId) return;
+    const el = focusEl.current;
+    if (!el) return;
+    scrolledFor.current = focusClassId;
+    el.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [focusClassId, plan]);
+
   if (plan.classes.length === 0) return <p className="py-10 text-center text-ink-muted">No classes on this day.</p>;
   return (
     <div className={busy ? "opacity-60" : ""}>
@@ -198,7 +212,15 @@ export function DayTimeline({ plan, home, config, busy, sel }: { plan: DayPlan; 
                 <div className="flex-1 px-3 text-sm text-ink-muted">Arrive {item.to.name}{item.transition.hasDeadline ? ` · ${config.arrivalBufferMinutes} min before class` : ""}</div>
               </li>
             );
-            case "CLASS": return <ClassRow key={i} c={item.scheduledClass} id={`class-${i}`} sel={sel} />;
+            case "CLASS": return (
+              <ClassRow
+                key={i}
+                c={item.scheduledClass}
+                id={`class-${i}`}
+                sel={sel}
+                focusRef={item.scheduledClass.id === focusClassId ? (el) => { focusEl.current = el; } : undefined}
+              />
+            );
             case "GAP": {
               const { prev, next } = neighbouringClasses(plan.items, i);
               return (

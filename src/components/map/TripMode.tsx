@@ -97,6 +97,7 @@ export function TripMode({ trip, onEnd }: { trip: Trip; onEnd: () => void }) {
   const hasGeolocation = typeof navigator !== "undefined" && "geolocation" in navigator;
   const [geoState, setGeoState] = useState<"asking" | "on" | "denied">(hasGeolocation ? "asking" : "denied");
   const [follow, setFollow] = useState(true);
+  const [showDetails, setShowDetails] = useState(false);
 
   // A trip that starts now must not show a bus that has already left.
   useEffect(() => {
@@ -124,27 +125,60 @@ export function TripMode({ trip, onEnd }: { trip: Trip; onEnd: () => void }) {
     [route, trip.from, trip.to],
   );
   const board = route.steps?.find((s) => s.mode === "TRANSIT")?.transit;
+  const transitLegs = (route.steps ?? []).filter((s) => s.mode === "TRANSIT");
+  const lastLeg = transitLegs[transitLegs.length - 1]?.transit;
+  const steps = route.steps ?? [];
+  const firstAt = steps.findIndex((s) => s.mode === "TRANSIT");
+  const lastAt = steps.length - 1 - [...steps].reverse().findIndex((s) => s.mode === "TRANSIT");
+  const sumWalk = (a: number, b: number) => steps.slice(a, b).reduce((n, s) => n + s.durationMinutes, 0);
+  const walkBefore = firstAt > 0 ? sumWalk(0, firstAt) : 0;
+  const walkAfter = firstAt >= 0 ? sumWalk(lastAt + 1, steps.length) : 0;
+  const hasDetails = Boolean(board);
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-ink text-white">
-      <header className="flex items-start gap-3 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
-        <button onClick={onEnd} aria-label="End trip" className="mt-0.5 shrink-0 rounded-full bg-white/15 px-3 py-2 text-lg leading-none">&larr;</button>
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate text-xl font-bold">{trip.to.name}</h1>
-          <div className="mt-0.5 flex flex-wrap items-baseline gap-x-3 text-sm">
-            <span className="text-2xl font-bold">{formatDuration(route.durationMinutes)}</span>
-            {route.mode === "TRANSIT" && route.arrivalTime && <span className="text-white/80">Arrive {formatClock(route.arrivalTime)}</span>}
-            {route.mode === "WALK" && route.distanceMeters !== undefined && (
-              <span className="text-white/80">{route.distanceMeters < 1000 ? `${route.distanceMeters} m` : `${(route.distanceMeters / 1000).toFixed(1)} km`}</span>
-            )}
-          </div>
-          <div className="mt-1 text-sm text-white/70">
-            {checking ? "Checking for a fresh departure…" : modeLabel(route)}
-            {board && <> · Route {board.lineShort ?? board.line}{board.lineShort && board.line && board.line !== board.lineShort ? ` · ${board.line}` : ""}</>}
-          </div>
-          {board && <div className="text-sm text-white/70">Board {board.departureStop} {formatClock(board.departureTime)}</div>}
-          {resolved.note && <p className="mt-2 rounded-lg bg-amber-400/20 px-2 py-1 text-sm text-amber-100">{resolved.note}</p>}
+      {/*
+        Kept deliberately short: on a phone every line here is a line of map the student
+        does not get. Destination, time, mode and boarding time earn their place; the
+        stop names, line name and walking legs sit behind Details.
+      */}
+      <header className="px-4 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
+        <div className="flex items-center gap-2">
+          <button onClick={onEnd} aria-label="End trip" className="-ml-1 flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full bg-white/15 text-lg leading-none">&larr;</button>
+          <h1 className="min-w-0 flex-1 truncate text-lg font-bold">{trip.to.name}</h1>
+          {hasDetails && (
+            <button onClick={() => setShowDetails((v) => !v)} aria-expanded={showDetails} className="flex min-h-11 shrink-0 items-center rounded-full px-2 text-sm font-medium text-white/70">
+              Details {showDetails ? "\u25b4" : "\u25be"}
+            </button>
+          )}
         </div>
+
+        <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 pl-10 text-sm">
+          <span className="text-2xl font-bold">{formatDuration(route.durationMinutes)}</span>
+          {route.mode === "TRANSIT" && route.arrivalTime && <span className="text-white/80">Arrive {formatClock(route.arrivalTime)}</span>}
+          {route.mode === "WALK" && route.distanceMeters !== undefined && (
+            <span className="text-white/80">{route.distanceMeters < 1000 ? `${route.distanceMeters} m` : `${(route.distanceMeters / 1000).toFixed(1)} km`}</span>
+          )}
+          <span className="text-white/70">
+            {"\u00b7 "}
+            {checking ? "checking\u2026" : board ? `${modeLabel(route)} ${board.lineShort ?? board.line}` : modeLabel(route)}
+          </span>
+          {board && <span className="font-semibold text-white">Board {formatClock(board.departureTime)}</span>}
+        </div>
+
+        {resolved.note && <p className="mt-1 pl-10 text-sm text-amber-200">{resolved.note}</p>}
+
+        {showDetails && (
+          <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 pl-10 text-sm text-white/70">
+            <dt>From</dt><dd className="text-white/90">{trip.from.name}</dd>
+            {board && <><dt>Board at</dt><dd className="text-white/90">{board.departureStop}</dd></>}
+            {board?.line && board.line !== board.lineShort && <><dt>Line</dt><dd className="text-white/90">{board.line}{board.headsign ? ` toward ${board.headsign}` : ""}</dd></>}
+            {lastLeg && <><dt>Get off</dt><dd className="text-white/90">{lastLeg.arrivalStop} {formatClock(lastLeg.arrivalTime)}</dd></>}
+            {route.transferCount ? <><dt>Transfers</dt><dd className="text-white/90">{route.transferCount}</dd></> : null}
+            {walkBefore > 0 && <><dt>Walk first</dt><dd className="text-white/90">{formatDuration(walkBefore)}</dd></>}
+            {walkAfter > 0 && <><dt>Walk after</dt><dd className="text-white/90">{formatDuration(walkAfter)}</dd></>}
+          </dl>
+        )}
       </header>
 
       <div className="relative min-h-0 flex-1">
