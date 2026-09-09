@@ -45,3 +45,6 @@ next-env.d.ts
 .env.local
 .claude/
 !.env.example
+
+# local Claude Code context (kept out of the public repo)
+CLAUDE.md
