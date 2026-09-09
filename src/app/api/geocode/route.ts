@@ -29,12 +29,20 @@ export async function POST(req: Request) {
     key,
   });
   const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?${params}`);
-  const json = (await res.json()) as { status: string; results?: { formatted_address: string; geometry: { location: { lat: number; lng: number } } }[]; error_message?: string };
+  const json = (await res.json()) as { status: string; results?: { formatted_address: string; geometry: { location: { lat: number; lng: number } }; types?: string[]; partial_match?: boolean }[]; error_message?: string };
   if (json.status !== "OK" || !json.results?.length) {
-    return NextResponse.json({ error: json.status === "ZERO_RESULTS" ? "No match for that address." : `Address lookup failed (${json.status}).` } satisfies GeocodeResponse, { status: 404 });
+    return NextResponse.json({ error: json.status === "ZERO_RESULTS" ? "We couldn't find that address." : `Address lookup failed (${json.status}).` } satisfies GeocodeResponse, { status: 404 });
   }
   const first = json.results[0];
   const result = { latitude: first.geometry.location.lat, longitude: first.geometry.location.lng, formattedAddress: first.formatted_address };
-  if (!isInWaterlooRegion(result)) return NextResponse.json({ error: "That address is outside Waterloo Region." } satisfies GeocodeResponse, { status: 400 });
+  if (!isInWaterlooRegion(result)) {
+    // Biasing to Canada means gibberish comes back as a vague far-away match rather than
+    // ZERO_RESULTS. Only call it "outside the region" when Google actually found a place.
+    const vague = first.partial_match === true || !first.types?.some((t) => t === "street_address" || t === "premise" || t === "subpremise" || t === "establishment");
+    return NextResponse.json(
+      { error: vague ? "We couldn't find that address." : `That address is outside Waterloo Region (${first.formatted_address}).` } satisfies GeocodeResponse,
+      { status: 400 },
+    );
+  }
   return NextResponse.json({ result } satisfies GeocodeResponse);
 }

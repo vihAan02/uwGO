@@ -13,11 +13,13 @@ import { DayTimeline } from "./DayTimeline";
 import { NextClassCard } from "./NextClassCard";
 import { SettingsSheet } from "./SettingsSheet";
 import type { MapSelection } from "../map/MapPanel";
+import type { Trip } from "../map/TripMode";
 
 const MapPanel = dynamic(() => import("../map/MapPanel").then((m) => m.MapPanel), {
   ssr: false,
   loading: () => <div className="h-64 animate-pulse rounded-xl bg-line lg:h-[70vh]" />,
 });
+const TripMode = dynamic(() => import("../map/TripMode").then((m) => m.TripMode), { ssr: false });
 
 export function WeekView() {
   const router = useRouter();
@@ -27,6 +29,7 @@ export function WeekView() {
   const [day, setDay] = useState<DayOfWeek>(() => { const d = weekdayOf(todayISO()); return d === "S" || d === "Su" ? "M" : d; });
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [picked, setPicked] = useState<{ id: string; selection: MapSelection } | undefined>();
+  const [trip, setTrip] = useState<Trip | undefined>();
 
   useEffect(() => {
     if (hydrated && !meetings?.length) router.replace("/");
@@ -49,14 +52,24 @@ export function WeekView() {
 
   const selection = picked?.selection ?? overview;
   const hasStops = selection.kind !== "DAY" || selection.stops.length > 0;
+  const startable = selection.kind === "LEG" && selection.route && selection.route.durationMinutes > 0 ? selection : undefined;
+  const destinationLabel = startable ? (startable.to.buildingCode ?? startable.to.name) : "";
 
   const mapBlock = (
     <div className="space-y-2">
-      {hasStops && <MapPanel selection={selection} heightClass="h-64 lg:h-[calc(100vh-11rem)]" />}
+      {hasStops && <MapPanel selection={selection} heightClass="h-64 lg:h-[calc(100vh-13rem)]" />}
       <div className="flex items-center justify-between gap-2 text-sm">
         <span className="min-w-0 truncate font-medium text-ink">{selection.label}</span>
         {picked && <button className="shrink-0 text-brand" onClick={() => setPicked(undefined)}>Show whole day</button>}
       </div>
+      {startable && (
+        <button
+          className="btn btn-primary w-full text-base"
+          onClick={() => setTrip({ label: startable.label, from: startable.from, to: startable.to, route: startable.route!, walkFallback: startable.walkFallback })}
+        >
+          Start Trip to {destinationLabel}
+        </button>
+      )}
     </div>
   );
 
@@ -101,7 +114,7 @@ export function WeekView() {
         <div className="lg:col-start-1 lg:row-start-1">
           {plan && <NextClassCard next={next} onSelect={() => {
             const t = next.transition;
-            if (t?.recommendedRoute) setPicked({ id: "next", selection: { kind: "LEG", label: `Next: ${t.from.name} \u2192 ${t.to.name}`, from: t.from, to: t.to, route: t.recommendedRoute } });
+            if (t?.recommendedRoute) setPicked({ id: "next", selection: { kind: "LEG", label: `Next: ${t.from.name} \u2192 ${t.to.name}`, from: t.from, to: t.to, route: t.recommendedRoute, walkFallback: t.walkingRoute } });
             else if (next.scheduledClass) setPicked({ id: "next", selection: { kind: "PLACE", label: next.scheduledClass.meeting.courseCode, at: next.scheduledClass.location } });
           }} />}
         </div>
@@ -127,6 +140,7 @@ export function WeekView() {
       </div>
 
       {settingsOpen && <SettingsSheet onClose={() => setSettingsOpen(false)} />}
+      {trip && <TripMode trip={trip} onEnd={() => setTrip(undefined)} />}
     </main>
   );
 }

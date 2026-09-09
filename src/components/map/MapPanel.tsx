@@ -8,7 +8,7 @@ const KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY;
 const MAP_ID = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID || "DEMO_MAP_ID";
 
 export type MapSelection =
-  | { kind: "LEG"; label: string; from: CampusLocation; to: CampusLocation; route?: RouteOption }
+  | { kind: "LEG"; label: string; from: CampusLocation; to: CampusLocation; route?: RouteOption; /** Used by Trip Mode when a transit option has gone. */ walkFallback?: RouteOption }
   | { kind: "PLACE"; label: string; at: CampusLocation }
   | { kind: "DAY"; label: string; stops: { at: CampusLocation; label: string }[] };
 

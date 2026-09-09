@@ -69,7 +69,7 @@ function LeaveRow({ t, id, sel, label }: { t: ClassTransition; id: string; sel: 
   const rec = t.recommendedRoute!;
   const alt = rec.mode === "WALK" ? t.transitRoute : t.walkingRoute;
   const sameSpot = rec.durationMinutes === 0;
-  const select = () => sel.onSelect(id, { kind: "LEG", label, from: t.from, to: t.to, route: rec });
+  const select = () => sel.onSelect(id, { kind: "LEG", label, from: t.from, to: t.to, route: rec, walkFallback: t.walkingRoute });
   return (
     <li className="flex gap-2 sm:gap-3">
       <Time at={t.recommendedDeparture!} />
