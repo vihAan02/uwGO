@@ -158,7 +158,7 @@ describe("normalizeWeek", () => {
       meeting({ id: "on", location: { kind: "ONLINE" } }),
       meeting({ id: "tba", location: { kind: "TBA" } }),
       meeting({ id: "zz", location: { kind: "ROOM", buildingCode: "ZZZ", roomNumber: "1" } }),
-      meeting({ id: "wlu-p", university: "WLU", location: { kind: "ROOM", buildingCode: "P", roomNumber: "327" } }),
+      meeting({ id: "wlu-p", university: "WLU", location: { kind: "ROOM", buildingCode: "M", roomNumber: "327" } }),
       meeting({ id: "past", startDate: "2026-01-05", endDate: "2026-04-03" }),
     ], D);
     expect(w.byDay.M).toHaveLength(0);

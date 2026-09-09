@@ -20,7 +20,7 @@ describe("manual meeting entry", () => {
     }
   });
   it("refuses buildings without coordinates and end <= start", () => {
-    const r = createManualMeeting({ university: "WLU", courseCode: "BU 111", days: ["M"], start: "10:00", end: "9:00", buildingCode: "P" });
+    const r = createManualMeeting({ university: "WLU", courseCode: "BU 111", days: ["M"], start: "10:00", end: "9:00", buildingCode: "M" });
     expect(r.ok).toBe(false);
     if (!r.ok) {
       expect(r.errors.join("\n")).toMatch(/no coordinates/);

@@ -35,9 +35,9 @@ describe("building registry", () => {
     expect(lh.name).toBe("Lazaridis Hall");
     expect(lh.coordinatesSource).toBe("OSM");
     expect(hasCoordinates(lh)).toBe(true);
-    const peters = findBuilding("WLU", "P")!;
-    expect(peters.coordinatesSource).toBe("UNVERIFIED");
-    expect(hasCoordinates(peters)).toBe(false);
+    const music = findBuilding("WLU", "M")!;
+    expect(music.coordinatesSource).toBe("UNVERIFIED");
+    expect(hasCoordinates(music)).toBe(false);
     expect(findBuilding("WLU", "BAB")!.code).toBe("BA");
     expect(findBuilding("WLU", "SBE")).toBeUndefined(); // not a real Laurier code
     expect(residencePresets("WLU").map((b) => b.residenceLabel)).toContain("Bricker Residence");
