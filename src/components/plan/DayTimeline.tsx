@@ -1,5 +1,5 @@
 "use client";
-import type { CampusLocation, ClassTransition, DayPlan, DayPlanItem, HomeReturnAnalysis, RouteOption, RouteStep, ScheduledClass, UserHome } from "@/domain/types";
+import type { CampusLocation, ClassTransition, DayPlan, DayPlanItem, HomeReturnAnalysis, RouteOption, ScheduledClass, UserHome } from "@/domain/types";
 import type { PlannerConfig } from "@/domain/config";
 import { formatClock, formatDuration } from "@/time/toronto";
 import { googleMapsDirectionsUrl, travelModeFor } from "@/lib/mapsLinks";
@@ -33,23 +33,11 @@ function modeIcon(r: RouteOption | undefined) {
   return r?.mode === "TRANSIT" ? "\u{1F68C}" : "\u{1F6B6}";
 }
 
-/** Google splits the walk to a stop into many short steps; one line per leg reads better. */
-function mergeWalks(steps: RouteStep[]): RouteStep[] {
-  const out: RouteStep[] = [];
-  for (const s of steps) {
-    const prev = out[out.length - 1];
-    if (s.mode === "WALK" && prev?.mode === "WALK") {
-      out[out.length - 1] = { ...prev, durationMinutes: prev.durationMinutes + s.durationMinutes };
-    } else out.push(s);
-  }
-  return out;
-}
-
 function TransitSteps({ route }: { route: RouteOption }) {
   if (!route.steps) return null;
   return (
     <ol className="mt-2 space-y-1 text-sm">
-      {mergeWalks(route.steps).map((s, i) => s.mode === "TRANSIT" && s.transit ? (
+      {route.steps.map((s, i) => s.mode === "TRANSIT" && s.transit ? (
         <li key={i} className="rounded-lg bg-brand-soft px-2 py-1">
           <span className="font-semibold">{s.transit.lineShort ?? s.transit.line}</span> {s.transit.vehicle.toLowerCase()} {s.transit.headsign ? `toward ${s.transit.headsign}` : ""}
           <div className="text-ink-muted">Board {s.transit.departureStop} {formatClock(s.transit.departureTime)} &rarr; {s.transit.arrivalStop} {formatClock(s.transit.arrivalTime)}</div>

@@ -110,7 +110,20 @@ export class GoogleRoutingProvider implements RoutingProvider {
     const leg = route?.legs?.[0];
     if (!route || !leg) return undefined;
 
-    const raw = leg.steps ?? [];
+    // Google splits the walk to a stop into many sub-minute steps. Rounding each one up
+    // separately inflates the walk badly (five steps of ~20s became "5 min"), so merge
+    // consecutive walking steps at full precision and convert once.
+    const raw: GStep[] = [];
+    for (const s of leg.steps ?? []) {
+      const prev = raw[raw.length - 1];
+      if (s.travelMode !== "TRANSIT" && prev && prev.travelMode !== "TRANSIT") {
+        raw[raw.length - 1] = {
+          ...prev,
+          staticDuration: `${seconds(prev.staticDuration) + seconds(s.staticDuration)}s`,
+          distanceMeters: (prev.distanceMeters ?? 0) + (s.distanceMeters ?? 0),
+        };
+      } else raw.push(s);
+    }
     const steps: RouteStep[] = raw.map((s) => {
       const td = s.transitDetails;
       if (s.travelMode === "TRANSIT" && td) {
