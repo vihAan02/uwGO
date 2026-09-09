@@ -8,7 +8,8 @@ const to: CampusLocation = { id: "b", name: "Lazaridis Hall", latitude: 43.47510
 const NOW = new Date("2026-09-09T17:00:00Z");
 const at = (mins: number) => new Date(NOW.getTime() + mins * 60_000);
 
-const walk: RouteOption = { mode: "WALK", durationMinutes: 31, distanceMeters: 2100, provider: "google-routes", computedAt: NOW.toISOString(), isEstimate: false };
+// Long enough that a 19 min bus leaving in a few minutes is worth waiting for.
+const walk: RouteOption = { mode: "WALK", durationMinutes: 45, distanceMeters: 2100, provider: "google-routes", computedAt: NOW.toISOString(), isEstimate: false };
 const transit = (depOffset: number, computedOffset = 0): RouteOption => ({
   mode: "TRANSIT", durationMinutes: 19,
   departureTime: at(depOffset), arrivalTime: at(depOffset + 19),
@@ -59,6 +60,16 @@ describe("resolveTripRoute", () => {
     const r = await resolveTripRoute(tomorrow, walk, from, to, NOW);
     expect(r.status).toBe("REFRESHED");
     expect(r.note).toMatch(/leaving now/);
+  });
+
+  it("keeps walking when the next bus would not get there any sooner", async () => {
+    // Bus in 12 min, 19 min ride: door to door in 31, the same as a 31 min walk. Walking has no bus to miss.
+    const evenWalk: RouteOption = { ...walk, durationMinutes: 31 };
+    vi.stubGlobal("fetch", stubFetch(transit(12)));
+    const r = await resolveTripRoute(transit(-5), evenWalk, from, to, NOW);
+    expect(r.status).toBe("FELL_BACK_TO_WALKING");
+    expect(r.route).toBe(evenWalk);
+    expect(r.note).toMatch(/as soon as the next bus/);
   });
 
   it("falls back to walking, with an explanation, when no transit comes back", async () => {

@@ -87,10 +87,13 @@ describe("planner", () => {
     expect(late.days.M!.warnings[0]).toMatch(/likely be late/);
   });
 
-  it("UW -> Laurier asks for transit with the class end as departure and picks by arrival", async () => {
+  it("UW -> Laurier asks for transit arriving before the buffer and picks by door-to-door saving", async () => {
+    const seen: TransitOptions[] = [];
     const provider = new FixtureProvider(walks, (opts) => {
-      const dep = addMin(opts.departureTime!, 4);
-      const arr = addMin(dep, 12);
+      seen.push(opts);
+      // A 12 min itinerary (4 walk, 4 ride, 4 walk) landing exactly when asked.
+      const arr = opts.arrivalTime!;
+      const dep = addMin(arr, -12);
       return { mode: "TRANSIT", durationMinutes: 12, departureTime: dep, arrivalTime: arr, transferCount: 0, provider: "fixture", computedAt: "x", isEstimate: false, steps: [{ mode: "WALK", durationMinutes: 4 }, { mode: "TRANSIT", durationMinutes: 4, transit: { line: "202", vehicle: "Bus", departureStop: "Univ/UW", arrivalStop: "Univ/WLU", departureTime: addMin(dep, 4), arrivalTime: addMin(dep, 8), stopCount: 1 } }, { mode: "WALK", durationMinutes: 4 }] };
     });
     const plan = await buildWeekPlan({
@@ -103,11 +106,13 @@ describe("planner", () => {
     const t = plan.days.M!.transitions[0];
     expect(t.crossCampus).toBe(true);
     expect(provider.calls.transit).toBe(1);
+    expect(formatClock(seen[0].arrivalTime!)).toBe("2:50 PM"); // class at 3:00 minus the 10 min buffer
     expect(t.walkingRoute!.durationMinutes).toBe(24);
     expect(t.transitRoute!.mode).toBe("TRANSIT");
-    expect(t.recommendedRoute!.mode).toBe("TRANSIT"); // arrives 14:36 vs walking 14:44
-    expect(formatClock(t.recommendedDeparture!)).toBe("2:24 PM");
-    expect(formatClock(t.expectedArrival!)).toBe("2:36 PM");
+    expect(t.recommendedRoute!.mode).toBe("TRANSIT"); // 12 min door to door vs 24 walking, and it leaves later
+    expect(formatClock(t.recommendedDeparture!)).toBe("2:38 PM");
+    expect(formatClock(t.expectedArrival!)).toBe("2:50 PM");
+    expect(t.consideredModes).toEqual(["WALK", "TRANSIT"]);
     expect(t.feasibility).toBe("COMFORTABLE");
   });
 
@@ -123,8 +128,8 @@ describe("planner", () => {
     }, provider);
     const [toFirst, cross] = plan.days.M!.transitions;
     expect(toFirst.crossCampus).toBe(true);
-    expect(seen[0].arrivalTime).toBeDefined();
-    expect(formatClock(seen[0].arrivalTime!)).toBe("8:20 AM");
+    // The gap analysis also asks (LH -> home by departure), so look for the class-bound query.
+    expect(seen.map((o) => (o.arrivalTime ? formatClock(o.arrivalTime) : undefined))).toContain("8:20 AM");
     expect(cross.recommendedRoute!.mode).toBe("WALK");
     expect(formatClock(cross.recommendedDeparture!)).toBe("9:56 AM");
     expect(cross.feasibility).toBe("COMFORTABLE");

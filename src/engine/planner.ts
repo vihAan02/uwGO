@@ -2,17 +2,17 @@
  * Async orchestrator: schedule + home + routing provider -> WeekPlan.
  * The only place that talks to a RoutingProvider. Every decision is delegated to the pure engines.
  */
-import type { CampusLocation, ClassTransition, CourseMeeting, DayOfWeek, DayPlan, DayPlanItem, LatLng, RouteOption, ScheduledClass, UserHome, WeekPlan } from "@/domain/types";
+import type { CampusLocation, ClassTransition, CourseMeeting, DayOfWeek, DayPlan, DayPlanItem, HomeReturnAnalysis, LatLng, RouteOption, ScheduledClass, UserHome, WeekPlan } from "@/domain/types";
 import { DAYS_IN_ORDER } from "@/domain/types";
 import type { PlannerConfig } from "@/domain/config";
 import type { RoutingProvider, TransitOptions } from "@/routing/RoutingProvider";
 import { pairKey } from "@/routing/RoutingProvider";
-import { addMin, dateForDay, minutesBetween } from "@/time/toronto";
+import { dateForDay, minutesBetween } from "@/time/toronto";
 import { normalizeWeek } from "./normalize";
-import { buildTransitions } from "./transitions";
-import { chooseRoute, shouldConsiderTransit } from "./transitCompare";
-import { assessFeasibility } from "./feasibility";
-import { analyzeHomeReturn } from "./homeReturn";
+import { buildItinerary, findContinuityBreaks, type LegSpec } from "./transitions";
+import { resolveBestRoute, type BestRoute, type RouteFetcher, type RouteRequest } from "./bestRoute";
+import { assessResolvedFeasibility } from "./feasibility";
+import { analyzeHomeReturn, type ResolvedLeg } from "./homeReturn";
 
 export interface PlanInput {
   meetings: CourseMeeting[];
@@ -27,8 +27,12 @@ export function homeLocation(home: UserHome): CampusLocation {
   return { id: "home", name: home.name, latitude: home.latitude, longitude: home.longitude, kind: "HOME", university: home.preset?.university, buildingCode: home.preset?.buildingCode };
 }
 
-/** Per-plan memo so the same building pair is fetched once even when it occurs on several days. */
-class RouteMemo {
+/**
+ * Per-plan memo. Walking depends only on the pair, so it is fetched once even when the pair
+ * occurs on several days. Transit is schedule-bound and is never memoised here by pair; the
+ * provider's own cache keys it by requested minute.
+ */
+class RouteMemo implements RouteFetcher {
   private readonly walks = new Map<string, Promise<RouteOption | undefined>>();
   constructor(private readonly provider: RoutingProvider, readonly errors: string[]) {}
 
@@ -56,37 +60,120 @@ class RouteMemo {
   }
 }
 
-const SAME_PLACE: RouteOption = { mode: "WALK", durationMinutes: 0, distanceMeters: 0, provider: "same-building", computedAt: "", isEstimate: false };
+/**
+ * One resolution per (origin, destination, window). The gap analysis and the itinerary walk
+ * both come through here, so the routes a go-home decision was made on are, by identity,
+ * the routes the timeline then shows.
+ */
+class LegResolver {
+  private readonly cache = new Map<string, Promise<BestRoute>>();
+  constructor(private readonly memo: RouteMemo, private readonly cfg: PlannerConfig) {}
 
-async function resolveTransition(t: ClassTransition, memo: RouteMemo, cfg: PlannerConfig): Promise<ClassTransition> {
-  if (t.from.id === t.to.id) {
-    const departure = t.hasDeadline ? addMin(t.arriveBy, -cfg.arrivalBufferMinutes) : t.departAfter;
-    return { ...t, walkingRoute: SAME_PLACE, recommendedRoute: SAME_PLACE, recommendedDeparture: departure.getTime() < t.departAfter.getTime() ? t.departAfter : departure, expectedArrival: departure.getTime() < t.departAfter.getTime() ? t.departAfter : departure, feasibility: t.hasDeadline ? assessFeasibility(t.availableMinutes, 0, cfg) : "COMFORTABLE", reason: "Same building." };
-  }
-  const walking = await memo.walk(t.from, t.to);
-  let transit: RouteOption | undefined;
-  if (shouldConsiderTransit(t.crossCampus, walking?.durationMinutes, cfg)) {
-    const opts: TransitOptions = t.kind === "HOME_TO_CLASS" ? { arrivalTime: addMin(t.arriveBy, -cfg.arrivalBufferMinutes) } : { departureTime: addMin(t.departAfter, cfg.buildingExitMinutes) };
-    transit = await memo.transit(t.from, t.to, opts);
-  }
-  const choice = chooseRoute({ departAfter: t.departAfter, arriveBy: t.arriveBy, hasDeadline: t.hasDeadline, walking, transit }, cfg);
-  let feasibility: ClassTransition["feasibility"] = "UNKNOWN";
-  if (choice.recommended && choice.departure && choice.arrival) {
-    if (!t.hasDeadline) feasibility = "COMFORTABLE";
-    else {
-      const effectiveTravel = choice.recommended.mode === "WALK" ? choice.recommended.durationMinutes : minutesBetween(t.departAfter, choice.arrival);
-      feasibility = assessFeasibility(t.availableMinutes, effectiveTravel, cfg);
+  resolve(req: RouteRequest): Promise<BestRoute> {
+    const key = `${pairKey(req.from, req.to)}|${req.departAfter.getTime()}|${req.arriveBy?.getTime() ?? "open"}`;
+    let p = this.cache.get(key);
+    if (!p) {
+      p = resolveBestRoute(req, this.memo, this.cfg);
+      this.cache.set(key, p);
     }
+    return p;
   }
-  return { ...t, walkingRoute: walking, transitRoute: transit, recommendedRoute: choice.recommended, recommendedDeparture: choice.departure, expectedArrival: choice.arrival, feasibility, reason: choice.reason };
+}
+
+function requestFor(t: ClassTransition): RouteRequest {
+  return { from: t.from, to: t.to, departAfter: t.departAfter, arriveBy: t.hasDeadline ? t.arriveBy : undefined, crossCampus: t.crossCampus };
+}
+
+async function resolveTransition(t: ClassTransition, resolver: LegResolver, cfg: PlannerConfig): Promise<ClassTransition> {
+  const best = await resolver.resolve(requestFor(t));
+  let feasibility: ClassTransition["feasibility"] = "UNKNOWN";
+  if (best.recommended && best.departure && best.arrival) {
+    feasibility = t.hasDeadline
+      ? assessResolvedFeasibility({ availableMinutes: t.availableMinutes, arriveBy: t.arriveBy, route: best.recommended, arrival: best.arrival }, cfg)
+      : "COMFORTABLE";
+  }
+  return {
+    ...t,
+    walkingRoute: best.walking,
+    transitRoute: best.transit,
+    recommendedRoute: best.recommended,
+    recommendedDeparture: best.departure,
+    expectedArrival: best.arrival,
+    feasibility,
+    reason: best.reason,
+    consideredModes: best.consideredModes,
+  };
+}
+
+const legOf = (t: ClassTransition): ResolvedLeg | undefined =>
+  t.recommendedRoute && t.recommendedDeparture && t.expectedArrival ? { route: t.recommendedRoute, departure: t.recommendedDeparture, arrival: t.expectedArrival } : undefined;
+
+/**
+ * Decide, for each gap long enough to be worth analysing, whether going home is sensible.
+ * The question is asked with the best route each way, not a walking estimate: fastest
+ * practical route from the class to home leaving at the gap start, then fastest practical
+ * route from home to the next class arriving before the buffer, setting off no earlier
+ * than the arrival home. Those two resolutions are the legs the itinerary will show.
+ */
+async function analyseGaps(
+  classes: ScheduledClass[],
+  home: CampusLocation | undefined,
+  resolver: LegResolver,
+  cfg: PlannerConfig,
+): Promise<Map<number, HomeReturnAnalysis>> {
+  const out = new Map<number, HomeReturnAnalysis>();
+  if (!home) return out;
+  const cross = (a: CampusLocation, b: CampusLocation) => Boolean(a.university && b.university && a.university !== b.university);
+  await Promise.all(
+    classes.slice(0, -1).map(async (c, i) => {
+      const next = classes[i + 1];
+      if (minutesBetween(c.end, next.start) < cfg.minGapForHomeAnalysisMinutes) return;
+      const toHome = await resolver.resolve({ from: c.location, to: home, departAfter: c.end, crossCampus: cross(c.location, home) });
+      if (!toHome.recommended || !toHome.departure || !toHome.arrival) return;
+      const back = await resolver.resolve({ from: home, to: next.location, departAfter: toHome.arrival, arriveBy: next.start, crossCampus: cross(home, next.location) });
+      if (!back.recommended || !back.departure || !back.arrival) return;
+      out.set(i, analyzeHomeReturn({
+        gapStart: c.end,
+        nextClassStart: next.start,
+        routeHome: { route: toHome.recommended, departure: toHome.departure, arrival: toHome.arrival },
+        routeBack: { route: back.recommended, departure: back.departure, arrival: back.arrival },
+      }, cfg));
+    }),
+  );
+  return out;
 }
 
 async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledClass[], home: CampusLocation | undefined, memo: RouteMemo, cfg: PlannerConfig): Promise<DayPlan> {
   const warnings: string[] = [];
-  const skeleton = buildTransitions(classes, home, dateISO);
-  const transitions = await Promise.all(skeleton.map((t) => resolveTransition(t, memo, cfg)));
-  const byId = new Map(transitions.map((t) => [t.id, t]));
+  const resolver = new LegResolver(memo, cfg);
 
+  // 1. Work out where the student will actually be, before working out any trip.
+  const gapAnalysis = await analyseGaps(classes, home, resolver, cfg);
+  const goHomeAfter = new Set(
+    [...gapAnalysis].filter(([, a]) => a.recommendation === "WORTH_IT").map(([i]) => i),
+  );
+
+  // 2. Build the chain of legs that follows from those decisions.
+  const legs = buildItinerary(classes, home, goHomeAfter, dateISO);
+
+  // 3. Resolve legs in order, carrying the running location and clock. A leg can never
+  //    set off before the previous one has landed, and never from anywhere else.
+  const transitions: ClassTransition[] = [];
+  let readyAt: Date | undefined;
+  for (const leg of legs) {
+    const spec: LegSpec = readyAt && readyAt.getTime() > leg.departAfter.getTime()
+      ? { ...leg, departAfter: readyAt, availableMinutes: leg.hasDeadline ? minutesBetween(readyAt, leg.arriveBy) : 0 }
+      : leg;
+    const resolved = await resolveTransition(spec, resolver, cfg);
+    transitions.push(resolved);
+    readyAt = resolved.expectedArrival ?? spec.arriveBy;
+  }
+
+  const breaks = findContinuityBreaks(transitions);
+  if (breaks.length) warnings.push(`Itinerary is inconsistent: ${breaks[0]}.`);
+
+  // 4. Emit the timeline. Legs are consumed in order, so what the student reads is
+  //    exactly the chain that was resolved above.
   const items: DayPlanItem[] = [];
   const pushLeg = (t: ClassTransition | undefined) => {
     if (!t) return;
@@ -98,27 +185,46 @@ async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledC
     items.push({ kind: "LEAVE", at: t.recommendedDeparture, from: t.from, transition: t });
     items.push({ kind: "ARRIVE", at: t.expectedArrival, to: t.to, transition: t });
   };
+  const legAt = (predicate: (l: LegSpec) => boolean) => {
+    const at = legs.findIndex(predicate);
+    return at < 0 ? undefined : transitions[at];
+  };
 
-  if (home && classes.length) pushLeg(byId.get(`home->${classes[0].id}`));
+  if (home && classes.length) pushLeg(legAt((l) => l.toClassIndex === 0 && l.from.kind === "HOME"));
+
   for (let i = 0; i < classes.length; i++) {
     const c = classes[i];
     items.push({ kind: "CLASS", scheduledClass: c });
     const next = classes[i + 1];
-    if (next) {
-      const gapMinutes = minutesBetween(c.end, next.start);
-      const t = byId.get(`${c.id}->${next.id}`);
-      if (gapMinutes >= cfg.minGapForHomeAnalysisMinutes) {
-        let homeReturn;
-        if (home) {
-          const [routeHome, routeBack] = await Promise.all([memo.walk(c.location, home), memo.walk(home, next.location)]);
-          if (routeHome && routeBack) homeReturn = analyzeHomeReturn({ gapStart: c.end, nextClassStart: next.start, routeHome, routeBack }, cfg);
-        }
-        items.push({ kind: "GAP", from: c.end, to: next.start, minutes: gapMinutes, homeReturn });
-      }
-      pushLeg(t);
+    if (!next) break;
+
+    const goingHome = goHomeAfter.has(i);
+    const outLeg = goingHome ? legAt((l) => l.midDayHomeReturn === true && l.fromClassIndex === i) : undefined;
+    const backLeg = goingHome ? legAt((l) => l.midDayHomeReturn === true && l.toClassIndex === i + 1) : undefined;
+
+    // The gap card reads the resolved legs. Normally these are the very resolutions the
+    // decision was made on; if the chain had to shift a departure, the card follows the chain.
+    const outResolved = outLeg && legOf(outLeg);
+    const backResolved = backLeg && legOf(backLeg);
+    const homeReturn: HomeReturnAnalysis | undefined = goingHome && outResolved && backResolved
+      ? analyzeHomeReturn({ gapStart: c.end, nextClassStart: next.start, routeHome: outResolved, routeBack: backResolved }, cfg)
+      : gapAnalysis.get(i);
+
+    if (minutesBetween(c.end, next.start) >= cfg.minGapForHomeAnalysisMinutes) {
+      items.push({ kind: "GAP", from: c.end, to: next.start, minutes: minutesBetween(c.end, next.start), homeReturn });
+    }
+
+    if (goingHome) {
+      pushLeg(outLeg);
+      pushLeg(backLeg);
+    } else {
+      pushLeg(legAt((l) => l.fromClassIndex === i && l.toClassIndex === i + 1));
     }
   }
-  if (home && classes.length) pushLeg(byId.get(`${classes[classes.length - 1].id}->home`));
+
+  if (home && classes.length) {
+    pushLeg(legAt((l) => l.kind === "CLASS_TO_HOME" && !l.midDayHomeReturn));
+  }
 
   for (const t of transitions) if (t.feasibility === "LIKELY_LATE") warnings.push(`${t.from.name} → ${t.to.name}: you will likely be late (${t.availableMinutes} min available).`);
   return { day, date: dateISO, classes, transitions, items, warnings };

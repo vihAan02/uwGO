@@ -1,8 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import type { CampusLocation, ClassTransition, DayPlan, DayPlanItem, HomeReturnAnalysis, RouteOption, ScheduledClass, UserHome } from "@/domain/types";
-import type { PlannerConfig } from "@/domain/config";
-import { formatClock, formatDuration } from "@/time/toronto";
+import { formatClock, formatDuration, minutesBetween } from "@/time/toronto";
 import { googleMapsDirectionsUrl, travelModeFor } from "@/lib/mapsLinks";
 import type { MapSelection } from "../map/MapPanel";
 
@@ -178,7 +177,7 @@ function neighbouringClasses(items: DayPlanItem[], index: number): { prev?: Sche
   return { prev, next };
 }
 
-export function DayTimeline({ plan, home, config, busy, sel, focusClassId }: { plan: DayPlan; home: UserHome | undefined; config: PlannerConfig; busy: boolean; sel: Selectable; focusClassId?: string }) {
+export function DayTimeline({ plan, home, busy, sel, focusClassId }: { plan: DayPlan; home: UserHome | undefined; busy: boolean; sel: Selectable; focusClassId?: string }) {
   const focusEl = useRef<HTMLLIElement | null>(null);
   const scrolledFor = useRef<string | undefined>(undefined);
 
@@ -209,7 +208,11 @@ export function DayTimeline({ plan, home, config, busy, sel, focusClassId }: { p
             case "ARRIVE": return (
               <li key={i} className="flex gap-2 sm:gap-3">
                 <Time at={item.at} />
-                <div className="flex-1 px-3 text-sm text-ink-muted">Arrive {item.to.name}{item.transition.hasDeadline ? ` · ${config.arrivalBufferMinutes} min before class` : ""}</div>
+                {/* The real margin, not the configured buffer: a tight hop can land later than intended. */}
+                <div className="flex-1 px-3 text-sm text-ink-muted">
+                  Arrive {item.to.name}
+                  {item.transition.hasDeadline ? ` · ${Math.max(0, minutesBetween(item.at, item.transition.arriveBy))} min before class` : ""}
+                </div>
               </li>
             );
             case "CLASS": return (

@@ -1,5 +1,5 @@
 import type { CourseMeeting, TermInfo, UserHome } from "@/domain/types";
-import { DEFAULT_PLANNER_CONFIG, type PlannerConfig } from "@/domain/config";
+import { DEFAULT_PLANNER_CONFIG, USER_CONFIG_KEYS, type PlannerConfig } from "@/domain/config";
 
 /** Everything the app persists. Versioned so a future shape change can migrate instead of crash. */
 export interface AppState {
@@ -19,7 +19,14 @@ function migrate(raw: unknown): AppState {
   if (!raw || typeof raw !== "object") return emptyState();
   const obj = raw as Partial<AppState>;
   if (obj.schemaVersion !== 1) return emptyState();
-  return { ...emptyState(), ...obj, config: { ...DEFAULT_PLANNER_CONFIG, ...(obj.config ?? {}) } };
+  // Only the student's own choices survive a reload; engine thresholds always come from the
+  // current defaults, otherwise a retuned engine would keep running on numbers saved months ago.
+  const config: PlannerConfig = { ...DEFAULT_PLANNER_CONFIG };
+  for (const k of USER_CONFIG_KEYS) {
+    const v = obj.config?.[k];
+    if (typeof v === "number" && Number.isFinite(v)) config[k] = v;
+  }
+  return { ...emptyState(), ...obj, config };
 }
 
 export function loadState(storage: Pick<Storage, "getItem"> | undefined = typeof window !== "undefined" ? window.localStorage : undefined): AppState {

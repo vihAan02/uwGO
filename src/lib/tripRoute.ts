@@ -1,4 +1,6 @@
 import type { CampusLocation, RouteOption } from "@/domain/types";
+import { DEFAULT_PLANNER_CONFIG } from "@/domain/config";
+import { chooseRoute } from "@/engine/transitCompare";
 import { HttpRoutingProvider } from "@/routing/HttpRoutingProvider";
 
 /** A transit result computed longer ago than this is refetched before a trip starts. */
@@ -37,8 +39,9 @@ function isStale(route: RouteOption, now: Date): boolean {
 /**
  * The route to actually travel, as opposed to the one the weekly plan worked out.
  * Walking never changes. A transit option whose bus has gone (or that was computed a
- * while ago) is recomputed for right now, and if nothing useful comes back the student
- * is told and given the walk instead.
+ * while ago) is recomputed for right now and put through the same walk-vs-transit choice
+ * the planner uses, so the trip only stays on the bus if the bus still wins from here.
+ * If nothing useful comes back the student is told and given the walk instead.
  */
 export async function resolveTripRoute(
   planned: RouteOption,
@@ -50,24 +53,29 @@ export async function resolveTripRoute(
   if (!isStale(planned, now)) return { route: planned, status: "PLANNED" };
 
   const missed = Boolean(planned.departureTime && planned.departureTime.getTime() <= now.getTime());
+  let fresh: RouteOption | undefined;
   try {
-    const fresh = await live.getTransitRoute(from, to, { departureTime: now });
-    if (fresh?.departureTime && fresh.departureTime.getTime() > now.getTime() - 60_000) {
-      return {
-        route: fresh,
-        status: "REFRESHED",
-        note: missed ? "That departure has gone. This is the next one." : "Updated for leaving now.",
-      };
-    }
+    fresh = await live.getTransitRoute(from, to, { departureTime: now });
   } catch {
     // Fall through to walking rather than showing a departure that has passed.
   }
 
+  // No deadline is known here, so the comparison is simply who gets there first from now.
+  const choice = chooseRoute({ departAfter: now, arriveBy: now, hasDeadline: false, walking: fallbackWalk, transit: fresh }, DEFAULT_PLANNER_CONFIG);
+  if (choice.recommended?.mode === "TRANSIT") {
+    return {
+      route: choice.recommended,
+      status: "REFRESHED",
+      note: missed ? "That departure has gone. This is the next one." : "Updated for leaving now.",
+    };
+  }
   if (fallbackWalk) {
     return {
       route: fallbackWalk,
       status: "FELL_BACK_TO_WALKING",
-      note: "No useful transit option right now, so this is the walking route.",
+      note: fresh?.departureTime && fresh.departureTime.getTime() > now.getTime() - 60_000
+        ? "Walking gets you there as soon as the next bus would, so this is the walking route."
+        : "No useful transit option right now, so this is the walking route.",
     };
   }
   return { route: planned, status: "NO_TRANSIT", note: "No transit option right now, and no walking route is available." };

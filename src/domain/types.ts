@@ -221,6 +221,8 @@ export interface ClassTransition {
   expectedArrival?: Date;
   feasibility: Feasibility;
   reason?: string;
+  /** Which modes were actually priced for this leg, so "walking" can be read as a choice rather than a default. */
+  consideredModes?: TravelMode[];
   crossCampus: boolean;
 }
 

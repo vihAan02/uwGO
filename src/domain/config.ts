@@ -8,8 +8,17 @@ export interface PlannerConfig {
   minPossibleHomeMinutes: number;
   /** Extra slack (beyond travel + buffer) required to call a transition COMFORTABLE. */
   comfortMarginMinutes: number;
-  /** Walking duration at or above which a transit alternative is requested even within one campus. */
+  /**
+   * Walking duration at or above which a transit itinerary is requested. A transit trip is
+   * a walk to a stop, a ride and a walk from a stop, and it has to beat walking by
+   * `minTransitSavingMinutes` door to door; under this walking length it cannot, so the
+   * request is skipped rather than billed. Cross-campus legs always ask.
+   */
   transitConsiderWalkMinutes: number;
+  /** Transit must beat walking door to door by at least this much, or walking wins: no wait, no bus to miss. */
+  minTransitSavingMinutes: number;
+  /** Each transfer counts as this many extra minutes when transit is compared against walking. */
+  transitTransferPenaltyMinutes: number;
   /** Minutes to get out of the building after class ends (0 for MVP). */
   buildingExitMinutes: number;
   /** Gaps shorter than this are never analysed for going home. */
@@ -21,9 +30,14 @@ export const DEFAULT_PLANNER_CONFIG: PlannerConfig = {
   minUsefulHomeMinutes: 30,
   minPossibleHomeMinutes: 10,
   comfortMarginMinutes: 5,
-  transitConsiderWalkMinutes: 18,
+  transitConsiderWalkMinutes: 10,
+  minTransitSavingMinutes: 5,
+  transitTransferPenaltyMinutes: 3,
   buildingExitMinutes: 0,
   minGapForHomeAnalysisMinutes: 20,
 };
+
+/** The only setting the student chooses; everything else is engine tuning that follows the code. */
+export const USER_CONFIG_KEYS = ["arrivalBufferMinutes"] as const satisfies readonly (keyof PlannerConfig)[];
 
 export const ARRIVAL_BUFFER_CHOICES = [5, 10, 15] as const;
