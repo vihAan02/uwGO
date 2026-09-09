@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# UW GO
 
-## Getting Started
+Turn a University of Waterloo (Quest) or Wilfrid Laurier class schedule into a day-by-day movement plan: when to leave, what building and floor the room is in, walk vs. bus/ION, and whether a gap is long enough to go home.
 
-First, run the development server:
+Mobile-first Next.js app. No accounts, no database, no AI. Everything about the schedule stays in the browser; only building coordinates and times are sent to the routing proxy.
+
+Planning docs: [docs/PRODUCT.md](docs/PRODUCT.md) · [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md) · [docs/BUILD_PLAN.md](docs/BUILD_PLAN.md)
+
+## Quick start
 
 ```bash
+npm install
+cp .env.example .env.local   # then fill in the keys below (optional for a first look)
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000, paste a Quest schedule (Quest → Class Schedule → List View → Select All → Copy), choose where you live, and press **Build my routes**.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Without Google keys the app still runs in **estimate mode**: walking times are straight-line estimates (clearly labelled), transit is unavailable, the map is hidden, and custom addresses cannot be geocoded. Residence presets work.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Google Maps Platform setup
 
-## Learn More
+Create one Google Cloud project with billing enabled and turn on three APIs: **Routes API**, **Geocoding API**, **Maps JavaScript API**. Then create two keys.
 
-To learn more about Next.js, take a look at the following resources:
+| Key | Env var | Application restriction | API restriction | Used for |
+|---|---|---|---|---|
+| Server key | `GOOGLE_MAPS_SERVER_KEY` | none (or your server IPs if self-hosting) | Routes API, Geocoding API | `/api/routes` (walking + transit) and `/api/geocode` (custom home address). Never shipped to the browser. |
+| Browser key | `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` | HTTP referrers: `https://your-domain/*`, `http://localhost:3000/*` | Maps JavaScript API | Rendering the map for a transition. Inlined into the client bundle at build time. |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Optional: `NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID` (a Map ID from Map Management) for styled Advanced Markers; without it the demo map id is used.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Why a server proxy for routing: a raw browser `fetch` to the Routes API cannot be protected by HTTP-referrer restrictions (browsers strip the Referer on cross-origin requests), so route calls go through `src/app/api/routes/route.ts` with the server key.
 
-## Deploy on Vercel
+Costs (verified September 2026): Compute Routes Essentials covers both WALK and TRANSIT at $5.00 per 1,000 after 10,000 free requests per month; Dynamic Maps is $7.00 per 1,000 map loads after 10,000 free. Walking routes are cached per building pair for 30 days (the maximum Google's terms allow), transit itineraries for 10 minutes, and the map only loads when a student expands it. See DATA_SOURCES.md for the cost model.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## What leaves the browser
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Data | Sent? | Where |
+|---|---|---|
+| Pasted Quest text, course codes, titles, instructors | No | Parsed and stored in `localStorage` only |
+| Building coordinates + departure/arrival times | Yes | `/api/routes` → Google Routes API |
+| Home coordinate | Yes, for legs to/from home | same |
+| Custom home address text | Once | `/api/geocode` → Google Geocoding API |
+| Map viewport | Only when the map is expanded | Google Maps JavaScript API |
+
+The server handlers keep no logs of request bodies. There is no analytics.
+
+## Scripts
+
+```bash
+npm run dev          # dev server
+npm test             # vitest (parser, engines, routing, registry)
+npm run typecheck    # tsc --noEmit
+npm run lint         # eslint
+npm run build        # production build
+npm run gen:uw-buildings   # regenerate src/data/buildings/uw-buildings.generated.ts from the ArcGIS snapshot
+```
+
+## Project layout
+
+```
+src/domain      types + planner config (pure)
+src/time        America/Toronto wall-clock helpers (date-fns + @date-fns/tz)
+src/parsers     ScheduleParser adapters: quest/ (implemented), LORIS stub, manual entry
+src/rooms       room string -> building + floor (only verified floor rules)
+src/data        building registry: UW (generated from the campus map service) + WLU (curated)
+src/engine      normalize, transitions, departure, feasibility, homeReturn, transitCompare, planner
+src/routing     RoutingProvider + Google / Cached / Estimate / Http implementations
+src/app         Next.js App Router pages and the two API handlers
+src/components  onboarding, plan timeline, map
+test/fixtures   real Quest pastes (MIT, from UWFlow) used by the parser tests
+```
+
+## Data and licences
+
+See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). UW building coordinates come from the University of Waterloo campus map service (used as-is); Laurier coordinates are from OpenStreetMap (ODbL, attribution shown in Settings); Quest fixtures are MIT-licensed from UWFlow.
+
+## Known limits (V1)
+
+- Laurier schedules must be added by hand; LORIS has no paste import yet.
+- Floors are shown only where the numbering rule is verified (Laurier buildings, UW PSE). UW MC is shown as "unconfirmed"; other UW buildings say "Floor unknown".
+- Several Laurier buildings (Peters, Science Building, Willison Hall) have no coordinates yet and cannot be routed.
+- Alternating-week labs and satellite campuses (Cambridge, Kitchener, Stratford) are not handled.

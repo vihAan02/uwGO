@@ -1,26 +1,37 @@
 {
-  "name": "uw-go-scaffold",
+  "name": "uw-go",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "gen:uw-buildings": "node scripts/gen-uw-buildings.mjs"
   },
   "dependencies": {
+    "@date-fns/tz": "^1.5.0",
+    "@googlemaps/polyline-codec": "^1.0.28",
+    "@vis.gl/react-google-maps": "^1.10.0",
+    "date-fns": "^4.4.0",
     "next": "16.3.4",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/google.maps": "^3.66.2",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.11"
   }
 }

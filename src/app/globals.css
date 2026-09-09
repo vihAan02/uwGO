@@ -1,26 +1,68 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --color-ink: #0f172a;
+  --color-ink-muted: #64748b;
+  --color-surface: #ffffff;
+  --color-canvas: #f4f5f7;
+  --color-line: #e2e8f0;
+  --color-brand: #1d4ed8;
+  --color-brand-soft: #dbeafe;
+  --color-ok: #15803d;
+  --color-ok-soft: #dcfce7;
+  --color-warn: #b45309;
+  --color-warn-soft: #fef3c7;
+  --color-bad: #b91c1c;
+  --color-bad-soft: #fee2e2;
+  --color-wlu: #6d28d9;
+  --color-wlu-soft: #ede9fe;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: light;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
 }
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: 1rem;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.875rem;
+  padding: 0.875rem 1.25rem;
+  font-weight: 600;
+  min-height: 3rem;
+  transition: background-color 120ms ease, opacity 120ms ease;
+}
+.btn-primary { background: var(--color-brand); color: white; }
+.btn-primary:disabled { opacity: 0.45; }
+.btn-secondary { background: var(--color-surface); border: 1px solid var(--color-line); color: var(--color-ink); }
+.btn-ghost { color: var(--color-brand); }
+
+.field {
+  width: 100%;
+  border: 1px solid var(--color-line);
+  border-radius: 0.75rem;
+  padding: 0.75rem 0.875rem;
+  background: var(--color-surface);
+  font-size: 1rem;
+  min-height: 3rem;
+}
+.field:focus { outline: 2px solid var(--color-brand); outline-offset: 1px; }
+
+.chip { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.125rem 0.625rem; font-size: 0.75rem; font-weight: 600; }

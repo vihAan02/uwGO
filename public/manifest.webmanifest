@@ -1,0 +1,10 @@
+{
+  "name": "UW GO",
+  "short_name": "UW GO",
+  "description": "Your Waterloo/Laurier schedule as a day-by-day movement plan.",
+  "start_url": "/plan",
+  "display": "standalone",
+  "background_color": "#f4f5f7",
+  "theme_color": "#1d4ed8",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
