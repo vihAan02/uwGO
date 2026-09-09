@@ -14,6 +14,12 @@ export interface NextUp {
   day?: DayPlan;
   /** True when the class is not on today's date. */
   isLaterDay?: boolean;
+  /**
+   * While a class is in progress, the one after it. The end of a class is exactly when
+   * a student needs the next departure time, so the card would otherwise go blank at
+   * the moment it matters most.
+   */
+  upNext?: { scheduledClass: ScheduledClass; transition?: ClassTransition; day: DayPlan };
 }
 
 /** The LEAVE transition immediately before a class in the day's item list. */
@@ -47,12 +53,19 @@ export function findNextUp(plan: WeekPlan | undefined, now: Date = new Date(), p
   }
   const { day, c } = upcoming;
   const isLaterDay = day.date !== isoOf(now);
+  const inClass = c.start.getTime() <= now.getTime();
+  const after = inClass
+    ? days.flatMap((d) => d.classes.map((cl) => ({ day: d, c: cl })))
+        .filter((x) => x.c.start.getTime() >= c.end.getTime())
+        .sort((a, b) => a.c.start.getTime() - b.c.start.getTime())[0]
+    : undefined;
   return {
-    status: c.start.getTime() <= now.getTime() ? "IN_CLASS" : "UPCOMING",
+    status: inClass ? "IN_CLASS" : "UPCOMING",
     scheduledClass: c,
     transition: transitionInto(day, c),
     day,
     isLaterDay,
+    upNext: after ? { scheduledClass: after.c, transition: transitionInto(after.day, after.c), day: after.day } : undefined,
   };
 }
 

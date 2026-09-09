@@ -67,7 +67,19 @@ export function NextClassCard({ next, onSelect }: { next: NextUp; onSelect: () =
           <span className="text-white/80">Leave {formatClock(leaveAt)} from {t.from.name}</span>
         </div>
       )}
-      {next.status === "IN_CLASS" && <div className="mt-3 border-t border-white/15 pt-3 text-sm text-white/70">Ends {formatClock(c.end)}</div>}
+      {next.status === "IN_CLASS" && (
+        <div className="mt-3 border-t border-white/15 pt-3 text-sm">
+          <span className="text-white/70">Ends {formatClock(c.end)}</span>
+          {next.upNext && (
+            <div className="mt-1 text-white/90">
+              Then <span className="font-semibold">{next.upNext.scheduledClass.meeting.courseCode}</span> {formatClock(next.upNext.scheduledClass.start)}
+              {next.upNext.transition?.recommendedDeparture && (
+                <> · leave <span className="font-semibold">{formatClock(next.upNext.transition.recommendedDeparture)}</span></>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </button>
   );
 }

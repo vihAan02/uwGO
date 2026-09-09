@@ -60,14 +60,22 @@ function TripCamera({ path, to, userPos, follow }: { path: Point[]; to: CampusLo
     return () => { clearTimeout(settle); clearTimeout(debounce); ro.disconnect(); };
   }, [map, path, to]);
 
-  // Follow mode: sit behind the student, pointed at the destination.
+  // Follow mode: sit behind the student, pointed at the destination. Centring on them
+  // exactly would put half the screen behind them; nudging the camera ahead keeps the
+  // route they are about to walk in view, the way a navigation view does.
   useEffect(() => {
     if (!map || !follow || !userPos) return;
     const vector = map.getRenderingType?.() === google.maps.RenderingType.VECTOR;
+    const head = bearing({ latitude: userPos.lat, longitude: userPos.lng }, to);
+    const ahead = 0.0011; // ~120 m towards the destination
+    const rad = (head * Math.PI) / 180;
     map.moveCamera({
-      center: userPos,
-      zoom: 18,
-      ...(vector ? { tilt: 60, heading: bearing({ latitude: userPos.lat, longitude: userPos.lng }, to) } : {}),
+      center: {
+        lat: userPos.lat + ahead * Math.cos(rad),
+        lng: userPos.lng + (ahead * Math.sin(rad)) / Math.cos((userPos.lat * Math.PI) / 180),
+      },
+      zoom: 17.5,
+      ...(vector ? { tilt: 60, heading: head } : {}),
     });
   }, [map, follow, userPos, to]);
 
@@ -169,7 +177,8 @@ export function TripMode({ trip, onEnd }: { trip: Trip; onEnd: () => void }) {
         {geoState === "on" && (
           <button
             onClick={() => setFollow((f) => !f)}
-            className={`absolute right-3 top-3 rounded-full px-3 py-2 text-sm font-semibold shadow ${follow ? "bg-white text-ink" : "bg-ink/80 text-white"}`}
+            aria-pressed={follow}
+            className={`absolute bottom-9 right-3 min-h-12 rounded-full px-4 text-sm font-semibold shadow-lg ${follow ? "bg-white text-ink" : "bg-ink/85 text-white"}`}
           >
             {follow ? "Following" : "Follow me"}
           </button>

@@ -52,7 +52,7 @@ function TransitSteps({ route }: { route: RouteOption }) {
 function MapsLink({ from, to, route }: { from: CampusLocation; to: CampusLocation; route?: RouteOption }) {
   return (
     <a
-      className="text-xs font-medium text-ink-muted underline decoration-dotted"
+      className="-mx-1 inline-flex min-h-11 items-center px-1 text-xs font-medium text-ink-muted underline decoration-dotted"
       href={googleMapsDirectionsUrl(from, to, travelModeFor(route))}
       target="_blank"
       rel="noopener noreferrer"
@@ -152,8 +152,8 @@ function HomeCard({ h, home, from, to, idBase, sel }: { h: HomeReturnAnalysis; h
           </dl>
           {homeLoc && from && to && (
             <div className="mt-2 flex flex-wrap gap-2 text-sm">
-              <button className="rounded-lg bg-surface px-2 py-1 font-medium text-ink" onClick={() => sel.onSelect(`${idBase}-out`, { kind: "LEG", label: `${from.name} → ${homeLoc.name}`, from, to: homeLoc, route: h.routeHome })}>Map trip home</button>
-              <button className="rounded-lg bg-surface px-2 py-1 font-medium text-ink" onClick={() => sel.onSelect(`${idBase}-back`, { kind: "LEG", label: `${homeLoc.name} → ${to.name}`, from: homeLoc, to, route: h.routeBack })}>Map trip back</button>
+              <button className="min-h-11 rounded-lg bg-surface px-3 font-medium text-ink" onClick={() => sel.onSelect(`${idBase}-out`, { kind: "LEG", label: `${from.name} → ${homeLoc.name}`, from, to: homeLoc, route: h.routeHome })}>Map trip home</button>
+              <button className="min-h-11 rounded-lg bg-surface px-3 font-medium text-ink" onClick={() => sel.onSelect(`${idBase}-back`, { kind: "LEG", label: `${homeLoc.name} → ${to.name}`, from: homeLoc, to, route: h.routeBack })}>Map trip back</button>
             </div>
           )}
         </>
