@@ -359,6 +359,8 @@ export type DayPlanItem =
       options: GapOption[];
       /** Which one we would pick, and why. The star is already set on the option. */
       recommendation?: GapRecommendation;
+      /** What the student actually picked, and whether it was for this day or every week. */
+      choice?: { value: GapChoice; source: "DATE" | "CLASS" };
       homeReturn?: HomeReturnAnalysis;
       gym?: GymWindow;
     }

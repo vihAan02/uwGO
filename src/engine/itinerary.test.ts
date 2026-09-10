@@ -12,7 +12,8 @@ import { DEFAULT_PLANNER_CONFIG as CFG } from "@/domain/config";
 import { EstimateRoutingProvider } from "@/routing/EstimateRoutingProvider";
 import { findBuilding } from "@/data/buildings";
 import { formatClock } from "@/time/toronto";
-import type { DayOfWeek, DayPlan, UserHome, WeekPlan } from "@/domain/types";
+import type { DayOfWeek, DayPlan, UserHome } from "@/domain/types";
+import type { GapChoices } from "@/domain/gapChoices";
 import { FALL_2026, ORDINARY_WEEK_MONDAY, OCT21_WEEK_MONDAY } from "../../test/fixtures/fall2026Schedule";
 
 const uwp = findBuilding("UW", "UWP")!;
@@ -23,8 +24,15 @@ const HOME: UserHome = {
   preset: { university: "UW", buildingCode: "UWP" },
 };
 
-const plan = (mondayISO = ORDINARY_WEEK_MONDAY) =>
-  buildWeekPlan({ meetings: FALL_2026, home: HOME, mondayISO, config: CFG }, new EstimateRoutingProvider());
+const plan = (mondayISO = ORDINARY_WEEK_MONDAY, gapChoices?: GapChoices) =>
+  buildWeekPlan({ meetings: FALL_2026, home: HOME, mondayISO, config: CFG, gapChoices }, new EstimateRoutingProvider());
+
+/** Answer one gap the way a student tapping a button would. */
+const answer = (classId: string, kind: "STAY" | "REZ" | "GYM" | "STUDY"): GapChoices =>
+  ({ byDate: {}, byClass: { [classId]: { kind } } });
+
+/** The Wednesday gap in question follows the 10:30 MATH 137 lecture. */
+const WED_LONG_GAP = "math137-lec:W";
 
 const planWithoutHome = (mondayISO = ORDINARY_WEEK_MONDAY) =>
   buildWeekPlan({ meetings: FALL_2026, mondayISO, config: CFG }, new EstimateRoutingProvider());
@@ -39,13 +47,46 @@ const chain = (d: DayPlan): string[] => {
 
 const courses = (d: DayPlan) => d.classes.map((c) => `${c.meeting.courseCode} ${c.meeting.component}`);
 
-describe("Wednesday: the long gap sends the student home, and the next trip starts there", () => {
-  let week: WeekPlan;
+describe("Wednesday, unanswered: the long gap is offered, not booked", () => {
   let wed: DayPlan;
   it("builds", async () => {
-    week = await plan();
-    wed = week.days.W!;
+    wed = (await plan()).days.W!;
     expect(courses(wed)).toEqual(["MATH 137 LEC", "MATH 135 LEC", "MATH 135 TUT"]);
+  });
+
+  it("no trip home is built until the student asks for one", () => {
+    expect(chain(wed)).toEqual(["UWP", "STC", "QNC", "STC", "UWP"]);
+    // One home-bound leg: the end of the day. The mid-day one is a suggestion, not a plan.
+    expect(wed.transitions.filter((t) => t.to.kind === "HOME")).toHaveLength(1);
+  });
+
+  it("but the gap card still prices going home, and stars it", () => {
+    const gap = wed.items.find((i) => i.kind === "GAP" && i.minutes === 190);
+    expect(gap?.kind).toBe("GAP");
+    if (gap?.kind !== "GAP") return;
+    expect(gap.recommendation?.recommended).toBe("REZ");
+    const rez = gap.options.find((o) => o.id === "REZ")!;
+    expect({ fits: rez.fits, starred: rez.starred }).toEqual({ fits: true, starred: true });
+    expect(gap.homeReturn?.recommendation).toBe("WORTH_IT");
+    expect(gap.choice).toBeUndefined();
+  });
+
+  it("the 40 minute gap is not worth a trip home, and says so", () => {
+    const short = wed.items.find((i) => i.kind === "GAP" && i.minutes === 40);
+    expect(short?.kind === "GAP" && short.homeReturn?.recommendation).not.toBe("WORTH_IT");
+    expect(short?.kind === "GAP" && short.recommendation?.recommended).not.toBe("REZ");
+  });
+
+  it("gap durations are end-to-start", () => {
+    const gaps = wed.items.filter((i) => i.kind === "GAP").map((i) => (i.kind === "GAP" ? i.minutes : 0));
+    expect(gaps).toEqual([190, 40]); // 11:20->14:30 and 15:20->16:00
+  });
+});
+
+describe("Wednesday, answered: choosing the rez rebuilds the chain through home", () => {
+  let wed: DayPlan;
+  it("builds", async () => {
+    wed = (await plan(ORDINARY_WEEK_MONDAY, answer(WED_LONG_GAP, "REZ"))).days.W!;
   });
 
   it("TEST 1 — chain is UWP > STC > UWP > QNC, never STC > QNC after going home", () => {
@@ -53,6 +94,7 @@ describe("Wednesday: the long gap sends the student home, and the next trip star
     // The specific bug: a leg leaving STC for QNC after the student was sent home.
     const teleport = wed.transitions.find((t) => t.from.buildingCode === "STC" && t.to.buildingCode === "QNC");
     expect(teleport).toBeUndefined();
+    expect(findContinuityBreaks(wed.transitions)).toEqual([]);
   });
 
   it("the trip to the 2:30 lecture departs from home, and the gap card agrees", () => {
@@ -64,17 +106,15 @@ describe("Wednesday: the long gap sends the student home, and the next trip star
     if (gap?.kind === "GAP") expect(gap.homeReturn!.leaveHomeAt!.getTime()).toBe(toQnc.recommendedDeparture!.getTime());
   });
 
-  it("TEST 2 — the 40 minute gap keeps the student on campus, QNC > STC", () => {
-    const short = wed.items.find((i) => i.kind === "GAP" && i.minutes === 40);
-    expect(short?.kind === "GAP" && short.homeReturn?.recommendation).not.toBe("WORTH_IT");
+  it("the card reports the answer back, and where it came from", () => {
+    const gap = wed.items.find((i) => i.kind === "GAP" && i.minutes === 190);
+    expect(gap?.kind === "GAP" && gap.choice).toEqual({ value: { kind: "REZ" }, source: "CLASS" });
+  });
+
+  it("TEST 2 — the 40 minute gap, left unanswered, keeps the student on campus, QNC > STC", () => {
     const leg = wed.transitions.find((t) => t.from.buildingCode === "QNC" && t.to.buildingCode === "STC");
     expect(leg).toBeDefined();
     expect(wed.transitions.filter((t) => t.to.kind === "HOME")).toHaveLength(2); // mid-day + end of day, no more
-  });
-
-  it("gap durations are end-to-start", () => {
-    const gaps = wed.items.filter((i) => i.kind === "GAP").map((i) => (i.kind === "GAP" ? i.minutes : 0));
-    expect(gaps).toEqual([190, 40]); // 11:20->14:30 and 15:20->16:00
   });
 
   it("every leg lands before the class it serves starts", () => {
@@ -261,7 +301,8 @@ describe("Monday to Friday audit", () => {
 
 describe("every leg is a route choice, not a default", () => {
   it("legs long enough for a bus to matter are priced for transit; short campus hops are not", async () => {
-    const week = await plan();
+    // Answered, so the Wednesday chain runs through home and there are long legs to price.
+    const week = await plan(ORDINARY_WEEK_MONDAY, answer(WED_LONG_GAP, "REZ"));
     for (const day of ["M", "W", "F"] as DayOfWeek[]) {
       for (const t of week.days[day]!.transitions) {
         if (t.from.id === t.to.id) continue;

@@ -181,23 +181,37 @@ const h = (hh: number, mm = 0) => hh * 60 + mm;
 const farWalks = { [pairKey(UWP, MC)]: 25, [pairKey(MC, UWP)]: 25 };
 
 describe("go-home feasibility uses the best route, and the itinerary shows that same route", () => {
-  const dayOf = async (provider: RoutingProvider) => {
-    const plan = await buildWeekPlan({ meetings: [meeting(h(10), h(10, 50)), meeting(h(12, 10), h(13))], home, mondayISO: D, config: CFG, days: ["M"] }, provider);
+  /** `goHome` answers the gap the way a student tapping Rez would; otherwise it is left unanswered. */
+  const dayOf = async (provider: RoutingProvider, goHome = false) => {
+    const first = meeting(h(10), h(10, 50));
+    const second = meeting(h(12, 10), h(13));
+    const gapChoices = goHome ? { byDate: {}, byClass: { [`${first.id}:M`]: { kind: "REZ" as const } } } : undefined;
+    const plan = await buildWeekPlan({ meetings: [first, second], home, mondayISO: D, config: CFG, days: ["M"], gapChoices }, provider);
     return plan.days.M!;
   };
   const chain = (d: Awaited<ReturnType<typeof dayOf>>) => [...d.transitions.map((x) => x.from.buildingCode), d.transitions[d.transitions.length - 1].to.buildingCode];
 
-  it("control: walking alone leaves too little time at home, so the student stays on campus", async () => {
+  it("control: walking alone leaves too little time at home, so going home is not recommended", async () => {
     const day = await dayOf(new ScriptedProvider(farWalks, () => undefined));
     const gap = day.items.find((i) => i.kind === "GAP");
     expect(gap?.kind === "GAP" && gap.homeReturn?.usableHomeMinutes).toBe(80 - 25 - 25 - 10);
     expect(gap?.kind === "GAP" && gap.homeReturn?.recommendation).toBe("POSSIBLE");
+    expect(gap?.kind === "GAP" && gap.recommendation?.recommended).not.toBe("REZ");
+    expect(chain(day)).toEqual(["UWP", "MC", "MC", "UWP"]);
+  });
+
+  it("a real bus flips the recommendation to going home, without anyone being sent there", async () => {
+    const provider = new ScriptedProvider(farWalks, (o) => bus(o, { access: 2, ride: 6, egress: 2, wait: 2, line: "9" }));
+    const day = await dayOf(provider);
+    const gap = day.items.find((i) => i.kind === "GAP");
+    expect(gap?.kind === "GAP" && gap.recommendation?.recommended).toBe("REZ");
+    // Recommended, but still not built: the student has not said yes.
     expect(chain(day)).toEqual(["UWP", "MC", "MC", "UWP"]);
   });
 
   it("TEST D — a real bus makes the gap workable, so the plan goes home on that bus", async () => {
     const provider = new ScriptedProvider(farWalks, (o) => bus(o, { access: 2, ride: 6, egress: 2, wait: 2, line: "9" }));
-    const day = await dayOf(provider);
+    const day = await dayOf(provider, true);
     expect(chain(day)).toEqual(["UWP", "MC", "UWP", "MC", "UWP"]);
     const gap = day.items.find((i) => i.kind === "GAP");
     expect(gap?.kind).toBe("GAP");
@@ -222,7 +236,7 @@ describe("go-home feasibility uses the best route, and the itinerary shows that 
 
   it("the trip back is asked for by arrival at the buffer, the trip home by departure at the class end", async () => {
     const provider = new ScriptedProvider(farWalks, (o) => bus(o, { access: 2, ride: 6, egress: 2, wait: 2 }));
-    await dayOf(provider);
+    await dayOf(provider, true);
     const asked = provider.transitAsked.map((o) => (o.arrivalTime ? `arrive ${formatClock(o.arrivalTime)}` : `depart ${formatClock(o.departureTime!)}`));
     expect(asked).toContain("depart 10:50 AM");
     expect(asked).toContain("arrive 12:00 PM");
@@ -252,7 +266,10 @@ describe("TEST E — scheduled transit varies by time", () => {
 
   it("the planner asks for each leg at its own time and gets that time's itinerary", async () => {
     const provider = new ScriptedProvider(farWalks, byHour);
-    const plan = await buildWeekPlan({ meetings: [meeting(h(9), h(9, 50)), meeting(h(14), h(14, 50))], home, mondayISO: D, config: CFG, days: ["M"] }, provider);
+    const first = meeting(h(9), h(9, 50));
+    const second = meeting(h(14), h(14, 50));
+    const gapChoices = { byDate: {}, byClass: { [`${first.id}:M`]: { kind: "REZ" as const } } };
+    const plan = await buildWeekPlan({ meetings: [first, second], home, mondayISO: D, config: CFG, days: ["M"], gapChoices }, provider);
     const day = plan.days.M!;
     const line = (i: number) => day.transitions[i].recommendedRoute!.steps!.find((s) => s.mode === "TRANSIT")!.transit!.line;
     expect(day.transitions.map((x) => x.recommendedRoute!.mode)).toEqual(["TRANSIT", "TRANSIT", "TRANSIT", "TRANSIT"]);

@@ -18,6 +18,7 @@ import { clampDeparture, expectedArrival, recommendedDeparture } from "./departu
 import { findGymWindows, gymForGap } from "./gym";
 import { priceGapOptions, recommendGapOption } from "./gapOptions";
 import { resolveStudySpots } from "@/data/study";
+import { chosenFor, type ChosenGap, type GapChoices } from "@/domain/gapChoices";
 import { estimateCrowd, type PacReading, type PacSample } from "@/data/pac/crowd";
 import { buildingLocation, findBuilding } from "@/data/buildings";
 
@@ -32,6 +33,8 @@ export interface PlanInput {
   gym?: GymPreferences;
   /** FASTEST (default) or INDOORS: prefer UW tunnels/bridges when the cost is reasonable. */
   routePreference?: RoutePreference;
+  /** What the student chose to do with each gap. An unanswered gap builds no trip at all. */
+  gapChoices?: GapChoices;
   /** Latest live PAC reading and the samples kept so far, for crowd estimates. */
   pacLive?: PacReading;
   pacSamples?: readonly PacSample[];
@@ -140,43 +143,9 @@ async function resolveTransition(t: ClassTransition, resolver: LegResolver, cfg:
 const legOf = (t: ClassTransition): ResolvedLeg | undefined =>
   t.recommendedRoute && t.recommendedDeparture && t.expectedArrival ? { route: t.recommendedRoute, departure: t.recommendedDeparture, arrival: t.expectedArrival } : undefined;
 
-/**
- * Decide, for each gap long enough to be worth analysing, whether going home is sensible.
- * The question is asked with the best route each way, not a walking estimate: fastest
- * practical route from the class to home leaving at the gap start, then fastest practical
- * route from home to the next class arriving before the buffer, setting off no earlier
- * than the arrival home. Those two resolutions are the legs the itinerary will show.
- */
-async function analyseGaps(
-  classes: ScheduledClass[],
-  home: CampusLocation | undefined,
-  resolver: LegResolver,
-  cfg: PlannerConfig,
-): Promise<Map<number, HomeReturnAnalysis>> {
-  const out = new Map<number, HomeReturnAnalysis>();
-  if (!home) return out;
-  const cross = (a: CampusLocation, b: CampusLocation) => Boolean(a.university && b.university && a.university !== b.university);
-  await Promise.all(
-    classes.slice(0, -1).map(async (c, i) => {
-      const next = classes[i + 1];
-      if (minutesBetween(c.end, next.start) < cfg.minGapForHomeAnalysisMinutes) return;
-      const toHome = await resolver.resolve({ from: c.location, to: home, departAfter: c.end, crossCampus: cross(c.location, home) });
-      if (!toHome.recommended || !toHome.departure || !toHome.arrival) return;
-      const back = await resolver.resolve({ from: home, to: next.location, departAfter: toHome.arrival, arriveBy: next.start, crossCampus: cross(home, next.location) });
-      if (!back.recommended || !back.departure || !back.arrival) return;
-      out.set(i, analyzeHomeReturn({
-        gapStart: c.end,
-        nextClassStart: next.start,
-        routeHome: { route: toHome.recommended, departure: toHome.departure, arrival: toHome.arrival },
-        routeBack: { route: back.recommended, departure: back.departure, arrival: back.arrival },
-      }, cfg));
-    }),
-  );
-  return out;
-}
-
 interface DayExtras {
   gym?: GymPreferences;
+  gapChoices?: GapChoices;
   routePreference: RoutePreference;
   crowdAt: (at: Date) => CrowdEstimate;
 }
@@ -200,18 +169,9 @@ async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledC
     return r.recommended && r.departure && r.arrival ? { route: r.recommended, departure: r.departure, arrival: r.arrival } : undefined;
   };
 
-  // 1. Work out where the student will actually be, before working out any trip.
-  const gapAnalysis = await analyseGaps(classes, home, resolver, cfg);
-  const gapStops = new Map<number, readonly GapStop[]>();
-  if (home) {
-    for (const [i, a] of gapAnalysis) {
-      if (a.recommendation === "WORTH_IT") gapStops.set(i, [{ purpose: "REZ", at: home, label: "home" }]);
-    }
-  }
-
-  // 1b. Price every way to spend each gap, and say which one we would pick. The same resolver
-  //     and the same clock as the itinerary, so an option the student picks costs no extra call
-  //     and the numbers on the card stay the numbers on the timeline.
+  // 1. Price every way to spend each gap, and say which one we would pick. The same resolver
+  //    and the same clock as the itinerary, so an option the student picks costs no extra call
+  //    and the numbers on the card stay the numbers on the timeline.
   const gapOptions = new Map<number, GapOption[]>();
   const gapAdvice = new Map<number, GapRecommendation>();
   for (let i = 0; i < classes.length - 1; i++) {
@@ -224,6 +184,19 @@ async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledC
     });
     gapAdvice.set(i, recommendGapOption(options, cfg));
     gapOptions.set(i, options);
+  }
+
+  // 1b. Take the student at their word. A gap they have not answered builds nothing: the plan
+  //     offers, it does not commit them to a walk home they never asked for. Picking the gym
+  //     without answering "and then where?" also builds nothing — that option carries no stops.
+  const gapStops = new Map<number, readonly GapStop[]>();
+  const gapChoice = new Map<number, ChosenGap>();
+  for (const [i, options] of gapOptions) {
+    const chosen = chosenFor(extras.gapChoices, dateISO, classes[i].id);
+    if (!chosen) continue;
+    gapChoice.set(i, chosen);
+    const option = options.find((o) => o.kind === chosen.value.kind && o.gymThen === chosen.value.gymThen);
+    if (option?.stops.length) gapStops.set(i, option.stops);
   }
 
   // 2. Build the chain of legs that follows from those decisions.
@@ -304,7 +277,7 @@ async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledC
     const backResolved = goingHome && inGap[1] && legOf(inGap[1]);
     const homeReturn: HomeReturnAnalysis | undefined = outResolved && backResolved
       ? analyzeHomeReturn({ gapStart: c.end, nextClassStart: next.start, routeHome: outResolved, routeBack: backResolved }, cfg)
-      : gapAnalysis.get(i);
+      : gapOptions.get(i)?.find((o) => o.id === "REZ")?.analysis;
 
     if (minutesBetween(c.end, next.start) >= cfg.minGapForHomeAnalysisMinutes) {
       items.push({
@@ -312,6 +285,7 @@ async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledC
         dateISO, classId: c.id,
         options: gapOptions.get(i) ?? [],
         recommendation: gapAdvice.get(i),
+        choice: gapChoice.get(i),
         homeReturn, gym: gymForGap(gym, i),
       });
     }
@@ -340,6 +314,7 @@ export async function buildWeekPlan(input: PlanInput, provider: RoutingProvider)
   const extras: DayExtras = {
     gym: input.gym,
     routePreference: input.routePreference ?? "FASTEST",
+    gapChoices: input.gapChoices,
     crowdAt: (at) => estimateCrowd(at, input.pacLive, input.pacSamples ?? []),
   };
   const plans = await Promise.all(days.map((d) => buildDayPlan(d, dateForDay(input.mondayISO, d), week.byDay[d], home, memo, input.config, extras)));
