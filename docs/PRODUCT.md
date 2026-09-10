@@ -1,6 +1,6 @@
 # UW GO — Product definition (V1)
 
-Working name: **UW GO**. A mobile-first web app that turns a University of Waterloo (UW) or Wilfrid Laurier University (WLU) student's class schedule into a day-by-day movement plan: when to leave, where the room actually is, walk vs. transit, and whether a gap is long enough to go home.
+Working name: **UW GO**. A mobile-first web app that turns a University of Waterloo (UW) or Wilfrid Laurier University (WLU) student's class schedule into a day-by-day movement plan: when to leave, where the room actually is, walk vs. transit, and what to do with the gaps in between.
 
 This document is the V1 contract. Anything not listed under "In scope" is out of scope until we decide otherwise.
 
@@ -16,7 +16,7 @@ This document is the V1 contract. Anything not listed under "In scope" is out of
 2. **Confirm.** The app shows the parsed classes (course, component, section, days, time, building, room, term) and flags anything it could not parse. Online/asynchronous and TBA rows are shown but marked "no location, skipped for routing". Exam (TST) rows are shown and excluded by default.
 3. **Add WLU classes manually (optional).** WLU uses LORIS, not Quest, so V1 has no WLU parser. A small form lets the student add a WLU class (course code, days, start/end, building code, room). These flow through the same models and routing.
 4. **Home.** Student picks where they live: a UW residence, a WLU residence, or a custom address (geocoded once, stored locally).
-5. **Build my routes.** The app computes, for each weekday, the ordered timeline of legs and classes: leave time, travel mode, arrival, class card with building name and floor when known, gap cards with the "Can I go home?" verdict, and a walk-vs-transit comparison for cross-campus transitions.
+5. **Build my routes.** The app computes, for each weekday, the ordered timeline of legs and classes: leave time, travel mode, arrival, class card with building name and floor when known, gap cards asking what to do after each class, and a walk-vs-transit comparison for cross-campus transitions.
 6. **Use it while walking.** Weekly tabs (Mon–Fri), one day at a time, big departure times, map collapsed by default and available per transition.
 
 ## What the app answers
@@ -28,8 +28,30 @@ This document is the V1 contract. Anything not listed under "In scope" is out of
 | What floor is my room on? | Only when the building has a verified numbering rule. Otherwise "floor unknown". Never guessed. |
 | How long is the walk? | Google Routes API walking duration between building centroids, cached per building pair. |
 | Walk or transit? | For cross-campus (UW↔WLU) and long transitions: departure-time-aware transit itinerary vs. walking, recommendation by expected arrival time. |
-| Can I go home between classes? | Deterministic engine with configurable thresholds: worth it / possible / not enough time, with leave-home-by time. |
+| What do I do with this gap? | Stay, go home, the gym, or the nearest library — each priced door to door, one starred, none of them built until the student picks. Choosing the gym asks where they go afterwards. |
 | Is this transition feasible? | COMFORTABLE / TIGHT / LIKELY_LATE from available minutes vs. travel + buffer. |
+
+
+### The gap is a choice, not a verdict
+
+The first version of this decided for the student: if the engine judged a gap worth going home
+for, the walk home was already on the timeline. That is the wrong default twice over. It assumes
+home is where a free hour goes, when it might be the gym or a library. And it presents a guess as
+a plan — the student opens the app and finds a trip they never asked for, with nothing to press.
+
+So the engine now prices every option and recommends one, and builds nothing until asked. The
+recommendation ladder — gym then home, gym then a library, gym then class, home, a library, stay
+— is ordered for how a day actually goes, and every rung is decided on the minutes usable at the
+destination, never on the length of the gap. A ninety-minute gap next to the PAC is not a
+ninety-minute gap across campus.
+
+Picking the gym asks one more question, because a workout ends somewhere: home to shower, a
+library, or straight to class. Until that is answered nothing is built either, so nobody is
+handed a workout they then have to undo.
+
+An option that does not fit is still shown, greyed, with the number that rules it out — "0 min at
+home" after an hour's workout is worth seeing. Hiding it would leave the student wondering
+whether the app had considered it at all.
 
 ## In scope (V1)
 
@@ -71,5 +93,5 @@ This document is the V1 contract. Anything not listed under "In scope" is out of
 - A real Fall 2025/2026 Quest paste from the fixtures parses with zero silent drops, including continuation rows.
 - For a schedule with UW classes in MC, DC, E2 and a residence, the Monday timeline shows correct departure times to the minute given the route durations.
 - A UW → WLU transition shows both a walking and a transit option with the recommended one chosen by arrival time.
-- The "Can I go home?" card matches the engine's unit tests for worth-it / possible / not-enough / back-to-back / exact-threshold cases.
+- The gap card matches the engine's unit tests for worth-it / possible / not-enough / back-to-back / exact-threshold cases, and an unanswered gap builds no trip.
 - The whole plan renders and is usable on a 375px-wide phone with the map collapsed.
