@@ -8,15 +8,22 @@
 - For Claude: start in this directory, or explicitly read this folder's CLAUDE.md
   and AGENTS.md before working from the repository root.
 
-`page.tsx` is a deliberately plain placeholder with a Get Started link to `/login`.
-`landing.module.css` holds scoped placeholder layout only. No shadcn components or
-Anime.js dependency have been installed yet: add only what the actual design uses,
-following AGENTS.md. No app redesign or new auth/import flow is included.
+`page.tsx` is the landing design: header, hero, product panel, three steps, closing CTA,
+footer. Get Started links to `/login`. Layout and typography live in `landing.module.css`;
+the product panel in `_components/ProductDemo.tsx` + `demo.module.css`; the hero entrance
+in `_components/Reveal.tsx`; the shadcn-derived button in `_components/ui/button.tsx` with
+`cn` in `_lib/utils.ts`. Sources consulted, decisions, and the type/colour/motion spec are
+in `DESIGN.md` here.
 
-Future component source belongs in `_components/ui/`, helpers/animation code in
-`_lib/`, and source selections in `DESIGN.md` here. Create these when needed.
-Record Poly screenshots/inspection results when its exact tool is identified; visual
-verification has not been performed for this scaffold.
+Dependencies added for this page only: `animejs`, `class-variance-authority`, `clsx`,
+`tailwind-merge`. No shadcn CLI init was run; the button source was copied by hand and
+retokened to the app theme, so `globals.css` and the app are unchanged.
+
+Visual verification: no tool named "Poly" exists in this environment. Captures were taken
+with the headless `browse` binary from the gstack skill (Playwright Chromium) at desktop,
+laptop, tablet, and phone widths; the Claude desktop Browser pane was tried first but does
+not paint while hidden. Details and the checks run are in `DESIGN.md`. Screenshots are
+session artefacts and are not committed.
 
 ## Integration boundary
 
