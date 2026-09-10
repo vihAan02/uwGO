@@ -26,6 +26,7 @@ Create one Google Cloud project with billing enabled and turn on three APIs: **R
 
 | Key | Env var | Application restriction | API restriction | Used for |
 |---|---|---|---|---|
+| Supabase | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | n/a (public by design; RLS + the Waterloo-only trigger protect data) | Supabase Auth (magic link), `profiles` table | Sign-in and the per-user preference backup. See docs/SUPABASE_SETUP.md. |
 | Server key | `GOOGLE_MAPS_SERVER_KEY` | none (or your server IPs if self-hosting) | Routes API, Geocoding API | `/api/routes` (walking + transit) and `/api/geocode` (custom home address). Never shipped to the browser. |
 | Browser key | `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` | HTTP referrers: `https://your-domain/*`, `http://localhost:3000/*`, `http://localhost:3010/*` | Maps JavaScript API | Rendering the embedded map. Inlined into the client bundle at build time. With only this key (no server key) the map shows a dashed straight line between buildings instead of a real path. |
 

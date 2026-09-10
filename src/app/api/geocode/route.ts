@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireUser } from "@/lib/auth/requireUser";
 import { isInWaterlooRegion, WATERLOO_REGION_BOUNDS as B } from "@/routing/RoutingProvider";
 
 export const runtime = "nodejs";
@@ -13,6 +14,8 @@ export interface GeocodeResponse {
  * The address is forwarded to Google and the result returned to the browser; nothing is stored here.
  */
 export async function POST(req: Request) {
+  const gate = await requireUser();
+  if (gate.response) return gate.response;
   const key = process.env.GOOGLE_MAPS_SERVER_KEY;
   if (!key) return NextResponse.json({ error: "Address lookup is not configured on this server (no GOOGLE_MAPS_SERVER_KEY). Choose a residence preset instead." } satisfies GeocodeResponse, { status: 503 });
   let address = "";

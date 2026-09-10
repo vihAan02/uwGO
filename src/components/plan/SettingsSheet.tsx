@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
+import { useAuth } from "@/lib/auth/AuthProvider";
 import { HomePicker } from "../onboarding/HomePicker";
 import { BufferPicker } from "../onboarding/BufferPicker";
 import { ManualClassForm } from "../onboarding/ManualClassForm";
@@ -10,6 +11,7 @@ import { RoutePrefPicker } from "../prefs/RoutePrefPicker";
 export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const router = useRouter();
   const { state, setHome, setConfig, setGym, setRoutePreference, setIncludeInPlan, removeMeeting, addMeeting, reset } = useStore();
+  const auth = useAuth();
   const meetings = state.schedule?.meetings ?? [];
   return (
     <div className="fixed inset-0 z-20 flex items-end justify-center bg-ink/40" onClick={onClose}>
@@ -18,6 +20,16 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
           <h2 className="text-lg font-semibold">Settings</h2>
           <button className="btn btn-secondary px-3 py-1 min-h-0 text-sm" onClick={onClose}>Done</button>
         </div>
+
+        {auth.user && (
+          <section className="card mt-4 flex items-center justify-between gap-3 p-4">
+            <div className="min-w-0">
+              <h3 className="font-semibold">Account</h3>
+              <p className="truncate text-sm text-ink-muted">{auth.user.email}{auth.mode === "DEV_BYPASS" ? " (dev bypass)" : ""}</p>
+            </div>
+            <button className="btn btn-secondary shrink-0 px-3 py-2 min-h-0 text-sm" onClick={() => void auth.signOut()}>Log out</button>
+          </section>
+        )}
 
         <section className="card mt-4 p-4">
           <h3 className="font-semibold">Where you live</h3>

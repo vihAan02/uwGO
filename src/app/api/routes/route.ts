@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireUser } from "@/lib/auth/requireUser";
 import type { LatLng } from "@/domain/types";
 import { isInWaterlooRegion } from "@/routing/RoutingProvider";
 import { getServerRoutingProvider, routingMode } from "@/routing/server";
@@ -16,6 +17,8 @@ function isLatLng(v: unknown): v is LatLng {
  * Uses the Google Routes API when GOOGLE_MAPS_SERVER_KEY is set, otherwise a clearly-labelled estimate.
  */
 export async function POST(req: Request) {
+  const gate = await requireUser();
+  if (gate.response) return gate.response;
   let body: RoutesRequestBody;
   try {
     body = (await req.json()) as RoutesRequestBody;

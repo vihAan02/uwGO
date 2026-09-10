@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireUser } from "@/lib/auth/requireUser";
 import { parseFacilityOccupancy, type PacLive } from "@/data/pac/live";
 
 export const runtime = "nodejs";
@@ -12,6 +13,8 @@ export interface PacLiveResponse { live?: PacLive; error?: string }
 
 /** Live PAC occupancy, proxied because the portal sends no CORS headers. Cached briefly so a class full of students is one request. */
 export async function GET() {
+  const gate = await requireUser();
+  if (gate.response) return gate.response;
   if (cached && Date.now() - cached.at < CACHE_MS) return NextResponse.json({ live: cached.body } satisfies PacLiveResponse);
   try {
     const res = await fetch(SOURCE, { headers: { "User-Agent": "UW GO (student schedule app)" }, signal: AbortSignal.timeout(8000), cache: "no-store" });

@@ -15,6 +15,8 @@
   "dependencies": {
     "@date-fns/tz": "^1.5.0",
     "@googlemaps/polyline-codec": "^1.0.28",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.116.0",
     "@vis.gl/react-google-maps": "^1.10.0",
     "date-fns": "^4.4.0",
     "next": "16.3.4",
