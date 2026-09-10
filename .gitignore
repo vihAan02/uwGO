@@ -48,3 +48,9 @@ next-env.d.ts
 
 # local Claude Code context (kept out of the public repo)
 CLAUDE.md
+
+# private source material (WatIAM floor plans etc.), never committed or served
+private/
+
+# macOS screenshots can capture keys and dashboards; never commit them
+Screenshot*.png
