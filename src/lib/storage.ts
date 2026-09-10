@@ -1,4 +1,5 @@
-import type { CourseMeeting, TermInfo, UserHome } from "@/domain/types";
+import type { CourseMeeting, GymPreferences, RoutePreference, TermInfo, UserHome } from "@/domain/types";
+import { GYM_DURATIONS } from "@/domain/types";
 import { DEFAULT_PLANNER_CONFIG, USER_CONFIG_KEYS, type PlannerConfig } from "@/domain/config";
 
 /** Everything the app persists. Versioned so a future shape change can migrate instead of crash. */
@@ -7,6 +8,23 @@ export interface AppState {
   schedule?: { meetings: CourseMeeting[]; term?: TermInfo; importedAt: string; source: "QUEST" | "MANUAL" | "MIXED" };
   home?: UserHome;
   config: PlannerConfig;
+  /** Undefined until the student has answered "do you work out?". */
+  gym?: GymPreferences;
+  routePreference?: RoutePreference;
+}
+
+export const DEFAULT_GYM: GymPreferences = { enabled: false, durationMinutes: 60, preferredTime: "NONE" };
+
+const GYM_TIMES = new Set<GymPreferences["preferredTime"]>(["MORNING", "AFTERNOON", "EVENING", "LEAST_BUSY", "NONE"]);
+
+function migrateGym(raw: unknown): GymPreferences | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const g = raw as Partial<GymPreferences>;
+  return {
+    enabled: g.enabled === true,
+    durationMinutes: (GYM_DURATIONS as readonly number[]).includes(g.durationMinutes as number) ? (g.durationMinutes as GymPreferences["durationMinutes"]) : 60,
+    preferredTime: GYM_TIMES.has(g.preferredTime as GymPreferences["preferredTime"]) ? (g.preferredTime as GymPreferences["preferredTime"]) : "NONE",
+  };
 }
 
 export const STORAGE_KEY = "uwgo.state.v1";
@@ -26,7 +44,8 @@ function migrate(raw: unknown): AppState {
     const v = obj.config?.[k];
     if (typeof v === "number" && Number.isFinite(v)) config[k] = v;
   }
-  return { ...emptyState(), ...obj, config };
+  const routePreference: RoutePreference | undefined = obj.routePreference === "INDOORS" ? "INDOORS" : obj.routePreference === "FASTEST" ? "FASTEST" : undefined;
+  return { ...emptyState(), ...obj, config, gym: migrateGym(obj.gym), routePreference };
 }
 
 export function loadState(storage: Pick<Storage, "getItem"> | undefined = typeof window !== "undefined" ? window.localStorage : undefined): AppState {

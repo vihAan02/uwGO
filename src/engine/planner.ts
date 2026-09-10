@@ -2,7 +2,7 @@
  * Async orchestrator: schedule + home + routing provider -> WeekPlan.
  * The only place that talks to a RoutingProvider. Every decision is delegated to the pure engines.
  */
-import type { CampusLocation, ClassTransition, CourseMeeting, DayOfWeek, DayPlan, DayPlanItem, HomeReturnAnalysis, LatLng, RouteOption, ScheduledClass, UserHome, WeekPlan } from "@/domain/types";
+import type { CampusLocation, ClassTransition, CourseMeeting, CrowdEstimate, DayOfWeek, DayPlan, DayPlanItem, GymPreferences, GymWindow, HomeReturnAnalysis, LatLng, RoutePreference, RouteOption, ScheduledClass, UserHome, WeekPlan } from "@/domain/types";
 import { DAYS_IN_ORDER } from "@/domain/types";
 import type { PlannerConfig } from "@/domain/config";
 import type { RoutingProvider, TransitOptions } from "@/routing/RoutingProvider";
@@ -13,6 +13,11 @@ import { buildItinerary, findContinuityBreaks, type LegSpec } from "./transition
 import { resolveBestRoute, type BestRoute, type RouteFetcher, type RouteRequest } from "./bestRoute";
 import { assessResolvedFeasibility } from "./feasibility";
 import { analyzeHomeReturn, type ResolvedLeg } from "./homeReturn";
+import { indoorIsReasonable, indoorRouteBetween } from "./indoorRoute";
+import { clampDeparture, expectedArrival, recommendedDeparture } from "./departure";
+import { findGymWindows, gymForGap } from "./gym";
+import { estimateCrowd, type PacReading, type PacSample } from "@/data/pac/crowd";
+import { buildingLocation, findBuilding } from "@/data/buildings";
 
 export interface PlanInput {
   meetings: CourseMeeting[];
@@ -21,6 +26,13 @@ export interface PlanInput {
   config: PlannerConfig;
   /** Days to plan; defaults to Mon–Fri plus any weekend day that has a class. */
   days?: DayOfWeek[];
+  /** Gym preferences; windows are only searched for when enabled. */
+  gym?: GymPreferences;
+  /** FASTEST (default) or INDOORS: prefer UW tunnels/bridges when the cost is reasonable. */
+  routePreference?: RoutePreference;
+  /** Latest live PAC reading and the samples kept so far, for crowd estimates. */
+  pacLive?: PacReading;
+  pacSamples?: readonly PacSample[];
 }
 
 export function homeLocation(home: UserHome): CampusLocation {
@@ -84,23 +96,41 @@ function requestFor(t: ClassTransition): RouteRequest {
   return { from: t.from, to: t.to, departAfter: t.departAfter, arriveBy: t.hasDeadline ? t.arriveBy : undefined, crossCampus: t.crossCampus };
 }
 
-async function resolveTransition(t: ClassTransition, resolver: LegResolver, cfg: PlannerConfig): Promise<ClassTransition> {
+async function resolveTransition(t: ClassTransition, resolver: LegResolver, cfg: PlannerConfig, routePreference: RoutePreference): Promise<ClassTransition> {
   const best = await resolver.resolve(requestFor(t));
+  let recommended = best.recommended;
+  let departure = best.departure;
+  let arrival = best.arrival;
+  let reason = best.reason;
+
+  // An indoor way exists only between UW buildings on the verified graph. It is always
+  // offered as the alternative; it is taken only when asked for and not unreasonably slower
+  // than the fastest walk. A chosen bus is never overridden: that decision was about time.
+  const indoorRoute = indoorRouteBetween(t.from, t.to);
+  if (indoorRoute && routePreference === "INDOORS" && recommended?.mode === "WALK" && best.walking && indoorIsReasonable(indoorRoute, best.walking, cfg)) {
+    recommended = indoorRoute;
+    departure = t.hasDeadline ? clampDeparture(recommendedDeparture(t.arriveBy, indoorRoute.durationMinutes, cfg.arrivalBufferMinutes), t.departAfter) : t.departAfter;
+    arrival = expectedArrival(departure, indoorRoute.durationMinutes);
+    const extra = indoorRoute.durationMinutes - best.walking.durationMinutes;
+    reason = extra > 0 ? `Indoor route: ${extra} min slower than the fastest walk, but you stay inside.` : "Indoor route: as fast as the outdoor walk.";
+  }
+
   let feasibility: ClassTransition["feasibility"] = "UNKNOWN";
-  if (best.recommended && best.departure && best.arrival) {
+  if (recommended && departure && arrival) {
     feasibility = t.hasDeadline
-      ? assessResolvedFeasibility({ availableMinutes: t.availableMinutes, arriveBy: t.arriveBy, route: best.recommended, arrival: best.arrival }, cfg)
+      ? assessResolvedFeasibility({ availableMinutes: t.availableMinutes, arriveBy: t.arriveBy, route: recommended, arrival }, cfg)
       : "COMFORTABLE";
   }
   return {
     ...t,
     walkingRoute: best.walking,
     transitRoute: best.transit,
-    recommendedRoute: best.recommended,
-    recommendedDeparture: best.departure,
-    expectedArrival: best.arrival,
+    indoorRoute,
+    recommendedRoute: recommended,
+    recommendedDeparture: departure,
+    expectedArrival: arrival,
     feasibility,
-    reason: best.reason,
+    reason,
     consideredModes: best.consideredModes,
   };
 }
@@ -143,9 +173,21 @@ async function analyseGaps(
   return out;
 }
 
-async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledClass[], home: CampusLocation | undefined, memo: RouteMemo, cfg: PlannerConfig): Promise<DayPlan> {
+interface DayExtras {
+  gym?: GymPreferences;
+  routePreference: RoutePreference;
+  crowdAt: (at: Date) => CrowdEstimate;
+}
+
+const PAC_LOCATION: CampusLocation | undefined = (() => {
+  const b = findBuilding("UW", "PAC");
+  return b ? buildingLocation(b) : undefined;
+})();
+
+async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledClass[], home: CampusLocation | undefined, memo: RouteMemo, cfg: PlannerConfig, extras: DayExtras): Promise<DayPlan> {
   const warnings: string[] = [];
   const resolver = new LegResolver(memo, cfg);
+  const cross = (a: CampusLocation, b: CampusLocation) => Boolean(a.university && b.university && a.university !== b.university);
 
   // 1. Work out where the student will actually be, before working out any trip.
   const gapAnalysis = await analyseGaps(classes, home, resolver, cfg);
@@ -164,13 +206,26 @@ async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledC
     const spec: LegSpec = readyAt && readyAt.getTime() > leg.departAfter.getTime()
       ? { ...leg, departAfter: readyAt, availableMinutes: leg.hasDeadline ? minutesBetween(readyAt, leg.arriveBy) : 0 }
       : leg;
-    const resolved = await resolveTransition(spec, resolver, cfg);
+    const resolved = await resolveTransition(spec, resolver, cfg, extras.routePreference);
     transitions.push(resolved);
     readyAt = resolved.expectedArrival ?? spec.arriveBy;
   }
 
   const breaks = findContinuityBreaks(transitions);
   if (breaks.length) warnings.push(`Itinerary is inconsistent: ${breaks[0]}.`);
+
+  // 3b. Workouts that fit around the same chain, priced with the same resolver.
+  let gym: GymWindow[] = [];
+  if (extras.gym?.enabled && PAC_LOCATION && classes.length) {
+    gym = await findGymWindows({
+      classes, home, pac: PAC_LOCATION, dateISO, prefs: extras.gym, cfg, crowdAt: extras.crowdAt,
+      resolve: async (from, to, departAfter, arriveBy) => {
+        if (from.id === to.id) return undefined;
+        const r = await resolver.resolve({ from, to, departAfter, arriveBy, crossCampus: cross(from, to) });
+        return r.recommended && r.departure && r.arrival ? { route: r.recommended, departure: r.departure, arrival: r.arrival } : undefined;
+      },
+    });
+  }
 
   // 4. Emit the timeline. Legs are consumed in order, so what the student reads is
   //    exactly the chain that was resolved above.
@@ -211,7 +266,7 @@ async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledC
       : gapAnalysis.get(i);
 
     if (minutesBetween(c.end, next.start) >= cfg.minGapForHomeAnalysisMinutes) {
-      items.push({ kind: "GAP", from: c.end, to: next.start, minutes: minutesBetween(c.end, next.start), homeReturn });
+      items.push({ kind: "GAP", from: c.end, to: next.start, minutes: minutesBetween(c.end, next.start), homeReturn, gym: gymForGap(gym, i) });
     }
 
     if (goingHome) {
@@ -222,12 +277,15 @@ async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledC
     }
   }
 
+  const afterLast = gym.find((w) => w.slot === "AFTER_LAST");
+  if (afterLast) items.push({ kind: "GYM", window: afterLast });
+
   if (home && classes.length) {
     pushLeg(legAt((l) => l.kind === "CLASS_TO_HOME" && !l.midDayHomeReturn));
   }
 
   for (const t of transitions) if (t.feasibility === "LIKELY_LATE") warnings.push(`${t.from.name} → ${t.to.name}: you will likely be late (${t.availableMinutes} min available).`);
-  return { day, date: dateISO, classes, transitions, items, warnings };
+  return { day, date: dateISO, classes, transitions, items, warnings, gym };
 }
 
 export async function buildWeekPlan(input: PlanInput, provider: RoutingProvider): Promise<WeekPlan> {
@@ -237,7 +295,12 @@ export async function buildWeekPlan(input: PlanInput, provider: RoutingProvider)
   const memo = new RouteMemo(provider, errors);
   const days = input.days ?? DAYS_IN_ORDER.filter((d) => ["M", "T", "W", "Th", "F"].includes(d) || week.byDay[d].length > 0);
 
-  const plans = await Promise.all(days.map((d) => buildDayPlan(d, dateForDay(input.mondayISO, d), week.byDay[d], home, memo, input.config)));
+  const extras: DayExtras = {
+    gym: input.gym,
+    routePreference: input.routePreference ?? "FASTEST",
+    crowdAt: (at) => estimateCrowd(at, input.pacLive, input.pacSamples ?? []),
+  };
+  const plans = await Promise.all(days.map((d) => buildDayPlan(d, dateForDay(input.mondayISO, d), week.byDay[d], home, memo, input.config, extras)));
   const result: WeekPlan = { generatedAt: new Date().toISOString(), weekStartDate: input.mondayISO, days: {}, skipped: week.skipped, usesEstimates: false };
   for (const p of plans) {
     result.days[p.day] = p;

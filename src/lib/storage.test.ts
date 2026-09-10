@@ -10,4 +10,14 @@ describe("loadState", () => {
     expect(state.config.transitConsiderWalkMinutes).toBe(DEFAULT_PLANNER_CONFIG.transitConsiderWalkMinutes);
     expect(state.config.minTransitSavingMinutes).toBe(DEFAULT_PLANNER_CONFIG.minTransitSavingMinutes);
   });
+
+  it("keeps gym and route preferences, sanitising anything odd", () => {
+    const saved = { schemaVersion: 1, config: DEFAULT_PLANNER_CONFIG, gym: { enabled: true, durationMinutes: 75, preferredTime: "DAWN" }, routePreference: "INDOORS" };
+    const state = loadState({ getItem: (k) => (k === STORAGE_KEY ? JSON.stringify(saved) : null) });
+    expect(state.gym).toEqual({ enabled: true, durationMinutes: 60, preferredTime: "NONE" });
+    expect(state.routePreference).toBe("INDOORS");
+    const none = loadState({ getItem: () => JSON.stringify({ schemaVersion: 1, config: DEFAULT_PLANNER_CONFIG }) });
+    expect(none.gym).toBeUndefined();
+    expect(none.routePreference).toBeUndefined();
+  });
 });

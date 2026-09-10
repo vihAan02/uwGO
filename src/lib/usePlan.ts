@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import type { CourseMeeting, UserHome, WeekPlan } from "@/domain/types";
+import type { CourseMeeting, GymPreferences, RoutePreference, UserHome, WeekPlan } from "@/domain/types";
 import type { PlannerConfig } from "@/domain/config";
+import type { PacReading, PacSample } from "@/data/pac/crowd";
 import { buildWeekPlan } from "@/engine/planner";
 import { CachedRoutingProvider } from "@/routing/CachedRoutingProvider";
 import { HttpRoutingProvider } from "@/routing/HttpRoutingProvider";
@@ -28,14 +29,27 @@ export function defaultWeekStart(meetings: CourseMeeting[], now = new Date()): s
   return mondayOfWeek(first);
 }
 
-export function usePlan(meetings: CourseMeeting[] | undefined, home: UserHome | undefined, config: PlannerConfig, mondayISO: string) {
+export interface PlanExtras {
+  gym?: GymPreferences;
+  routePreference?: RoutePreference;
+  pacLive?: PacReading;
+  pacSamples?: readonly PacSample[];
+}
+
+export function usePlan(meetings: CourseMeeting[] | undefined, home: UserHome | undefined, config: PlannerConfig, mondayISO: string, extras: PlanExtras = {}) {
   const [result, setResult] = useState<{ key: string; plan?: WeekPlan; error?: string } | undefined>();
-  const key = useMemo(() => JSON.stringify({ m: meetings?.map((x) => [x.id, x.includeInPlan]), h: home, c: config, w: mondayISO }), [meetings, home, config, mondayISO]);
+  // Live PAC readings drift by the minute; the plan only needs rebuilding when the picture
+  // of "how busy" actually moves (a 10-point step), and only if the gym is in play at all.
+  const liveKey = extras.gym?.enabled && extras.pacLive ? `${Math.round(extras.pacLive.occupancyPct / 10)}@${Math.floor(extras.pacLive.at.getTime() / 900_000)}` : "";
+  const key = useMemo(
+    () => JSON.stringify({ m: meetings?.map((x) => [x.id, x.includeInPlan]), h: home, c: config, w: mondayISO, g: extras.gym, r: extras.routePreference ?? "FASTEST", l: liveKey }),
+    [meetings, home, config, mondayISO, extras.gym, extras.routePreference, liveKey],
+  );
 
   useEffect(() => {
     if (!meetings) return;
     let cancelled = false;
-    buildWeekPlan({ meetings, home, mondayISO, config }, getClientProvider())
+    buildWeekPlan({ meetings, home, mondayISO, config, gym: extras.gym, routePreference: extras.routePreference, pacLive: extras.pacLive, pacSamples: extras.pacSamples }, getClientProvider())
       .then((plan) => { if (!cancelled) setResult({ key, plan }); })
       .catch((e: unknown) => { if (!cancelled) setResult({ key, error: e instanceof Error ? e.message : String(e) }); });
     return () => { cancelled = true; };

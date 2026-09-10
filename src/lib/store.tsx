@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import type { CourseMeeting, TermInfo, UserHome } from "@/domain/types";
+import type { CourseMeeting, GymPreferences, RoutePreference, TermInfo, UserHome } from "@/domain/types";
 import type { PlannerConfig } from "@/domain/config";
 import { type AppState, emptyState, loadState, saveState, clearState } from "./storage";
 
@@ -13,6 +13,8 @@ interface StoreApi {
   setIncludeInPlan(id: string, include: boolean): void;
   setHome(home: UserHome | undefined): void;
   setConfig(patch: Partial<PlannerConfig>): void;
+  setGym(gym: GymPreferences | undefined): void;
+  setRoutePreference(pref: RoutePreference): void;
   reset(): void;
 }
 
@@ -55,6 +57,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setIncludeInPlan: (id, include) => update((s) => s.schedule ? { ...s, schedule: { ...s.schedule, meetings: s.schedule.meetings.map((m) => (m.id === id ? { ...m, includeInPlan: include } : m)) } } : s),
     setHome: (home) => update((s) => ({ ...s, home })),
     setConfig: (patch) => update((s) => ({ ...s, config: { ...s.config, ...patch } })),
+    setGym: (gym) => update((s) => ({ ...s, gym })),
+    setRoutePreference: (routePreference) => update((s) => ({ ...s, routePreference })),
     reset: () => { clearState(); setState(emptyState()); },
   }), [state, hydrated, update]);
 

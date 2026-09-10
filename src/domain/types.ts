@@ -192,6 +192,10 @@ export interface RouteOption {
   /** Google encoded polyline (whole route). */
   polyline?: string;
   transferCount?: number;
+  /** Building codes walked through, for a route planned over UW's indoor connections. */
+  indoorPath?: string[];
+  /** 0..1 share of the trip spent inside buildings; set for indoor-graph routes. */
+  indoorShare?: number;
   provider: string;
   computedAt: string;
   /** True only for the straight-line fallback used when no routing API is configured. */
@@ -216,6 +220,8 @@ export interface ClassTransition {
   availableMinutes: number;
   walkingRoute?: RouteOption;
   transitRoute?: RouteOption;
+  /** A route over UW's verified tunnels/bridges, when both ends are on that graph. */
+  indoorRoute?: RouteOption;
   recommendedRoute?: RouteOption;
   recommendedDeparture?: Date;
   expectedArrival?: Date;
@@ -247,7 +253,8 @@ export type DayPlanItem =
   | { kind: "LEAVE"; at: Date; from: CampusLocation; transition: ClassTransition }
   | { kind: "ARRIVE"; at: Date; to: CampusLocation; transition: ClassTransition }
   | { kind: "CLASS"; scheduledClass: ScheduledClass }
-  | { kind: "GAP"; from: Date; to: Date; minutes: number; homeReturn?: HomeReturnAnalysis }
+  | { kind: "GAP"; from: Date; to: Date; minutes: number; homeReturn?: HomeReturnAnalysis; gym?: GymWindow }
+  | { kind: "GYM"; window: GymWindow }
   | { kind: "NOTE"; text: string };
 
 export interface DayPlan {
@@ -257,6 +264,8 @@ export interface DayPlan {
   transitions: ClassTransition[];
   items: DayPlanItem[];
   warnings: string[];
+  /** Every workout that fits this day, best first. Empty unless the student works out. */
+  gym: GymWindow[];
 }
 
 export interface WeekPlan {
@@ -265,4 +274,60 @@ export interface WeekPlan {
   days: Partial<Record<DayOfWeek, DayPlan>>;
   skipped: { meeting: CourseMeeting; reason: string }[];
   usesEstimates: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Preferences and the gym
+
+export type GymTimePreference = "MORNING" | "AFTERNOON" | "EVENING" | "LEAST_BUSY" | "NONE";
+export const GYM_DURATIONS = [45, 60, 90] as const;
+export type GymDuration = (typeof GYM_DURATIONS)[number];
+
+export interface GymPreferences {
+  enabled: boolean;
+  durationMinutes: GymDuration;
+  preferredTime: GymTimePreference;
+}
+
+/** FASTEST: Google's route. INDOORS: prefer UW tunnels/bridges when the cost is reasonable. */
+export type RoutePreference = "FASTEST" | "INDOORS";
+
+export type CrowdLevel = "QUIET" | "BEARABLE" | "BUSY" | "VERY_BUSY";
+
+export interface CrowdEstimate {
+  level: CrowdLevel;
+  /** Estimated fitness-centre occupancy, 0..100 (% of capacity). */
+  occupancyPct: number;
+  /** Estimated wait for a piece of equipment, derived from crowding: not a machine tracker. */
+  estimatedMachineWaitMin: number;
+  estimatedMachineWaitMax: number;
+  /** LIVE: a fresh reading from the portal. TYPICAL: the time-of-day pattern. LIVE_ADJUSTED: pattern nudged by a recent reading. */
+  source: "LIVE" | "LIVE_ADJUSTED" | "TYPICAL";
+}
+
+export type GymSlot = "BEFORE_FIRST" | "BETWEEN" | "AFTER_LAST";
+
+export interface GymWindow {
+  id: string;
+  slot: GymSlot;
+  /** Index of the class this window follows (BETWEEN, AFTER_LAST) or precedes (BEFORE_FIRST). */
+  classIndex: number;
+  /** Suggested workout, travel excluded. */
+  start: Date;
+  end: Date;
+  workoutMinutes: number;
+  /** Everything between arriving at PAC and having to leave it. */
+  usableMinutes: number;
+  from: CampusLocation;
+  to: CampusLocation;
+  fromLabel: string;
+  toLabel: string;
+  routeIn: RouteOption;
+  routeOut: RouteOption;
+  leaveAt: Date;
+  arrivePacAt: Date;
+  leavePacBy: Date;
+  crowd: CrowdEstimate;
+  score: number;
+  reasons: string[];
 }

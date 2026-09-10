@@ -23,6 +23,13 @@ export interface PlannerConfig {
   buildingExitMinutes: number;
   /** Gaps shorter than this are never analysed for going home. */
   minGapForHomeAnalysisMinutes: number;
+  /**
+   * An indoor route may cost this many minutes more than Google's walk and still be preferred
+   * when the student asks for "indoors when possible"; beyond it the fastest route wins.
+   */
+  indoorMaxExtraMinutes: number;
+  /** ...and it may not be more than this fraction longer either (a 4 min walk should not become 12). */
+  indoorMaxExtraRatio: number;
 }
 
 export const DEFAULT_PLANNER_CONFIG: PlannerConfig = {
@@ -35,6 +42,8 @@ export const DEFAULT_PLANNER_CONFIG: PlannerConfig = {
   transitTransferPenaltyMinutes: 3,
   buildingExitMinutes: 0,
   minGapForHomeAnalysisMinutes: 20,
+  indoorMaxExtraMinutes: 8,
+  indoorMaxExtraRatio: 0.75,
 };
 
 /** The only setting the student chooses; everything else is engine tuning that follows the code. */
