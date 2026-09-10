@@ -5,6 +5,7 @@ import { StoreProvider } from "@/lib/store";
 import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
 import { getServerAuth } from "@/lib/supabase/server";
+import { ProfileSync } from "@/lib/profileSync";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -31,7 +32,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <AuthProvider initial={{ mode: auth.mode, user: auth.user }}>
-          <StoreProvider>{children}</StoreProvider>
+          <StoreProvider>
+            {children}
+            <ProfileSync />
+          </StoreProvider>
         </AuthProvider>
         <ServiceWorkerRegistrar />
       </body>
