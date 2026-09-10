@@ -54,3 +54,6 @@ private/
 
 # macOS screenshots can capture keys and dashboards; never commit them
 Screenshot*.png
+
+# Share only the landing workspace Claude instructions.
+!/src/app/landing/CLAUDE.md

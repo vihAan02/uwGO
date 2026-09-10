@@ -8,6 +8,16 @@ describe("request proxy decisions", () => {
     expect(decideAuth({ ...base, pathname: "/" })).toEqual({ kind: "TO_LOGIN" });
     expect(decideAuth({ ...base, pathname: "/plan" })).toEqual({ kind: "TO_LOGIN" });
   });
+  it("the landing preview is public without opening similarly named or nested app routes", () => {
+    for (const configured of [true, false]) {
+      expect(decideAuth({ ...base, configured, pathname: "/landing" })).toEqual({ kind: "ALLOW" });
+      for (const pathname of ["/landing-private", "/landing/admin"]) {
+        expect(decideAuth({ ...base, configured, pathname }).kind).toBe("TO_LOGIN");
+      }
+    }
+    expect(decideAuth({ ...base, hasUser: true, pathname: "/landing" })).toEqual({ kind: "ALLOW" });
+    expect(decideAuth({ ...base, rejected: true, pathname: "/landing" })).toEqual({ kind: "SIGN_OUT_DOMAIN" });
+  });
   it("login and the auth callback stay reachable", () => {
     expect(decideAuth({ ...base, pathname: "/login" })).toEqual({ kind: "ALLOW" });
     expect(decideAuth({ ...base, pathname: "/auth/callback" })).toEqual({ kind: "ALLOW" });

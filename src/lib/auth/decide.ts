@@ -1,6 +1,6 @@
 /**
  * The routing decision the request proxy makes, kept pure so it can be tested without
- * Next or Supabase. Everything under /login and /auth is public; the app itself and its
+ * Next or Supabase. /landing and everything under /login and /auth are public; the app itself and its
  * API routes need a verified Waterloo user.
  */
 export type AuthDecision =
@@ -21,7 +21,7 @@ export interface DecisionInput {
 export const PUBLIC_PREFIXES = ["/login", "/auth/"];
 
 export function isPublicPath(pathname: string): boolean {
-  return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p));
+  return pathname === "/landing" || PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p));
 }
 
 export function decideAuth(i: DecisionInput): AuthDecision {
