@@ -1,4 +1,4 @@
-import type { CampusLocation, ClassTransition, ScheduledClass } from "@/domain/types";
+import type { CampusLocation, ClassTransition, GapStop, ScheduledClass, TransitionKind } from "@/domain/types";
 import { minutesBetween, torontoDate } from "@/time/toronto";
 
 function isCrossCampus(a: CampusLocation, b: CampusLocation): boolean {
@@ -15,33 +15,38 @@ export interface LegSpec extends ClassTransition {
   fromClassIndex?: number;
   /** Index in `classes` of the class this leg is heading to, if it ends at a class. */
   toClassIndex?: number;
-  /** True for the mid-day trip home during a gap, as opposed to going home at the end of the day. */
-  midDayHomeReturn?: boolean;
+  /** Which gap this leg belongs to: the index of the class it follows. Absent for the day's bookends. */
+  gapIndex?: number;
+  /** Position within that gap's chain: 0 leaves the class, 1 leaves the first stop, and so on. */
+  gapLeg?: number;
+  /** The stop this leg is heading to, when it heads to one rather than to a class. */
+  toStop?: GapStop;
+  /** Minutes owed at `from` before setting off — the workout, on the leg leaving PAC. */
+  dwellMinutes?: number;
 }
 
 /**
  * The day's legs in chronological order.
  *
- * `goHomeAfter` holds the indices of classes after which the student was told to go home
- * during the gap. Those gaps become two legs (class -> home, home -> next class) instead
- * of one, which is the whole point: once the plan sends someone home, the next trip has
- * to start from home.
+ * `gapStops` holds, per class index, the ordered places the student chose to stop at during the
+ * gap that follows it. A gap with N stops becomes N+1 legs instead of one, which is the whole
+ * point: once the plan sends someone somewhere, the next trip has to start from there.
  */
 export function buildItinerary(
   classes: ScheduledClass[],
   home: CampusLocation | undefined,
-  goHomeAfter: ReadonlySet<number>,
+  gapStops: ReadonlyMap<number, readonly GapStop[]>,
   dateISO: string,
 ): LegSpec[] {
   const out: LegSpec[] = [];
   if (classes.length === 0) return out;
   const dayStart = torontoDate(dateISO, 0);
 
-  const toClass = (id: string, from: CampusLocation, earliest: Date, toIndex: number, fromIndex?: number): LegSpec => {
+  const toClass = (id: string, from: CampusLocation, earliest: Date, toIndex: number, fromIndex?: number, kind?: TransitionKind): LegSpec => {
     const b = classes[toIndex];
     return {
       id,
-      kind: from.kind === "HOME" ? "HOME_TO_CLASS" : "CLASS_TO_CLASS",
+      kind: kind ?? (from.kind === "HOME" ? "HOME_TO_CLASS" : "CLASS_TO_CLASS"),
       from,
       to: b.location,
       departAfter: earliest,
@@ -59,27 +64,46 @@ export function buildItinerary(
 
   for (let i = 0; i < classes.length - 1; i++) {
     const a = classes[i];
-    if (home && goHomeAfter.has(i)) {
+    const stops = gapStops.get(i) ?? [];
+    if (stops.length === 0) {
+      out.push({ ...toClass(`${a.id}->${classes[i + 1].id}`, a.location, a.end, i + 1, i), gapIndex: i, gapLeg: 0 });
+      continue;
+    }
+
+    // Hop to each stop in turn, then on to the next class. Every leg sets off from where the
+    // previous one landed; the planner pushes the real departures forward once routes exist.
+    // Ids are derived from what a leg actually joins, never from an ordinal: a reminder is keyed
+    // by leg id (lib/reminders.ts) and has to survive the student changing an earlier choice.
+    let from = a.location;
+    let fromId = a.id;
+    for (const [k, stop] of stops.entries()) {
       out.push({
-        id: `${a.id}->home`,
-        kind: "CLASS_TO_HOME",
-        from: a.location,
-        to: home,
+        id: `${fromId}->${stop.at.id}`,
+        kind: k === 0 ? "CLASS_TO_STOP" : "STOP_TO_STOP",
+        from,
+        to: stop.at,
         departAfter: a.end,
         arriveBy: a.end,
         hasDeadline: false,
         availableMinutes: 0,
         feasibility: "UNKNOWN",
-        crossCampus: isCrossCampus(a.location, home),
-        fromClassIndex: i,
-        midDayHomeReturn: true,
+        crossCampus: isCrossCampus(from, stop.at),
+        fromClassIndex: k === 0 ? i : undefined,
+        gapIndex: i,
+        gapLeg: k,
+        toStop: stop,
+        dwellMinutes: stops[k - 1]?.minDwellMinutes,
       });
-      // Earliest is still the class end here; the planner pushes it to the real arrival
-      // home once the leg above has a route.
-      out.push({ ...toClass(`home->${classes[i + 1].id}`, home, a.end, i + 1), midDayHomeReturn: true });
-      continue;
+      from = stop.at;
+      fromId = stop.at.id;
     }
-    out.push(toClass(`${a.id}->${classes[i + 1].id}`, a.location, a.end, i + 1, i));
+    const last = stops[stops.length - 1];
+    out.push({
+      ...toClass(`${fromId}->${classes[i + 1].id}`, from, a.end, i + 1, undefined, "STOP_TO_CLASS"),
+      gapIndex: i,
+      gapLeg: stops.length,
+      dwellMinutes: last.minDwellMinutes,
+    });
   }
 
   if (home) {
@@ -101,9 +125,9 @@ export function buildItinerary(
   return out;
 }
 
-/** Back-compat wrapper: the plain academic chain, with no mid-day home returns. */
+/** Back-compat wrapper: the plain academic chain, with no mid-gap stops. */
 export function buildTransitions(classes: ScheduledClass[], home: CampusLocation | undefined, dateISO: string): ClassTransition[] {
-  return buildItinerary(classes, home, new Set(), dateISO);
+  return buildItinerary(classes, home, new Map(), dateISO);
 }
 
 /**

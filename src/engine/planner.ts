@@ -2,12 +2,12 @@
  * Async orchestrator: schedule + home + routing provider -> WeekPlan.
  * The only place that talks to a RoutingProvider. Every decision is delegated to the pure engines.
  */
-import type { CampusLocation, ClassTransition, CourseMeeting, CrowdEstimate, DayOfWeek, DayPlan, DayPlanItem, GymPreferences, GymWindow, HomeReturnAnalysis, LatLng, RoutePreference, RouteOption, ScheduledClass, UserHome, WeekPlan } from "@/domain/types";
+import type { CampusLocation, ClassTransition, CourseMeeting, CrowdEstimate, DayOfWeek, DayPlan, DayPlanItem, GapStop, GymPreferences, GymWindow, HomeReturnAnalysis, LatLng, RoutePreference, RouteOption, ScheduledClass, UserHome, WeekPlan } from "@/domain/types";
 import { DAYS_IN_ORDER } from "@/domain/types";
 import type { PlannerConfig } from "@/domain/config";
 import type { RoutingProvider, TransitOptions } from "@/routing/RoutingProvider";
 import { pairKey } from "@/routing/RoutingProvider";
-import { dateForDay, minutesBetween } from "@/time/toronto";
+import { addMin, dateForDay, minutesBetween } from "@/time/toronto";
 import { normalizeWeek } from "./normalize";
 import { buildItinerary, findContinuityBreaks, type LegSpec } from "./transitions";
 import { resolveBestRoute, type BestRoute, type RouteFetcher, type RouteRequest } from "./bestRoute";
@@ -191,24 +191,38 @@ async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledC
 
   // 1. Work out where the student will actually be, before working out any trip.
   const gapAnalysis = await analyseGaps(classes, home, resolver, cfg);
-  const goHomeAfter = new Set(
-    [...gapAnalysis].filter(([, a]) => a.recommendation === "WORTH_IT").map(([i]) => i),
-  );
+  const gapStops = new Map<number, readonly GapStop[]>();
+  if (home) {
+    for (const [i, a] of gapAnalysis) {
+      if (a.recommendation === "WORTH_IT") gapStops.set(i, [{ purpose: "REZ", at: home, label: "home" }]);
+    }
+  }
 
   // 2. Build the chain of legs that follows from those decisions.
-  const legs = buildItinerary(classes, home, goHomeAfter, dateISO);
+  const legs = buildItinerary(classes, home, gapStops, dateISO);
 
   // 3. Resolve legs in order, carrying the running location and clock. A leg can never
-  //    set off before the previous one has landed, and never from anywhere else.
+  //    set off before the previous one has landed, and never from anywhere else. A stop the
+  //    student owes time to (the workout) holds the clock before the next leg may depart.
   const transitions: ClassTransition[] = [];
   let readyAt: Date | undefined;
   for (const leg of legs) {
-    const spec: LegSpec = readyAt && readyAt.getTime() > leg.departAfter.getTime()
-      ? { ...leg, departAfter: readyAt, availableMinutes: leg.hasDeadline ? minutesBetween(readyAt, leg.arriveBy) : 0 }
+    const earliest = readyAt ? addMin(readyAt, leg.dwellMinutes ?? 0) : undefined;
+    const spec: LegSpec = earliest && earliest.getTime() > leg.departAfter.getTime()
+      ? { ...leg, departAfter: earliest, availableMinutes: leg.hasDeadline ? minutesBetween(earliest, leg.arriveBy) : 0 }
       : leg;
     const resolved = await resolveTransition(spec, resolver, cfg, extras.routePreference);
     transitions.push(resolved);
     readyAt = resolved.expectedArrival ?? spec.arriveBy;
+  }
+
+  // Legs of each gap, in order, so the emitter never has to guess which leg is which.
+  const gapLegs = new Map<number, ClassTransition[]>();
+  for (const [k, leg] of legs.entries()) {
+    if (leg.gapIndex === undefined) continue;
+    const list = gapLegs.get(leg.gapIndex) ?? [];
+    list[leg.gapLeg ?? 0] = transitions[k];
+    gapLegs.set(leg.gapIndex, list);
   }
 
   const breaks = findContinuityBreaks(transitions);
@@ -253,15 +267,15 @@ async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledC
     const next = classes[i + 1];
     if (!next) break;
 
-    const goingHome = goHomeAfter.has(i);
-    const outLeg = goingHome ? legAt((l) => l.midDayHomeReturn === true && l.fromClassIndex === i) : undefined;
-    const backLeg = goingHome ? legAt((l) => l.midDayHomeReturn === true && l.toClassIndex === i + 1) : undefined;
-
+    const inGap = gapLegs.get(i) ?? [];
     // The gap card reads the resolved legs. Normally these are the very resolutions the
     // decision was made on; if the chain had to shift a departure, the card follows the chain.
-    const outResolved = outLeg && legOf(outLeg);
-    const backResolved = backLeg && legOf(backLeg);
-    const homeReturn: HomeReturnAnalysis | undefined = goingHome && outResolved && backResolved
+    // Only a single-stop trip home can be read this way: with two stops the leg pair no longer
+    // spans the gap, and `analyzeHomeReturn`'s gapMinutes would mean something else.
+    const goingHome = (gapStops.get(i) ?? []).length === 1 && gapStops.get(i)![0].purpose === "REZ";
+    const outResolved = goingHome && inGap[0] && legOf(inGap[0]);
+    const backResolved = goingHome && inGap[1] && legOf(inGap[1]);
+    const homeReturn: HomeReturnAnalysis | undefined = outResolved && backResolved
       ? analyzeHomeReturn({ gapStart: c.end, nextClassStart: next.start, routeHome: outResolved, routeBack: backResolved }, cfg)
       : gapAnalysis.get(i);
 
@@ -269,19 +283,14 @@ async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledC
       items.push({ kind: "GAP", from: c.end, to: next.start, minutes: minutesBetween(c.end, next.start), homeReturn, gym: gymForGap(gym, i) });
     }
 
-    if (goingHome) {
-      pushLeg(outLeg);
-      pushLeg(backLeg);
-    } else {
-      pushLeg(legAt((l) => l.fromClassIndex === i && l.toClassIndex === i + 1));
-    }
+    for (const t of inGap) pushLeg(t);
   }
 
   const afterLast = gym.find((w) => w.slot === "AFTER_LAST");
   if (afterLast) items.push({ kind: "GYM", window: afterLast });
 
   if (home && classes.length) {
-    pushLeg(legAt((l) => l.kind === "CLASS_TO_HOME" && !l.midDayHomeReturn));
+    pushLeg(legAt((l) => l.kind === "CLASS_TO_HOME"));
   }
 
   for (const t of transitions) if (t.feasibility === "LIKELY_LATE") warnings.push(`${t.from.name} → ${t.to.name}: you will likely be late (${t.availableMinutes} min available).`);

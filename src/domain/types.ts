@@ -204,7 +204,37 @@ export interface RouteOption {
 
 export type Feasibility = "COMFORTABLE" | "TIGHT" | "LIKELY_LATE" | "UNKNOWN";
 
-export type TransitionKind = "HOME_TO_CLASS" | "CLASS_TO_CLASS" | "CLASS_TO_HOME";
+export type TransitionKind =
+  | "HOME_TO_CLASS"
+  | "CLASS_TO_CLASS"
+  /** Going home at the end of the day. A mid-day trip home is STOP-shaped, not this. */
+  | "CLASS_TO_HOME"
+  /** First hop of a gap the student chose to spend somewhere. */
+  | "CLASS_TO_STOP"
+  /** Between two stops in one gap: PAC, then the rez to shower. */
+  | "STOP_TO_STOP"
+  /** Last hop of such a gap, back to the next class. */
+  | "STOP_TO_CLASS";
+
+/** What a student goes somewhere for during a gap. */
+export type GapStopPurpose = "REZ" | "GYM" | "STUDY";
+
+/**
+ * A place the student chose to stop at during a gap. The itinerary is built from an ordered
+ * list of these, so a gap can hold a workout and then a shower at the rez.
+ */
+export interface GapStop {
+  purpose: GapStopPurpose;
+  at: CampusLocation;
+  /** Short word for the timeline: "rez", "PAC", "Dana Porter". */
+  label: string;
+  /**
+   * Minutes owed here before setting off again — the workout. Absent means "leave on arrival".
+   * It cannot be derived later: `buildItinerary` runs before any route exists, so without it the
+   * planner's running clock would let the next leg depart the moment the student arrives.
+   */
+  minDwellMinutes?: number;
+}
 
 export interface ClassTransition {
   id: string;
