@@ -8,6 +8,7 @@ import { findRoomPosition } from "@/data/floorplans";
 import type { MapSelection } from "../map/MapPanel";
 import { RemindButton } from "./RemindButton";
 import { GymCard } from "./GymCard";
+import { GapChoicePicker, type ChooseGap } from "./GapChoicePicker";
 
 export interface Selectable {
   selectedId: string | undefined;
@@ -256,7 +257,7 @@ function neighbouringClasses(items: DayPlanItem[], index: number): { prev?: Sche
   return { prev, next };
 }
 
-export function DayTimeline({ plan, home, busy, sel, focusClassId }: { plan: DayPlan; home: UserHome | undefined; busy: boolean; sel: Selectable; focusClassId?: string }) {
+export function DayTimeline({ plan, home, busy, sel, focusClassId, onChooseGap }: { plan: DayPlan; home: UserHome | undefined; busy: boolean; sel: Selectable; focusClassId?: string; onChooseGap?: ChooseGap }) {
   const focusEl = useRef<HTMLLIElement | null>(null);
   const scrolledFor = useRef<string | undefined>(undefined);
 
@@ -320,10 +321,14 @@ export function DayTimeline({ plan, home, busy, sel, focusClassId }: { plan: Day
                   <div className="card flex-1 border-dashed p-3">
                     <div className="font-semibold">{formatDuration(item.minutes)} free</div>
                     <div className="text-sm text-ink-muted">{formatClock(item.from)} &ndash; {formatClock(item.to)}</div>
-                    {item.homeReturn ? <HomeCard h={item.homeReturn} home={home} from={prev?.location} to={next?.location} gapStart={item.from} idBase={`home-${i}`} sel={sel} day={plan} backLeg={plan.transitions.find((t) => t.from.kind === "HOME" && next && t.arriveBy.getTime() === next.start.getTime() && t.to.id === next.location.id)} />
-                      : home ? <p className="mt-1 text-sm text-ink-muted">Home route unavailable.</p>
-                      : <p className="mt-1 text-sm text-ink-muted">Set where you live to see if you can go home.</p>}
-                    {item.gym && <GymCard w={item.gym} heading={item.homeReturn?.recommendation === "WORTH_IT" ? "Or go to the gym" : "PAC fits here"} />}
+                    {/* The detail cards only make sense once the student has committed to going. */}
+                    {item.choice?.value.kind === "REZ" && item.homeReturn && (
+                      <HomeCard h={item.homeReturn} home={home} from={prev?.location} to={next?.location} gapStart={item.from} idBase={`home-${i}`} sel={sel} day={plan} backLeg={plan.transitions.find((t) => t.from.kind === "HOME" && next && t.arriveBy.getTime() === next.start.getTime() && t.to.id === next.location.id)} />
+                    )}
+                    {item.choice?.value.kind === "GYM" && item.gym && <GymCard w={item.gym} heading="Your workout" />}
+                    {onChooseGap
+                      ? <GapChoicePicker gap={item} onChoose={onChooseGap} />
+                      : !home && <p className="mt-1 text-sm text-ink-muted">Set where you live to see if you can go home.</p>}
                   </div>
                 </li>
               );

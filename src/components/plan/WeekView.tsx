@@ -26,7 +26,7 @@ const TripMode = dynamic(() => import("../map/TripMode").then((m) => m.TripMode)
 
 export function WeekView() {
   const router = useRouter();
-  const { state, hydrated } = useStore();
+  const { state, hydrated, setGapChoice } = useStore();
   const meetings = state.schedule?.meetings;
   const [weekOverride, setWeekStart] = useState<string | undefined>();
   const [day, setDay] = useState<DayOfWeek>(() => { const d = weekdayOf(todayISO()); return d === "S" || d === "Su" ? "M" : d; });
@@ -142,7 +142,7 @@ export function WeekView() {
           )}
           {error && <div className="rounded-xl bg-bad-soft p-3 text-sm text-bad">{error}</div>}
           {loading && !dayPlan && <p className="py-10 text-center text-ink-muted">Building your routes&hellip;</p>}
-          {dayPlan && <DayTimeline plan={dayPlan} home={state.home} busy={loading} sel={{ selectedId: picked?.id, onSelect: (id, sl) => setPicked({ id, selection: sl }) }} focusClassId={focusClassId} />}
+          {dayPlan && <DayTimeline plan={dayPlan} home={state.home} busy={loading} sel={{ selectedId: picked?.id, onSelect: (id, sl) => setPicked({ id, selection: sl }) }} focusClassId={focusClassId} onChooseGap={setGapChoice} />}
           {plan && plan.skipped.length > 0 && (
             <details className="mt-6 text-sm text-ink-muted">
               <summary className="cursor-pointer">{plan.skipped.length} meeting{plan.skipped.length > 1 ? "s" : ""} not on the map</summary>
