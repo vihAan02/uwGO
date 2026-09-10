@@ -1,5 +1,6 @@
-import type { DayOfWeek } from "@/domain/types";
-import { weekdayOf } from "@/time/toronto";
+import { hoursOn, t, type HoursTable, type OpenWindow, type ResolvedHours, type WeekHours } from "@/data/hours";
+
+export type { OpenWindow };
 
 /**
  * PAC Fitness Centre opening hours.
@@ -7,14 +8,9 @@ import { weekdayOf } from "@/time/toronto";
  * Times are minutes past midnight, Toronto wall clock; a close after midnight is > 1440.
  * Every date is inclusive. Update this table when Athletics posts the next term.
  */
-export interface OpenWindow { open: number; close: number }
-type WeekHours = Record<"weekday" | "saturday" | "sunday", OpenWindow | undefined>;
+export const PAC_HOURS_SOURCE = "https://athletics.uwaterloo.ca/sports/2010/7/21/Facility_Hours.aspx";
 
-const t = (h: number, m = 0) => h * 60 + m;
-
-interface HoursPeriod { from: string; to: string; label: string; hours: WeekHours }
-
-export const PAC_HOURS_PERIODS: HoursPeriod[] = [
+export const PAC_HOURS_PERIODS: HoursTable["periods"] = [
   { from: "2026-08-01", to: "2026-09-05", label: "Reduced exam hours", hours: { weekday: { open: t(7, 30), close: t(22, 30) }, saturday: { open: t(9), close: t(17, 30) }, sunday: { open: t(9), close: t(17, 30) } } },
   { from: "2026-09-08", to: "2026-12-11", label: "Fall term", hours: { weekday: { open: t(6), close: t(24, 30) }, saturday: { open: t(9), close: t(24, 30) }, sunday: { open: t(9), close: t(24, 30) } } },
   { from: "2026-12-12", to: "2026-12-22", label: "Reduced exam hours", hours: { weekday: { open: t(6), close: t(24, 30) }, saturday: { open: t(9), close: t(22, 30) }, sunday: { open: t(9), close: t(22, 30) } } },
@@ -36,19 +32,16 @@ export const PAC_SPECIAL_DAYS: Record<string, OpenWindow | undefined> = {
 /** Fallback when a date is outside every posted period: the regular term pattern, flagged by `known: false`. */
 const FALLBACK: WeekHours = PAC_HOURS_PERIODS[1].hours;
 
-export interface PacHours extends OpenWindow { known: boolean; label: string }
+export const PAC_HOURS: HoursTable = {
+  source: PAC_HOURS_SOURCE,
+  periods: PAC_HOURS_PERIODS,
+  special: PAC_SPECIAL_DAYS,
+  fallback: FALLBACK,
+};
+
+export type PacHours = ResolvedHours;
 
 /** Opening window for one date, or undefined when PAC is closed that day. */
 export function pacHoursOn(dateISO: string): PacHours | undefined {
-  if (dateISO in PAC_SPECIAL_DAYS) {
-    const w = PAC_SPECIAL_DAYS[dateISO];
-    return w ? { ...w, known: true, label: "Special hours" } : undefined;
-  }
-  const day: DayOfWeek = weekdayOf(dateISO);
-  const key = day === "S" ? "saturday" : day === "Su" ? "sunday" : "weekday";
-  const period = PAC_HOURS_PERIODS.find((p) => dateISO >= p.from && dateISO <= p.to);
-  const w = (period?.hours ?? FALLBACK)[key];
-  return w ? { ...w, known: Boolean(period), label: period?.label ?? "Assumed regular hours" } : undefined;
+  return hoursOn(PAC_HOURS, dateISO);
 }
-
-export const PAC_HOURS_SOURCE = "https://athletics.uwaterloo.ca/sports/2010/7/21/Facility_Hours.aspx";
