@@ -2,7 +2,7 @@
  * Async orchestrator: schedule + home + routing provider -> WeekPlan.
  * The only place that talks to a RoutingProvider. Every decision is delegated to the pure engines.
  */
-import type { CampusLocation, ClassTransition, CourseMeeting, CrowdEstimate, DayOfWeek, DayPlan, DayPlanItem, GapStop, GymPreferences, GymWindow, HomeReturnAnalysis, LatLng, RoutePreference, RouteOption, ScheduledClass, UserHome, WeekPlan } from "@/domain/types";
+import type { CampusLocation, ClassTransition, CourseMeeting, CrowdEstimate, DayOfWeek, DayPlan, DayPlanItem, GapOption, GapRecommendation, GapStop, GymPreferences, GymWindow, HomeReturnAnalysis, LatLng, RoutePreference, RouteOption, ScheduledClass, UserHome, WeekPlan } from "@/domain/types";
 import { DAYS_IN_ORDER } from "@/domain/types";
 import type { PlannerConfig } from "@/domain/config";
 import type { RoutingProvider, TransitOptions } from "@/routing/RoutingProvider";
@@ -16,6 +16,8 @@ import { analyzeHomeReturn, type ResolvedLeg } from "./homeReturn";
 import { indoorIsReasonable, indoorRouteBetween } from "./indoorRoute";
 import { clampDeparture, expectedArrival, recommendedDeparture } from "./departure";
 import { findGymWindows, gymForGap } from "./gym";
+import { priceGapOptions, recommendGapOption } from "./gapOptions";
+import { resolveStudySpots } from "@/data/study";
 import { estimateCrowd, type PacReading, type PacSample } from "@/data/pac/crowd";
 import { buildingLocation, findBuilding } from "@/data/buildings";
 
@@ -184,10 +186,19 @@ const PAC_LOCATION: CampusLocation | undefined = (() => {
   return b ? buildingLocation(b) : undefined;
 })();
 
+const STUDY_SPOTS = resolveStudySpots("UW");
+
 async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledClass[], home: CampusLocation | undefined, memo: RouteMemo, cfg: PlannerConfig, extras: DayExtras): Promise<DayPlan> {
   const warnings: string[] = [];
   const resolver = new LegResolver(memo, cfg);
   const cross = (a: CampusLocation, b: CampusLocation) => Boolean(a.university && b.university && a.university !== b.university);
+
+  // One adapter for every engine that needs a route: the gym windows, the gap options and the
+  // itinerary all go through this resolver, so they can never disagree about a trip.
+  const resolveLeg = async (a: CampusLocation, b: CampusLocation, departAfter: Date, arriveBy?: Date): Promise<ResolvedLeg | undefined> => {
+    const r = await resolver.resolve({ from: a, to: b, departAfter, arriveBy, crossCampus: cross(a, b) });
+    return r.recommended && r.departure && r.arrival ? { route: r.recommended, departure: r.departure, arrival: r.arrival } : undefined;
+  };
 
   // 1. Work out where the student will actually be, before working out any trip.
   const gapAnalysis = await analyseGaps(classes, home, resolver, cfg);
@@ -196,6 +207,23 @@ async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledC
     for (const [i, a] of gapAnalysis) {
       if (a.recommendation === "WORTH_IT") gapStops.set(i, [{ purpose: "REZ", at: home, label: "home" }]);
     }
+  }
+
+  // 1b. Price every way to spend each gap, and say which one we would pick. The same resolver
+  //     and the same clock as the itinerary, so an option the student picks costs no extra call
+  //     and the numbers on the card stay the numbers on the timeline.
+  const gapOptions = new Map<number, GapOption[]>();
+  const gapAdvice = new Map<number, GapRecommendation>();
+  for (let i = 0; i < classes.length - 1; i++) {
+    const a = classes[i];
+    const b = classes[i + 1];
+    if (minutesBetween(a.end, b.start) < cfg.minGapForHomeAnalysisMinutes) continue;
+    const options = await priceGapOptions({
+      from: a, to: b, home, pac: PAC_LOCATION, studySpots: STUDY_SPOTS, dateISO,
+      gym: extras.gym, cfg, resolve: resolveLeg,
+    });
+    gapAdvice.set(i, recommendGapOption(options, cfg));
+    gapOptions.set(i, options);
   }
 
   // 2. Build the chain of legs that follows from those decisions.
@@ -233,11 +261,10 @@ async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledC
   if (extras.gym?.enabled && PAC_LOCATION && classes.length) {
     gym = await findGymWindows({
       classes, home, pac: PAC_LOCATION, dateISO, prefs: extras.gym, cfg, crowdAt: extras.crowdAt,
-      resolve: async (from, to, departAfter, arriveBy) => {
-        if (from.id === to.id) return undefined;
-        const r = await resolver.resolve({ from, to, departAfter, arriveBy, crossCampus: cross(from, to) });
-        return r.recommended && r.departure && r.arrival ? { route: r.recommended, departure: r.departure, arrival: r.arrival } : undefined;
-      },
+      // A workout in the building you are already in is not a trip anywhere; the gap options
+      // deliberately do allow a same-place stay, because a class inside the library is the best
+      // case there rather than a degenerate one.
+      resolve: async (from, to, departAfter, arriveBy) => (from.id === to.id ? undefined : resolveLeg(from, to, departAfter, arriveBy)),
     });
   }
 
@@ -280,7 +307,13 @@ async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledC
       : gapAnalysis.get(i);
 
     if (minutesBetween(c.end, next.start) >= cfg.minGapForHomeAnalysisMinutes) {
-      items.push({ kind: "GAP", from: c.end, to: next.start, minutes: minutesBetween(c.end, next.start), homeReturn, gym: gymForGap(gym, i) });
+      items.push({
+        kind: "GAP", from: c.end, to: next.start, minutes: minutesBetween(c.end, next.start),
+        dateISO, classId: c.id,
+        options: gapOptions.get(i) ?? [],
+        recommendation: gapAdvice.get(i),
+        homeReturn, gym: gymForGap(gym, i),
+      });
     }
 
     for (const t of inGap) pushLeg(t);

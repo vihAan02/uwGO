@@ -9,7 +9,7 @@ import type { CampusLocation, CrowdEstimate, GymPreferences, GymSlot, GymWindow,
 import type { PlannerConfig } from "@/domain/config";
 import { addMin, minutesBetween, minutesOfDay, torontoDate } from "@/time/toronto";
 import { pacHoursOn } from "@/data/pac/hours";
-import type { ResolvedLeg } from "./homeReturn";
+import { usableAt, type ResolvedLeg } from "./homeReturn";
 
 export interface GymInput {
   classes: ScheduledClass[];
@@ -79,11 +79,8 @@ export async function findGymWindows(input: GymInput): Promise<GymWindow[]> {
   const push = (slot: GymSlot, classIndex: number, from: CampusLocation, fromCls: ScheduledClass | undefined, to: CampusLocation, toCls: ScheduledClass | undefined, inLeg: ResolvedLeg, outLeg: ResolvedLeg) => {
     // The workout can start when the student is at PAC and PAC is open, and must end before
     // the trip out has to start and before PAC closes.
-    const arrive = inLeg.arrival.getTime() < open.getTime() ? open : inLeg.arrival;
-    const mustLeave = outLeg.departure.getTime() < close.getTime() ? outLeg.departure : close;
-    const usable = minutesBetween(arrive, mustLeave);
+    const { start, mustLeave, minutes: usable } = usableAt({ arrival: inLeg.arrival, mustLeaveBy: outLeg.departure, open, close });
     if (usable < duration) return;
-    const start = arrive;
     const end = addMin(start, duration);
     const base: Omit<GymWindow, "score" | "reasons"> = {
       id: `gym-${dateISO}-${slot}-${classIndex}`,

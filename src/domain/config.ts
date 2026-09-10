@@ -24,6 +24,11 @@ export interface PlannerConfig {
   /** Gaps shorter than this are never analysed for going home. */
   minGapForHomeAnalysisMinutes: number;
   /**
+   * Time at a study spot below which the walk there is not worth it. Higher than the "possible"
+   * home threshold on purpose: a library has a settling-in cost that your own room does not.
+   */
+  minUsefulStudyMinutes: number;
+  /**
    * An indoor route may cost this many minutes more than Google's walk and still be preferred
    * when the student asks for "indoors when possible"; beyond it the fastest route wins.
    */
@@ -42,6 +47,7 @@ export const DEFAULT_PLANNER_CONFIG: PlannerConfig = {
   transitTransferPenaltyMinutes: 3,
   buildingExitMinutes: 0,
   minGapForHomeAnalysisMinutes: 20,
+  minUsefulStudyMinutes: 20,
   indoorMaxExtraMinutes: 8,
   indoorMaxExtraRatio: 0.75,
 };

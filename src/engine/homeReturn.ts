@@ -54,3 +54,15 @@ export function analyzeHomeReturn(input: HomeReturnInput, cfg: PlannerConfig): H
     routeBack: routeBack.route,
   };
 }
+
+/**
+ * Minutes actually usable at a stop: you cannot start before you arrive or before the doors open,
+ * and you must be gone before your onward leg departs or before they close. Shared by the gym
+ * windows and the gap options so both measure a stay the same way.
+ */
+export function usableAt(input: { arrival: Date; mustLeaveBy: Date; open?: Date; close?: Date }): { start: Date; mustLeave: Date; minutes: number } {
+  const { arrival, mustLeaveBy, open, close } = input;
+  const start = open && arrival.getTime() < open.getTime() ? open : arrival;
+  const mustLeave = close && mustLeaveBy.getTime() > close.getTime() ? close : mustLeaveBy;
+  return { start, mustLeave, minutes: minutesBetween(start, mustLeave) };
+}

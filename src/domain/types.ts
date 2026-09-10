@@ -233,6 +233,56 @@ export interface StudySpot {
   floorNote?: string;
 }
 
+/** What the student picked for a gap. STAY builds nothing. */
+export type GapChoiceKind = "STAY" | "REZ" | "GYM" | "STUDY";
+
+/** Where they go after the workout. CLASS means straight on, with no second stop. */
+export type GymThen = "REZ" | "STUDY" | "CLASS";
+
+export interface GapChoice {
+  kind: GapChoiceKind;
+  /** Only meaningful when kind is GYM. Absent means the fork has not been answered yet. */
+  gymThen?: GymThen;
+}
+
+export type GapOptionId = "STAY" | "REZ" | "STUDY" | "GYM" | "GYM_CLASS" | "GYM_REZ" | "GYM_STUDY";
+
+export interface GapOption {
+  id: GapOptionId;
+  kind: GapChoiceKind;
+  /** Set on the three fork options. Absent on the four top-level ones. */
+  gymThen?: GymThen;
+  /** The stops this option would add to the day. Empty for STAY, and for the unanswered GYM fork. */
+  stops: GapStop[];
+  /** Every leg routed, the stay long enough to be worth making, and the last leg lands before the buffer. */
+  fits: boolean;
+  /** Minutes actually usable at the last place the student stays. */
+  usableMinutes: number;
+  travelMinutes: number;
+  leaveAt?: Date;
+  arriveBackAt?: Date;
+  /** Button text. */
+  label: string;
+  /** One line under the button. */
+  detail: string;
+  /** Why it fits or does not, naming the numbers. */
+  reason: string;
+  /** True when any leg was priced by the straight-line estimator rather than real routing. */
+  isEstimate: boolean;
+  /** Set by `recommendGapOption`; the component renders the star, it does not decide it. */
+  starred: boolean;
+  /** REZ only. A two-stop chain measures something else, so it must never be exported here. */
+  analysis?: HomeReturnAnalysis;
+}
+
+export interface GapRecommendation {
+  recommended: GapOptionId;
+  /** Plain language, naming the numbers that decided it. */
+  reason: string;
+  /** Every rung tried and why it was passed over. */
+  considered: { id: GapOptionId; met: boolean; reason: string }[];
+}
+
 /** What a student goes somewhere for during a gap. */
 export type GapStopPurpose = "REZ" | "GYM" | "STUDY";
 
@@ -300,7 +350,18 @@ export type DayPlanItem =
   | { kind: "LEAVE"; at: Date; from: CampusLocation; transition: ClassTransition }
   | { kind: "ARRIVE"; at: Date; to: CampusLocation; transition: ClassTransition }
   | { kind: "CLASS"; scheduledClass: ScheduledClass }
-  | { kind: "GAP"; from: Date; to: Date; minutes: number; homeReturn?: HomeReturnAnalysis; gym?: GymWindow }
+  | {
+      kind: "GAP";
+      from: Date; to: Date; minutes: number;
+      /** Identity of the gap, so a picker can report a choice without working out which gap it is in. */
+      dateISO: string; classId: string;
+      /** Every way to spend it, priced, in display order. */
+      options: GapOption[];
+      /** Which one we would pick, and why. The star is already set on the option. */
+      recommendation?: GapRecommendation;
+      homeReturn?: HomeReturnAnalysis;
+      gym?: GymWindow;
+    }
   | { kind: "GYM"; window: GymWindow }
   | { kind: "NOTE"; text: string };
 
