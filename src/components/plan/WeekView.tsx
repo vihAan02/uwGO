@@ -8,6 +8,9 @@ import { DAY_LABELS, DAYS_IN_ORDER } from "@/domain/types";
 import { useStore } from "@/lib/store";
 import { defaultWeekStart, usePlan } from "@/lib/usePlan";
 import { findNextUp } from "@/lib/nextClass";
+import { usePacLive } from "@/lib/usePacLive";
+import { RemindersProvider, useReminders } from "@/lib/useReminders";
+import { CROWD_LABELS, estimateFromPct, waitLabel } from "@/data/pac/crowd";
 import { formatISODate, mondayOfWeek, todayISO, torontoDate, weekdayOf } from "@/time/toronto";
 import { DayTimeline } from "./DayTimeline";
 import { NextClassCard } from "./NextClassCard";
@@ -36,7 +39,9 @@ export function WeekView() {
   }, [hydrated, meetings, router]);
 
   const monday = useMemo(() => weekOverride ?? (meetings ? defaultWeekStart(meetings) : mondayOfWeek(todayISO())), [weekOverride, meetings]);
-  const { plan, loading, error } = usePlan(hydrated ? meetings : undefined, state.home, state.config, monday);
+  const pac = usePacLive(Boolean(hydrated && state.gym?.enabled));
+  const { plan, loading, error } = usePlan(hydrated ? meetings : undefined, state.home, state.config, monday, { gym: state.gym, routePreference: state.routePreference, pacLive: pac.reading, pacSamples: pac.samples });
+  const pacNow = pac.reading ? estimateFromPct(pac.reading.occupancyPct, "LIVE") : undefined;
   const visibleDays = useMemo(() => DAYS_IN_ORDER.filter((d) => ["M", "T", "W", "Th", "F"].includes(d) || (plan?.days[d]?.classes.length ?? 0) > 0), [plan]);
   const dayPlan = plan?.days[day];
   const isThisWeek = monday === mondayOfWeek(todayISO());
@@ -76,7 +81,9 @@ export function WeekView() {
   );
 
   return (
+    <RemindersProvider plan={plan}>
     <main className="mx-auto w-full max-w-6xl pb-16">
+      <ReminderBanner />
       <header className="sticky top-0 z-10 border-b border-line bg-canvas/95 backdrop-blur">
         <div className="flex items-center justify-between px-4 pt-4">
           <div>
@@ -114,6 +121,12 @@ export function WeekView() {
       */}
       <div className="px-4 pt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-start lg:gap-6">
         <div className="lg:col-start-1 lg:row-start-1">
+          {pacNow && state.gym?.enabled && (
+            <div className="mb-3 flex items-center justify-between rounded-xl bg-surface px-3 py-2 text-sm">
+              <span><span className="font-semibold">PAC now:</span> {CROWD_LABELS[pacNow.level]} ({pacNow.occupancyPct}% full)</span>
+              <span className="text-ink-muted">Est. machine wait {waitLabel(pacNow)}</span>
+            </div>
+          )}
           {plan && <NextClassCard next={next} onSelect={() => {
             const t = next.transition;
             if (t?.recommendedRoute) setPicked({ id: "next", selection: { kind: "LEG", label: `Next: ${t.from.name} \u2192 ${t.to.name}`, from: t.from, to: t.to, route: t.recommendedRoute, walkFallback: t.walkingRoute } });
@@ -144,5 +157,21 @@ export function WeekView() {
       {settingsOpen && <SettingsSheet onClose={() => setSettingsOpen(false)} />}
       {trip && <TripMode trip={trip} onEnd={() => setTrip(undefined)} />}
     </main>
+    </RemindersProvider>
+  );
+}
+
+/** Shown when a reminder is due but no system notification could be shown (permission denied or unsupported). */
+function ReminderBanner() {
+  const rem = useReminders();
+  if (!rem.banner) return null;
+  return (
+    <div role="alert" className="fixed inset-x-0 top-0 z-30 flex items-start justify-between gap-3 bg-ink px-4 py-3 text-white shadow-lg">
+      <div>
+        <div className="font-semibold">{"\u{1F514}"} {rem.banner.title}</div>
+        <div className="text-sm text-white/80">{rem.banner.body}</div>
+      </div>
+      <button className="min-h-11 rounded-lg bg-white/15 px-3 text-sm font-semibold" onClick={rem.dismissBanner}>OK</button>
+    </div>
   );
 }

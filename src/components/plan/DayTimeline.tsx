@@ -3,7 +3,10 @@ import { useEffect, useRef } from "react";
 import type { CampusLocation, ClassTransition, DayPlan, DayPlanItem, HomeReturnAnalysis, RouteOption, ScheduledClass, UserHome } from "@/domain/types";
 import { formatClock, formatDuration, minutesBetween } from "@/time/toronto";
 import { googleMapsDirectionsUrl, travelModeFor } from "@/lib/mapsLinks";
+import { indoorPathLabel } from "@/engine/indoorRoute";
 import type { MapSelection } from "../map/MapPanel";
+import { RemindButton } from "./RemindButton";
+import { GymCard } from "./GymCard";
 
 export interface Selectable {
   selectedId: string | undefined;
@@ -24,13 +27,45 @@ function feasibilityChip(f: ClassTransition["feasibility"]) {
 }
 
 function routeSummary(r: RouteOption): string {
+  if (r.indoorPath) return `${formatDuration(r.durationMinutes)} indoors · ${indoorPathLabel(r)}`;
   if (r.mode === "WALK") return r.durationMinutes === 0 ? "Same building" : `${formatDuration(r.durationMinutes)} walk${r.isEstimate ? " (est.)" : ""}`;
   const names = (r.steps ?? []).filter((s) => s.mode === "TRANSIT").map((s) => s.transit?.lineShort ?? s.transit?.line).filter(Boolean).join(" → ");
   return `${formatDuration(r.durationMinutes)} · ${names || "transit"}${r.transferCount ? ` · ${r.transferCount} transfer${r.transferCount > 1 ? "s" : ""}` : ""}`;
 }
 
 function modeIcon(r: RouteOption | undefined) {
+  if (r?.indoorPath) return "\u{1F3E2}";
   return r?.mode === "TRANSIT" ? "\u{1F68C}" : "\u{1F6B6}";
+}
+
+/** "Floor 2" from the V1 rule; a floor of 0 is the lowest level in Waterloo's numbering. */
+export function floorLabel(room: ScheduledClass["room"]): string {
+  if (room.floor === "unknown") return "Floor unknown";
+  return room.floor === 0 ? "Floor 0 (lowest level)" : `Floor ${room.floor}`;
+}
+
+function WalkChoiceRow({ label, r, chosen, note }: { label: string; r: RouteOption; chosen: boolean; note: string }) {
+  return (
+    <div className={`flex items-baseline justify-between gap-2 rounded-lg px-2 py-1 ${chosen ? "bg-brand-soft text-brand" : "text-ink-muted"}`}>
+      <span><span className="font-semibold">{label}</span> · {formatDuration(r.durationMinutes)}</span>
+      <span className="text-xs">{note}</span>
+    </div>
+  );
+}
+
+/** The two ways to walk: Google's fastest and the indoor path, side by side. */
+function IndoorComparison({ t }: { t: ClassTransition }) {
+  const rec = t.recommendedRoute;
+  const indoor = t.indoorRoute;
+  const fastest = t.walkingRoute;
+  if (!rec || !indoor || !fastest || rec.mode === "TRANSIT") return null;
+  const chosenIndoor = Boolean(rec.indoorPath);
+  return (
+    <div className="mt-2 space-y-1 text-sm">
+      <WalkChoiceRow label="Fastest" r={fastest} chosen={!chosenIndoor} note="mostly outdoors" />
+      <WalkChoiceRow label="Winter route" r={indoor} chosen={chosenIndoor} note={`${indoorPathLabel(indoor)} · mostly indoors`} />
+    </div>
+  );
 }
 
 function TransitSteps({ route }: { route: RouteOption }) {
@@ -65,7 +100,7 @@ function MapsLink({ from, to, route }: { from: CampusLocation; to: CampusLocatio
 
 const SELECTED = "ring-2 ring-brand";
 
-function LeaveRow({ t, id, sel, label }: { t: ClassTransition; id: string; sel: Selectable; label: string }) {
+function LeaveRow({ t, id, sel, label, day }: { t: ClassTransition; id: string; sel: Selectable; label: string; day: DayPlan }) {
   const rec = t.recommendedRoute!;
   const alt = rec.mode === "WALK" ? t.transitRoute : t.walkingRoute;
   const sameSpot = rec.durationMinutes === 0;
@@ -88,6 +123,7 @@ function LeaveRow({ t, id, sel, label }: { t: ClassTransition; id: string; sel: 
           {t.hasDeadline && feasibilityChip(t.feasibility)}
         </div>
         {rec.mode === "TRANSIT" && <TransitSteps route={rec} />}
+        <IndoorComparison t={t} />
         {alt && (
           <div className="mt-2 rounded-lg border border-dashed border-line px-2 py-1 text-sm text-ink-muted">
             Also: {modeIcon(alt)} {routeSummary(alt)}
@@ -97,7 +133,12 @@ function LeaveRow({ t, id, sel, label }: { t: ClassTransition; id: string; sel: 
           </div>
         )}
         {t.feasibility === "LIKELY_LATE" && <p className="mt-2 text-sm text-bad">Only {t.availableMinutes} min between classes; this trip needs more.</p>}
-        {!sameSpot && <div className="mt-2"><MapsLink from={t.from} to={t.to} route={rec} /></div>}
+        {!sameSpot && (
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+            <MapsLink from={t.from} to={t.to} route={rec} />
+            {t.hasDeadline && <RemindButton day={day} t={t} />}
+          </div>
+        )}
       </div>
     </li>
   );
@@ -106,7 +147,7 @@ function LeaveRow({ t, id, sel, label }: { t: ClassTransition; id: string; sel: 
 function ClassRow({ c, id, sel, focusRef }: { c: ScheduledClass; id: string; sel: Selectable; focusRef?: (el: HTMLLIElement | null) => void }) {
   const m = c.meeting;
   const roomLabel = m.location.kind === "ROOM" ? `${m.location.buildingCode} ${m.location.roomNumber}` : "";
-  const floor = c.room.floor === "unknown" ? "Floor unknown" : `Floor ${c.room.floor}${c.room.floorConfidence === "likely" ? " (unconfirmed)" : ""}`;
+  const floor = floorLabel(c.room);
   const isWlu = m.university === "WLU";
   const select = () => sel.onSelect(id, { kind: "PLACE", label: `${m.courseCode} · ${roomLabel}`, at: c.location });
   return (
@@ -134,28 +175,60 @@ function ClassRow({ c, id, sel, focusRef }: { c: ScheduledClass; id: string; sel
   );
 }
 
-function HomeCard({ h, home, from, to, idBase, sel }: { h: HomeReturnAnalysis; home: UserHome | undefined; from?: CampusLocation; to?: CampusLocation; idBase: string; sel: Selectable }) {
-  const verdict = h.recommendation === "WORTH_IT" ? { icon: "✅", text: "You can go home", cls: "bg-ok-soft text-ok" }
-    : h.recommendation === "POSSIBLE" ? { icon: "⚠️", text: `Tight: only ~${formatDuration(h.usableHomeMinutes)} at home`, cls: "bg-warn-soft text-warn" }
-    : { icon: "❌", text: h.possible ? `Not worth going home. You would only have ${formatDuration(h.usableHomeMinutes)} there.` : "Not enough time to go home", cls: "bg-bad-soft text-bad" };
+/** The buffer implied by the analysis: gap minus travel minus usable time, never below zero. */
+function cfgBuffer(h: HomeReturnAnalysis): number {
+  return Math.max(0, h.gapMinutes - h.travelHomeMinutes - h.travelBackMinutes - h.usableHomeMinutes);
+}
+
+function legLine(r: RouteOption | undefined, minutes: number): string {
+  if (!r) return formatDuration(minutes);
+  if (r.mode === "TRANSIT") {
+    const names = (r.steps ?? []).filter((x) => x.mode === "TRANSIT").map((x) => x.transit?.lineShort ?? x.transit?.line).filter(Boolean).join(" → ");
+    return `${formatDuration(minutes)} · bus ${names || ""}`.trim();
+  }
+  return `${formatDuration(minutes)} ${r.indoorPath ? "indoors" : "walk"}${r.isEstimate && !r.indoorPath ? " (est.)" : ""}`;
+}
+
+/**
+ * previous class ends -> travel home -> time at home -> leave home -> travel back -> next class.
+ * The number that matters is usable time at home; travel is already taken out of it.
+ */
+function HomeCard({ h, home, from, to, gapStart, idBase, sel, day, backLeg }: { h: HomeReturnAnalysis; home: UserHome | undefined; from?: CampusLocation; to?: CampusLocation; gapStart: Date; idBase: string; sel: Selectable; day: DayPlan; backLeg?: ClassTransition }) {
+  const verdict = h.recommendation === "WORTH_IT"
+    ? { icon: "\u2705", text: "You can go home", cls: "bg-ok-soft text-ok" }
+    : h.recommendation === "POSSIBLE"
+      ? { icon: "\u26A0\uFE0F", text: "Possible, but probably not worth it", cls: "bg-warn-soft text-warn" }
+      : h.possible
+        ? { icon: "\u274C", text: "Not worth going home", cls: "bg-bad-soft text-bad" }
+        : { icon: "\u274C", text: "Not enough time to go home", cls: "bg-bad-soft text-bad" };
+  const sub = h.recommendation === "WORTH_IT"
+    ? undefined
+    : h.possible
+      ? `You would only have ${formatDuration(h.usableHomeMinutes)} at home after ${formatDuration(h.travelHomeMinutes)} there and ${formatDuration(h.travelBackMinutes)} back.`
+      : `${formatDuration(h.travelHomeMinutes)} home and ${formatDuration(h.travelBackMinutes)} back don't fit in ${formatDuration(h.gapMinutes)} with your ${formatDuration(cfgBuffer(h))} buffer; you wouldn't make your next class safely.`;
   const homeLoc: CampusLocation | undefined = home ? { id: "home", name: home.name, latitude: home.latitude, longitude: home.longitude, kind: "HOME" } : undefined;
   return (
     <div className={`mt-2 rounded-xl p-3 ${verdict.cls}`}>
       <div className="font-semibold">{verdict.icon} {verdict.text}</div>
-      {h.possible && (
+      {sub && <p className="mt-1 text-sm">{sub}</p>}
+      {h.possible && h.arriveHomeAt && h.leaveHomeAt && (
         <>
-          <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-sm text-ink">
-            <dt className="text-ink-muted">Trip home</dt><dd>{formatDuration(h.travelHomeMinutes)}{h.routeHome?.isEstimate ? " (est.)" : ""}</dd>
-            <dt className="text-ink-muted">Time at home</dt><dd className="font-semibold">{formatDuration(h.usableHomeMinutes)}</dd>
-            <dt className="text-ink-muted">Leave again at</dt><dd className="font-semibold">{formatClock(h.leaveHomeAt!)}</dd>
-            <dt className="text-ink-muted">Next class</dt><dd>{formatClock(h.nextClassStart)}</dd>
+          <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm text-ink">
+            <dt className="text-ink-muted">Class ends</dt><dd className="font-mono tabular-nums">{formatClock(gapStart)}</dd>
+            <dt className="text-ink-muted">Get home</dt><dd className="font-mono tabular-nums">{formatClock(h.arriveHomeAt)} <span className="font-sans text-ink-muted">· {legLine(h.routeHome, h.travelHomeMinutes)}</span></dd>
+            <dt className="text-ink-muted">Time at home</dt><dd className="text-base font-bold">{formatDuration(h.usableHomeMinutes)}</dd>
+            <dt className="text-ink-muted">Leave home</dt><dd className="font-mono tabular-nums font-semibold">{formatClock(h.leaveHomeAt)} <span className="font-sans font-normal text-ink-muted">· {legLine(h.routeBack, h.travelBackMinutes)}</span></dd>
+            <dt className="text-ink-muted">Next class</dt><dd className="font-mono tabular-nums">{formatClock(h.nextClassStart)}</dd>
           </dl>
-          {homeLoc && from && to && (
-            <div className="mt-2 flex flex-wrap gap-2 text-sm">
-              <button className="min-h-11 rounded-lg bg-surface px-3 font-medium text-ink" onClick={() => sel.onSelect(`${idBase}-out`, { kind: "LEG", label: `${from.name} → ${homeLoc.name}`, from, to: homeLoc, route: h.routeHome })}>Map trip home</button>
-              <button className="min-h-11 rounded-lg bg-surface px-3 font-medium text-ink" onClick={() => sel.onSelect(`${idBase}-back`, { kind: "LEG", label: `${homeLoc.name} → ${to.name}`, from: homeLoc, to, route: h.routeBack })}>Map trip back</button>
-            </div>
-          )}
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+            {homeLoc && from && to && (
+              <>
+                <button className="min-h-11 rounded-lg bg-surface px-3 font-medium text-ink" onClick={() => sel.onSelect(`${idBase}-out`, { kind: "LEG", label: `${from.name} → ${homeLoc.name}`, from, to: homeLoc, route: h.routeHome })}>Map trip home</button>
+                <button className="min-h-11 rounded-lg bg-surface px-3 font-medium text-ink" onClick={() => sel.onSelect(`${idBase}-back`, { kind: "LEG", label: `${homeLoc.name} → ${to.name}`, from: homeLoc, to, route: h.routeBack })}>Map trip back</button>
+              </>
+            )}
+            {backLeg && <RemindButton day={day} t={backLeg} />}
+          </div>
         </>
       )}
     </div>
@@ -203,8 +276,17 @@ export function DayTimeline({ plan, home, busy, sel, focusClassId }: { plan: Day
             case "LEAVE": {
               const { prev, next } = neighbouringClasses(plan.items, i);
               const t = item.transition;
-              return <LeaveRow key={i} t={t} id={`leg-${i}`} sel={sel} label={`${endpointLabel(t.from, prev)} → ${endpointLabel(t.to, next)}`} />;
+              return <LeaveRow key={i} t={t} id={`leg-${i}`} sel={sel} label={`${endpointLabel(t.from, prev)} → ${endpointLabel(t.to, next)}`} day={plan} />;
             }
+            case "GYM": return (
+              <li key={i} className="flex gap-2 sm:gap-3">
+                <div className="w-16 shrink-0 sm:w-20" />
+                <div className="card flex-1 border-dashed p-3">
+                  <div className="font-semibold">Gym after class?</div>
+                  <GymCard w={item.window} />
+                </div>
+              </li>
+            );
             case "ARRIVE": return (
               <li key={i} className="flex gap-2 sm:gap-3">
                 <Time at={item.at} />
@@ -232,9 +314,10 @@ export function DayTimeline({ plan, home, busy, sel, focusClassId }: { plan: Day
                   <div className="card flex-1 border-dashed p-3">
                     <div className="font-semibold">{formatDuration(item.minutes)} free</div>
                     <div className="text-sm text-ink-muted">{formatClock(item.from)} &ndash; {formatClock(item.to)}</div>
-                    {item.homeReturn ? <HomeCard h={item.homeReturn} home={home} from={prev?.location} to={next?.location} idBase={`home-${i}`} sel={sel} />
+                    {item.homeReturn ? <HomeCard h={item.homeReturn} home={home} from={prev?.location} to={next?.location} gapStart={item.from} idBase={`home-${i}`} sel={sel} day={plan} backLeg={plan.transitions.find((t) => t.from.kind === "HOME" && next && t.arriveBy.getTime() === next.start.getTime() && t.to.id === next.location.id)} />
                       : home ? <p className="mt-1 text-sm text-ink-muted">Home route unavailable.</p>
                       : <p className="mt-1 text-sm text-ink-muted">Set where you live to see if you can go home.</p>}
+                    {item.gym && <GymCard w={item.gym} heading={item.homeReturn?.recommendation === "WORTH_IT" ? "Or go to the gym" : "PAC fits here"} />}
                   </div>
                 </li>
               );

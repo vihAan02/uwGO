@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { CourseMeeting, ParsedSchedule, UserHome } from "@/domain/types";
+import type { CourseMeeting, GymPreferences, ParsedSchedule, UserHome } from "@/domain/types";
 import { questParser } from "@/parsers/quest/QuestParser";
 import { useStore } from "@/lib/store";
 import { PasteStep } from "./PasteStep";
@@ -9,6 +9,7 @@ import { ParsePreview } from "./ParsePreview";
 import { ManualClassForm } from "./ManualClassForm";
 import { HomePicker } from "./HomePicker";
 import { BufferPicker } from "./BufferPicker";
+import { GymPrefsPicker } from "../prefs/GymPrefsPicker";
 
 export function Onboarding() {
   const router = useRouter();
@@ -17,12 +18,13 @@ export function Onboarding() {
     if (hydrated && state.schedule?.meetings.length) router.replace("/plan");
   }, [hydrated, state.schedule, router]);
   if (!hydrated) return null;
-  return <OnboardingForm key="form" initialHome={state.home} initialBuffer={state.config.arrivalBufferMinutes} />;
+  return <OnboardingForm key="form" initialHome={state.home} initialBuffer={state.config.arrivalBufferMinutes} initialGym={state.gym} />;
 }
 
-function OnboardingForm({ initialHome, initialBuffer }: { initialHome: UserHome | undefined; initialBuffer: number }) {
+function OnboardingForm({ initialHome, initialBuffer, initialGym }: { initialHome: UserHome | undefined; initialBuffer: number; initialGym: GymPreferences | undefined }) {
   const router = useRouter();
-  const { setSchedule, addMeeting, setHome, setConfig } = useStore();
+  const { setSchedule, addMeeting, setHome, setConfig, setGym } = useStore();
+  const [gym, setLocalGym] = useState<GymPreferences | undefined>(initialGym);
   const [parsed, setParsed] = useState<ParsedSchedule | undefined>();
   const [manual, setManual] = useState<CourseMeeting[]>([]);
   const [home, setLocalHome] = useState<UserHome | undefined>(initialHome);
@@ -38,6 +40,7 @@ function OnboardingForm({ initialHome, initialBuffer }: { initialHome: UserHome 
     for (const m of manual) addMeeting(m);
     setHome(home);
     setConfig({ arrivalBufferMinutes: buffer });
+    setGym(gym ?? { enabled: false, durationMinutes: 60, preferredTime: "NONE" });
     router.push("/plan");
   };
 
@@ -83,6 +86,11 @@ function OnboardingForm({ initialHome, initialBuffer }: { initialHome: UserHome 
         <h2 className="text-lg font-semibold">3. Arrival buffer</h2>
         <p className="mt-1 text-sm text-ink-muted">How early you want to be at the door.</p>
         <BufferPicker value={buffer} onChange={setBuffer} />
+      </section>
+
+      <section className="card mt-4 p-4">
+        <h2 className="text-lg font-semibold">4. Gym</h2>
+        <GymPrefsPicker value={gym} onChange={setLocalGym} />
       </section>
 
       <div className="fixed inset-x-0 bottom-0 border-t border-line bg-surface/95 p-4 backdrop-blur">

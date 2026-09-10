@@ -4,10 +4,12 @@ import { useStore } from "@/lib/store";
 import { HomePicker } from "../onboarding/HomePicker";
 import { BufferPicker } from "../onboarding/BufferPicker";
 import { ManualClassForm } from "../onboarding/ManualClassForm";
+import { GymPrefsPicker } from "../prefs/GymPrefsPicker";
+import { RoutePrefPicker } from "../prefs/RoutePrefPicker";
 
 export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const router = useRouter();
-  const { state, setHome, setConfig, setIncludeInPlan, removeMeeting, addMeeting, reset } = useStore();
+  const { state, setHome, setConfig, setGym, setRoutePreference, setIncludeInPlan, removeMeeting, addMeeting, reset } = useStore();
   const meetings = state.schedule?.meetings ?? [];
   return (
     <div className="fixed inset-0 z-20 flex items-end justify-center bg-ink/40" onClick={onClose}>
@@ -25,6 +27,16 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
         <section className="card mt-4 p-4">
           <h3 className="font-semibold">Arrival buffer</h3>
           <BufferPicker value={state.config.arrivalBufferMinutes} onChange={(v) => setConfig({ arrivalBufferMinutes: v })} />
+        </section>
+
+        <section className="card mt-4 p-4">
+          <h3 className="font-semibold">Route preference</h3>
+          <RoutePrefPicker value={state.routePreference ?? "FASTEST"} onChange={setRoutePreference} />
+        </section>
+
+        <section className="card mt-4 p-4">
+          <h3 className="font-semibold">Gym</h3>
+          <GymPrefsPicker value={state.gym} onChange={setGym} />
         </section>
 
         <section className="card mt-4 p-4">
@@ -52,7 +64,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
           <button className="btn btn-secondary mt-3 w-full text-bad" onClick={() => { if (confirm("Delete your schedule and home from this device?")) { reset(); router.replace("/"); } }}>Delete everything</button>
         </section>
 
-        <p className="mt-4 text-xs text-ink-muted">Building data: University of Waterloo campus map (used as-is) and Wilfrid Laurier University pages. Laurier coordinates © OpenStreetMap contributors (ODbL). Routes and maps by Google.</p>
+        <p className="mt-4 text-xs text-ink-muted">Building data: University of Waterloo campus map (used as-is) and Wilfrid Laurier University pages. Laurier coordinates © OpenStreetMap contributors (ODbL). Routes and maps by Google. PAC hours and live occupancy from Waterloo Athletics; indoor connections from the UW Campus Accessibility building pages.</p>
       </div>
     </div>
   );
