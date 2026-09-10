@@ -216,6 +216,23 @@ export type TransitionKind =
   /** Last hop of such a gap, back to the next class. */
   | "STOP_TO_CLASS";
 
+/**
+ * Somewhere a student can go and work during a gap. Coordinates are deliberately absent: they
+ * come from the building registry via `findBuilding` -> `buildingLocation`, so there is one
+ * source of truth for where a place is and a spot whose building has no coordinates is simply
+ * never offered.
+ */
+export interface StudySpot {
+  id: string;
+  university: University;
+  buildingCode: string;
+  name: string;
+  /** What the button says. */
+  shortName: string;
+  /** Where inside the building, when it is worth saying. Display only. */
+  floorNote?: string;
+}
+
 /** What a student goes somewhere for during a gap. */
 export type GapStopPurpose = "REZ" | "GYM" | "STUDY";
 
