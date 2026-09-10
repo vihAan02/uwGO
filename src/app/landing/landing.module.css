@@ -47,6 +47,21 @@
   backdrop-filter: saturate(180%) blur(12px);
 }
 
+/* A hairline that arrives with the first 64px of scroll. Scroll-driven, so no JS; browsers
+   without animation-timeline just never show it. */
+@supports (animation-timeline: scroll()) {
+  .header {
+    animation: headerEdge linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 64px;
+  }
+}
+
+@keyframes headerEdge {
+  from { box-shadow: 0 1px 0 0 rgb(226 232 240 / 0); }
+  to { box-shadow: 0 1px 0 0 rgb(226 232 240 / 1); }
+}
+
 .headerInner {
   display: flex;
   align-items: center;

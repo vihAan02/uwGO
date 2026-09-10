@@ -33,9 +33,16 @@
 
 @media (min-width: 768px) {
   .panel {
+    grid-template-columns: minmax(0, 1fr) 5.25rem minmax(0, 1fr);
+    padding: 1rem;
+    align-items: center;
+  }
+}
+
+@media (min-width: 1024px) {
+  .panel {
     grid-template-columns: minmax(0, 1fr) 6.5rem minmax(0, 1fr);
     padding: 1.25rem;
-    align-items: center;
   }
 }
 

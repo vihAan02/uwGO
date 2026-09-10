@@ -39,7 +39,7 @@ export default function LandingPage() {
 
       <header className={styles.header}>
         <div className={cn(styles.container, styles.headerInner)}>
-          <Link href="/landing" className={styles.wordmark} aria-label="UW GO">
+          <Link href="/landing" className={styles.wordmark}>
             UW GO
           </Link>
           <Link href="/login" className={buttonVariants({ variant: "outline", size: "sm" })}>

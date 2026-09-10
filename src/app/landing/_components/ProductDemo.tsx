@@ -40,15 +40,15 @@ export function ProductDemo() {
       if (self?.matches.reduceMotion) return;
 
       const tl = createTimeline({ autoplay: false, defaults: { ease: "out(3)" } })
-        .add(el, { opacity: [0, 1], translateY: [16, 0], duration: 600 }, 0)
-        .add(`.${s.row}`, { opacity: [0, 1], translateY: [8, 0], duration: 500, delay: stagger(100) }, 220)
-        .add(`.${s.connectorLine}`, { opacity: [0, 1], scale: [0, 1], duration: 450 }, 620)
-        .add(`.${s.connectorPill}`, { opacity: [0, 1], scale: [0.85, 1], duration: 420 }, 700)
-        .add(`.${s.plan}`, { opacity: [0, 1], translateY: [14, 0], duration: 650 }, 900)
-        .add(`.${s.planLeg} > *`, { opacity: [0, 1], translateY: [6, 0], duration: 450, delay: stagger(110) }, 1250)
-        .add(`.${s.routePath}`, { strokeDashoffset: [1, 0], duration: 1000, ease: "inOut(2)" }, 1450)
-        .add(`.${s.routeDotEnd}`, { opacity: [0, 1], scale: [0, 1], duration: 350, ease: "out(2)" }, 2300)
-        .add(`.${s.leaveIn}`, { opacity: [0, 1], duration: 400 }, 2450);
+        .add(el, { opacity: [0, 1], translateY: [16, 0], duration: 560 }, 0)
+        .add(`.${s.row}`, { opacity: [0, 1], translateY: [8, 0], duration: 460, delay: stagger(90) }, 200)
+        .add(`.${s.connectorLine}`, { opacity: [0, 1], scale: [0, 1], duration: 400 }, 560)
+        .add(`.${s.connectorPill}`, { opacity: [0, 1], scale: [0.85, 1], duration: 380 }, 640)
+        .add(`.${s.plan}`, { opacity: [0, 1], translateY: [14, 0], duration: 600 }, 800)
+        .add(`.${s.planLeg} > *`, { opacity: [0, 1], translateY: [6, 0], duration: 420, delay: stagger(100) }, 1120)
+        .add(`.${s.routePath}`, { strokeDashoffset: [1, 0], duration: 900, ease: "inOut(2)" }, 1300)
+        .add(`.${s.routeDotEnd}`, { opacity: [0, 1], scale: [0, 1], duration: 320, ease: "out(2)" }, 2060)
+        .add(`.${s.leaveIn}`, { opacity: [0, 1], duration: 380 }, 2200);
 
       // In view at load (phones, tall screens): wait a beat so the hero lands first.
       // Scrolled into view later: play at once.
@@ -73,7 +73,7 @@ export function ProductDemo() {
 
   return (
     <figure ref={root} className={s.panel} data-reveal>
-      <div className={s.schedule} aria-label="A pasted Quest schedule">
+      <div className={s.schedule} role="group" aria-label="A pasted Quest schedule">
         <div className={s.cardHead}>
           <span>Quest schedule</span>
           <span>Monday</span>
@@ -102,7 +102,7 @@ export function ProductDemo() {
         <span className={s.connectorLine} data-reveal />
       </div>
 
-      <div className={s.plan} aria-label="The plan UW GO builds for the first class" data-reveal>
+      <div className={s.plan} role="group" aria-label="The plan UW GO builds for the first class" data-reveal>
         <div className={s.planHead}>
           <span>Next class</span>
           <span className={s.leaveIn} data-reveal>

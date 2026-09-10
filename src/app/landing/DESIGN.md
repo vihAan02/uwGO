@@ -61,11 +61,14 @@ Read from https://github.com/voltagent/awesome-design-md (`design-md/<name>/DESI
   copy max 34rem; panel max 52rem. Gutter `clamp(1.25rem, 4vw, 2.5rem)`.
 - **CTA:** brand-filled, 0.75rem radius (the app's button radius, not a marketing pill),
   56px tall in the hero, 48px in the closing, 36px outline in the header.
+- **Header:** sticky, translucent with backdrop blur, no border at the top of the page; a
+  hairline fades in over the first 64px of scroll via a CSS scroll-driven animation (no JS,
+  progressive).
 - **Motion:** two pieces only. (1) Hero entrance: title, lede, CTA rise 14px and fade over
   800ms, 90ms stagger, `out(4)`. (2) Product build-up, a single timeline that plays once
   when a quarter of the panel is on screen: panel -> schedule rows (100ms stagger) ->
   connector -> dark card -> walk chip and leave line -> route draws over 1s (`inOut(2)`)
-  -> destination dot -> "Leave in 6 min" last. About 2.9s total. Waits 550ms after mount
+  -> destination dot -> "Leave in 6 min" last. About 2.6s total. Waits 550ms after mount
   if it is already in view so the hero lands first. Hover states are CSS only.
 - **Reduced motion / no JS:** `[data-reveal]` is hidden only under
   `prefers-reduced-motion: no-preference`; the scope checks the same query and skips all
