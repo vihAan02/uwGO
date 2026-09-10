@@ -1,8 +1,9 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import type { CourseMeeting, GymPreferences, RoutePreference, TermInfo, UserHome } from "@/domain/types";
+import type { CourseMeeting, GapChoice, GymPreferences, RoutePreference, TermInfo, UserHome } from "@/domain/types";
 import type { PlannerConfig } from "@/domain/config";
 import { type AppState, emptyState, loadState, saveState, clearState } from "./storage";
+import { forgetMissingClasses, setGapChoice } from "./gapChoices";
 
 interface StoreApi {
   state: AppState;
@@ -15,6 +16,8 @@ interface StoreApi {
   setConfig(patch: Partial<PlannerConfig>): void;
   setGym(gym: GymPreferences | undefined): void;
   setRoutePreference(pref: RoutePreference): void;
+  /** Answer one gap. `everyWeek` makes it the standing answer for that class; undefined clears both. */
+  setGapChoice(dateISO: string, classId: string, choice: GapChoice | undefined, everyWeek: boolean): void;
   reset(): void;
 }
 
@@ -53,12 +56,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       if (existing.some((m) => m.id === meeting.id)) return s;
       return { ...s, schedule: { meetings: [...existing, meeting], term: s.schedule?.term, importedAt: s.schedule?.importedAt ?? new Date().toISOString(), source: s.schedule ? "MIXED" : "MANUAL" } };
     }),
-    removeMeeting: (id) => update((s) => s.schedule ? { ...s, schedule: { ...s.schedule, meetings: s.schedule.meetings.filter((m) => m.id !== id) } } : s),
+    removeMeeting: (id) => update((s) => {
+      if (!s.schedule) return s;
+      const meetings = s.schedule.meetings.filter((m) => m.id !== id);
+      // A dropped course should stop haunting the plan with last term's answers.
+      return { ...s, schedule: { ...s.schedule, meetings }, gapChoices: forgetMissingClasses(s.gapChoices, meetings.map((m) => m.id)) };
+    }),
     setIncludeInPlan: (id, include) => update((s) => s.schedule ? { ...s, schedule: { ...s.schedule, meetings: s.schedule.meetings.map((m) => (m.id === id ? { ...m, includeInPlan: include } : m)) } } : s),
     setHome: (home) => update((s) => ({ ...s, home })),
     setConfig: (patch) => update((s) => ({ ...s, config: { ...s.config, ...patch } })),
     setGym: (gym) => update((s) => ({ ...s, gym })),
     setRoutePreference: (routePreference) => update((s) => ({ ...s, routePreference })),
+    setGapChoice: (dateISO, classId, choice, everyWeek) =>
+      update((s) => ({ ...s, gapChoices: setGapChoice(s.gapChoices, dateISO, classId, choice, everyWeek) })),
     reset: () => { clearState(); setState(emptyState()); },
   }), [state, hydrated, update]);
 

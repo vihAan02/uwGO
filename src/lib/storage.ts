@@ -1,4 +1,7 @@
 import type { CourseMeeting, GymPreferences, RoutePreference, TermInfo, UserHome } from "@/domain/types";
+import type { GapChoices } from "@/domain/gapChoices";
+import { migrateGapChoices } from "./gapChoices";
+import { todayISO } from "@/time/toronto";
 import { GYM_DURATIONS } from "@/domain/types";
 import { DEFAULT_PLANNER_CONFIG, USER_CONFIG_KEYS, type PlannerConfig } from "@/domain/config";
 
@@ -11,6 +14,11 @@ export interface AppState {
   /** Undefined until the student has answered "do you work out?". */
   gym?: GymPreferences;
   routePreference?: RoutePreference;
+  /**
+   * What to do with each gap. Per device on purpose: this is a day-to-day decision about one
+   * afternoon, not a preference, so it is never synced to the profile.
+   */
+  gapChoices?: GapChoices;
 }
 
 export const DEFAULT_GYM: GymPreferences = { enabled: false, durationMinutes: 60, preferredTime: "NONE" };
@@ -45,7 +53,9 @@ function migrate(raw: unknown): AppState {
     if (typeof v === "number" && Number.isFinite(v)) config[k] = v;
   }
   const routePreference: RoutePreference | undefined = obj.routePreference === "INDOORS" ? "INDOORS" : obj.routePreference === "FASTEST" ? "FASTEST" : undefined;
-  return { ...emptyState(), ...obj, config, gym: migrateGym(obj.gym), routePreference };
+  // Everything below has to come AFTER the spread: `...obj` is raw parsed JSON, so a field
+  // that is not explicitly overridden here arrives unvalidated.
+  return { ...emptyState(), ...obj, config, gym: migrateGym(obj.gym), routePreference, gapChoices: migrateGapChoices(obj.gapChoices, todayISO()) };
 }
 
 export function loadState(storage: Pick<Storage, "getItem"> | undefined = typeof window !== "undefined" ? window.localStorage : undefined): AppState {

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import type { CourseMeeting, GymPreferences, RoutePreference, UserHome, WeekPlan } from "@/domain/types";
+import type { GapChoices } from "@/domain/gapChoices";
 import type { PlannerConfig } from "@/domain/config";
 import type { PacReading, PacSample } from "@/data/pac/crowd";
 import { buildWeekPlan } from "@/engine/planner";
@@ -31,6 +32,7 @@ export function defaultWeekStart(meetings: CourseMeeting[], now = new Date()): s
 
 export interface PlanExtras {
   gym?: GymPreferences;
+  gapChoices?: GapChoices;
   routePreference?: RoutePreference;
   pacLive?: PacReading;
   pacSamples?: readonly PacSample[];
@@ -41,15 +43,24 @@ export function usePlan(meetings: CourseMeeting[] | undefined, home: UserHome | 
   // Live PAC readings drift by the minute; the plan only needs rebuilding when the picture
   // of "how busy" actually moves (a 10-point step), and only if the gym is in play at all.
   const liveKey = extras.gym?.enabled && extras.pacLive ? `${Math.round(extras.pacLive.occupancyPct / 10)}@${Math.floor(extras.pacLive.at.getTime() / 900_000)}` : "";
+  // Sorted, so a store update that rebuilds the same answers into a new object does not read
+  // as a change and trigger a pointless rebuild of the whole week.
+  const gapChoiceKey = useMemo(() => {
+    const gc = extras.gapChoices;
+    if (!gc) return "";
+    const flat = [...Object.entries(gc.byDate ?? {}), ...Object.entries(gc.byClass ?? {})];
+    return flat.map(([k, v]) => `${k}=${v.kind}${v.gymThen ?? ""}`).sort().join(",");
+  }, [extras.gapChoices]);
+
   const key = useMemo(
-    () => JSON.stringify({ m: meetings?.map((x) => [x.id, x.includeInPlan]), h: home, c: config, w: mondayISO, g: extras.gym, r: extras.routePreference ?? "FASTEST", l: liveKey }),
-    [meetings, home, config, mondayISO, extras.gym, extras.routePreference, liveKey],
+    () => JSON.stringify({ m: meetings?.map((x) => [x.id, x.includeInPlan]), h: home, c: config, w: mondayISO, g: extras.gym, r: extras.routePreference ?? "FASTEST", l: liveKey, gc: gapChoiceKey }),
+    [meetings, home, config, mondayISO, extras.gym, extras.routePreference, liveKey, gapChoiceKey],
   );
 
   useEffect(() => {
     if (!meetings) return;
     let cancelled = false;
-    buildWeekPlan({ meetings, home, mondayISO, config, gym: extras.gym, routePreference: extras.routePreference, pacLive: extras.pacLive, pacSamples: extras.pacSamples }, getClientProvider())
+    buildWeekPlan({ meetings, home, mondayISO, config, gym: extras.gym, routePreference: extras.routePreference, gapChoices: extras.gapChoices, pacLive: extras.pacLive, pacSamples: extras.pacSamples }, getClientProvider())
       .then((plan) => { if (!cancelled) setResult({ key, plan }); })
       .catch((e: unknown) => { if (!cancelled) setResult({ key, error: e instanceof Error ? e.message : String(e) }); });
     return () => { cancelled = true; };
