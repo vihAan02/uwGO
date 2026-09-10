@@ -33,6 +33,13 @@ export const UW_ALIASES: Record<string, string> = {
   "DANA PORTER": "LIB",
 };
 
+/**
+ * V1 rule for Waterloo classrooms: the first digit of the room number is the floor
+ * (MC 2065 -> floor 2, DC 1350 -> floor 1, RCH 305 -> floor 3). Buildings below override
+ * it; anything not listed there uses this rule and is flagged "likely", not "verified".
+ */
+const UW_DEFAULT_FLOOR_RULE: FloorRule = { kind: "FIRST_DIGIT", confidence: "likely", source: "UW GO v1 rule: first digit of the room number is the floor" };
+
 const FLOOR_RULES: Record<string, FloorRule> = {
   // Verified from the public E7 space-booking floor-plan PDF (rooms 1327…7431 across floors 1-7).
   PSE: {
@@ -66,7 +73,7 @@ export const UW_BUILDINGS: readonly CampusBuilding[] = UW_BUILDING_ROWS.map((row
     address: "200 University Ave W, Waterloo, ON N2L 3G1",
     kind: isResidence ? "RESIDENCE" : isCollege ? "MIXED" : "ACADEMIC",
     parentCode: row.parentCode?.toUpperCase(),
-    floorRule: FLOOR_RULES[code] ?? { kind: "UNKNOWN" },
+    floorRule: FLOOR_RULES[code] ?? UW_DEFAULT_FLOOR_RULE,
     residenceLabel: RESIDENCES[code] ?? COLLEGES[code],
   };
 });

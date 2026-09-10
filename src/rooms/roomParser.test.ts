@@ -12,15 +12,18 @@ describe("room parser", () => {
     expect(r.university).toBe("UW");
   });
 
-  it("PSE/E7 rooms get a verified floor; other UW buildings report unknown", () => {
+  it("PSE/E7 rooms get a verified floor; every other UW building uses the first-digit rule as 'likely'", () => {
     const e7 = parseRoom("E7 2317", "UW");
     expect(e7.buildingCode).toBe("PSE");
     expect(e7.floor).toBe(2);
     expect(e7.floorConfidence).toBe("verified");
-    const dc = parseRoom("DC 1351", "UW");
+    const dc = parseRoom("DC 1350", "UW");
     expect(dc.resolved).toBe(true);
-    expect(dc.floor).toBe("unknown");
-    expect(dc.floorConfidence).toBeUndefined();
+    expect(dc.floor).toBe(1);
+    expect(dc.floorConfidence).toBe("likely");
+    expect(parseRoom("RCH 305", "UW")).toMatchObject({ roomNumber: "305", floor: 3 });
+    expect(parseRoom("STC 0010", "UW")).toMatchObject({ roomNumber: "0010", floor: 0 });
+    expect(parseRoom("QNC 2502", "UW")).toMatchObject({ roomNumber: "2502", floor: 2 });
   });
 
   it("normalizes internal whitespace and lettered suffixes", () => {
