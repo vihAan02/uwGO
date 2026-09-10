@@ -4,6 +4,7 @@ import type { CampusLocation, ClassTransition, DayPlan, DayPlanItem, HomeReturnA
 import { formatClock, formatDuration, minutesBetween } from "@/time/toronto";
 import { googleMapsDirectionsUrl, travelModeFor } from "@/lib/mapsLinks";
 import { indoorPathLabel } from "@/engine/indoorRoute";
+import { findRoomPosition } from "@/data/floorplans";
 import type { MapSelection } from "../map/MapPanel";
 import { RemindButton } from "./RemindButton";
 import { GymCard } from "./GymCard";
@@ -38,10 +39,15 @@ function modeIcon(r: RouteOption | undefined) {
   return r?.mode === "TRANSIT" ? "\u{1F68C}" : "\u{1F6B6}";
 }
 
-/** "Floor 2" from the V1 rule; a floor of 0 is the lowest level in Waterloo's numbering. */
+/**
+ * "Floor 2" from the V1 rule, or "Floor 2 · east side" when the room's position on the
+ * floor plan is known. A floor of 0 is the lowest level in Waterloo's numbering.
+ */
 export function floorLabel(room: ScheduledClass["room"]): string {
   if (room.floor === "unknown") return "Floor unknown";
-  return room.floor === 0 ? "Floor 0 (lowest level)" : `Floor ${room.floor}`;
+  const base = room.floor === 0 ? "Floor 0 (lowest level)" : `Floor ${room.floor}`;
+  const pos = room.roomNumber ? findRoomPosition(room.buildingCode, room.roomNumber) : undefined;
+  return pos?.description ? `${base} · ${pos.description}` : base;
 }
 
 function WalkChoiceRow({ label, r, chosen, note }: { label: string; r: RouteOption; chosen: boolean; note: string }) {

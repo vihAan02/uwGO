@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "gen:uw-buildings": "node scripts/gen-uw-buildings.mjs"
+    "gen:uw-buildings": "node scripts/gen-uw-buildings.mjs",
+    "ingest:floorplans": "node scripts/floorplans/ingest.mjs"
   },
   "dependencies": {
     "@date-fns/tz": "^1.5.0",
