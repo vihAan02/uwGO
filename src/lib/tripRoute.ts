@@ -1,7 +1,10 @@
-import type { CampusLocation, RouteOption } from "@/domain/types";
+import type { CampusLocation, LatLng, RouteOption, RoutePreference } from "@/domain/types";
 import { DEFAULT_PLANNER_CONFIG } from "@/domain/config";
 import { chooseRoute } from "@/engine/transitCompare";
+import type { RouteFetcher } from "@/engine/bestRoute";
+import { fetcherDeps, livePosition, selectRoute } from "@/engine/selectRoute";
 import { HttpRoutingProvider } from "@/routing/HttpRoutingProvider";
+import { clientRoutingProvider } from "./routingClient";
 
 /** A transit result computed longer ago than this is refetched before a trip starts. */
 export const TRANSIT_STALE_MINUTES = 3;
@@ -93,11 +96,43 @@ export function bearing(from: { latitude: number; longitude: number }, to: { lat
 }
 
 /**
- * A fresh walking route from wherever the student actually is, for when they have left the
- * planned route. Same provider and same server handler as every other route; the caller
- * decides how rarely to ask (see `rerouteDecision`).
+ * The browser's shared routing provider as a fetcher. A lookup that fails is "no route", never
+ * a thrown trip: the student keeps the route they are already following.
  */
-export async function rerouteWalk(from: { latitude: number; longitude: number }, to: CampusLocation): Promise<TripRoute | undefined> {
-  const route = await live.getWalkingRoute(from, to);
-  return route ? { route, status: "REROUTED", note: "Route updated from where you are." } : undefined;
+function liveFetcher(): RouteFetcher {
+  const provider = clientRoutingProvider();
+  return {
+    walk: (from, to) => provider.getWalkingRoute(from, to).catch(() => undefined),
+    transit: (from, to, opts) => provider.getTransitRoute(from, to, opts).catch(() => undefined),
+  };
+}
+
+/**
+ * The best route to the same destination from wherever the student actually is. This is the
+ * same `selectRoute` the weekly plan uses, so a reroute is not a lesser kind of routing: the
+ * outdoor walk, the winter route over the indoor network and a mixed way through both are all
+ * priced from the live position and chosen between by the student's own route preference.
+ *
+ * The caller decides how rarely to ask (see `TripRerouter`). Config is the default set because
+ * the only setting a student can change, the arrival buffer, has no bearing on a trip already
+ * under way: there is no deadline to work back from once you have set off.
+ */
+export async function rerouteFrom(at: LatLng, to: CampusLocation, preference: RoutePreference, now: Date = new Date()): Promise<RouteOption | undefined> {
+  const cfg = DEFAULT_PLANNER_CONFIG;
+  const selection = await selectRoute(
+    // No deadline: the trip is already under way, so the question is simply what gets there
+    // soonest from here. The winter route is only priced when the student actually prefers it,
+    // because an option that cannot be recommended is not worth the lookups it costs.
+    { from: livePosition(at), to, departAfter: now, preference, indoorAlternative: false },
+    fetcherDeps(liveFetcher(), cfg),
+    cfg,
+    now,
+  );
+  const route = selection.recommended;
+  if (!route) return undefined;
+  // A straight-line guess is exactly what a reroute must never draw. Winter routes carry
+  // `isEstimate` because their timings come from the campus survey rather than Google, but
+  // their line is real geometry, so they are kept.
+  if (route.isEstimate && !route.indoorPath) return undefined;
+  return route;
 }

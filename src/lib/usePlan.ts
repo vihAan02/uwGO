@@ -5,17 +5,8 @@ import type { GapChoices } from "@/domain/gapChoices";
 import type { PlannerConfig } from "@/domain/config";
 import type { PacReading, PacSample } from "@/data/pac/crowd";
 import { buildWeekPlan } from "@/engine/planner";
-import { CachedRoutingProvider } from "@/routing/CachedRoutingProvider";
-import { HttpRoutingProvider } from "@/routing/HttpRoutingProvider";
-import type { RoutingProvider } from "@/routing/RoutingProvider";
-import { LocalStorageRouteCacheStore } from "./routeCacheStore";
+import { clientRoutingProvider } from "./routingClient";
 import { mondayOfWeek, todayISO } from "@/time/toronto";
-
-let clientProvider: RoutingProvider | undefined;
-function getClientProvider(): RoutingProvider {
-  if (!clientProvider) clientProvider = new CachedRoutingProvider(new HttpRoutingProvider(), new LocalStorageRouteCacheStore());
-  return clientProvider;
-}
 
 /** The week to show by default: this week if the schedule covers it, otherwise the first week of the term. */
 export function defaultWeekStart(meetings: CourseMeeting[], now = new Date()): string {
@@ -61,7 +52,7 @@ export function usePlan(meetings: CourseMeeting[] | undefined, home: UserHome | 
   useEffect(() => {
     if (!meetings) return;
     let cancelled = false;
-    buildWeekPlan({ meetings, home, mondayISO, config, gym: extras.gym, routePreference: extras.routePreference, gapChoices: extras.gapChoices, endOfDay: extras.endOfDay, pacLive: extras.pacLive, pacSamples: extras.pacSamples }, getClientProvider())
+    buildWeekPlan({ meetings, home, mondayISO, config, gym: extras.gym, routePreference: extras.routePreference, gapChoices: extras.gapChoices, endOfDay: extras.endOfDay, pacLive: extras.pacLive, pacSamples: extras.pacSamples }, clientRoutingProvider())
       .then((plan) => { if (!cancelled) setResult({ key, plan }); })
       .catch((e: unknown) => { if (!cancelled) setResult({ key, error: e instanceof Error ? e.message : String(e) }); });
     return () => { cancelled = true; };

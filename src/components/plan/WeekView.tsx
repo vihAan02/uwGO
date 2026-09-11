@@ -86,7 +86,7 @@ export function WeekView() {
         <Button
           size="lg"
           className="w-full"
-          onClick={() => setTrip({ label: startable.label, from: startable.from, to: startable.to, route: startable.route!, walkFallback: startable.walkFallback })}
+          onClick={() => setTrip({ label: startable.label, from: startable.from, to: startable.to, route: startable.route!, walkFallback: startable.walkFallback, preference: state.routePreference ?? "FASTEST" })}
         >
           <Navigation /> Start trip to {destinationLabel}
         </Button>

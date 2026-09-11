@@ -126,11 +126,18 @@ export function formatRemaining(r: Remaining): { time: string; distance: string 
 export const ARRIVED_METERS = 15;
 
 export const REROUTE_POLICY = {
-  /** Further from the route than this counts as off it. */
+  /**
+   * Further from the route than this counts as off it. Walking navigation on campus is the
+   * demanding case: a phone between tall buildings is routinely 15-30 m out, and the paths
+   * either side of a green run 20-40 m apart, so a smaller threshold would reroute a student
+   * who is walking the right path. At 60 m they are on a different path, not a noisy fix.
+   */
   offRouteMeters: 60,
-  /** Only after being off the route for this long, so one bad fix does not reroute. */
+  /** Off the route on this many consecutive usable fixes, so a single wild fix cannot reroute. */
+  offRouteFixes: 3,
+  /** ...and for at least this long, so a burst of fixes in one second cannot either. */
   offRouteForMs: 20_000,
-  /** Never two reroutes closer together than this. */
+  /** Never two reroutes closer together than this, whatever the fixes say. */
   minGapMs: 60_000,
   /** A fix this uncertain says nothing about whether the student left the route. */
   maxAccuracyMeters: 50,
@@ -138,21 +145,25 @@ export const REROUTE_POLICY = {
 
 export interface RerouteState {
   offSince?: number;
+  /** Consecutive usable fixes seen off the route. */
+  offFixes?: number;
   lastRerouteAt?: number;
 }
 
 /**
- * Whether it is time to ask for a new route. Leaving the route is only believed once a
- * run of accurate fixes has agreed on it for a while, and reroutes are spaced out, so the
- * routing API is asked rarely rather than on every position update.
+ * Whether it is time to ask for a new route. Leaving the route is only believed once a run of
+ * accurate fixes has agreed on it, for both a number of fixes and a length of time, and
+ * reroutes are spaced out, so the routing API is asked rarely rather than on every update.
+ * Anything that resolves to `reroute: false` is free: no route is computed, nothing is fetched.
  */
 export function rerouteDecision(state: RerouteState, fix: { offRouteMeters: number; accuracyMeters?: number }, now: number, policy = REROUTE_POLICY): { state: RerouteState; reroute: boolean } {
   const usable = fix.accuracyMeters === undefined || fix.accuracyMeters <= policy.maxAccuracyMeters;
   if (!usable) return { state, reroute: false };
-  if (fix.offRouteMeters <= policy.offRouteMeters) return { state: { ...state, offSince: undefined }, reroute: false };
+  if (fix.offRouteMeters <= policy.offRouteMeters) return { state: { ...state, offSince: undefined, offFixes: 0 }, reroute: false };
   const offSince = state.offSince ?? now;
-  const longEnough = now - offSince >= policy.offRouteForMs;
+  const offFixes = (state.offFixes ?? 0) + 1;
+  const longEnough = now - offSince >= policy.offRouteForMs && offFixes >= policy.offRouteFixes;
   const spaced = state.lastRerouteAt === undefined || now - state.lastRerouteAt >= policy.minGapMs;
-  if (longEnough && spaced) return { state: { offSince: undefined, lastRerouteAt: now }, reroute: true };
-  return { state: { ...state, offSince }, reroute: false };
+  if (longEnough && spaced) return { state: { offSince: undefined, offFixes: 0, lastRerouteAt: now }, reroute: true };
+  return { state: { ...state, offSince, offFixes }, reroute: false };
 }

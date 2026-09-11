@@ -125,6 +125,27 @@ describe("deciding to reroute", () => {
     expect(s.state.lastRerouteAt).toBeGreaterThanOrEqual(t0 + REROUTE_POLICY.offRouteForMs + REROUTE_POLICY.minGapMs);
   });
 
+  it("needs a run of fixes to agree, not just two of them a long way apart", () => {
+    // Two off-route readings half a minute apart: long enough on the clock, but a phone that
+    // reported twice in thirty seconds has not established anything.
+    let s = rerouteDecision({}, off, t0);
+    s = rerouteDecision(s.state, off, t0 + 30_000);
+    expect(s.reroute).toBe(false);
+    expect(s.state.offFixes).toBe(2);
+    s = rerouteDecision(s.state, off, t0 + 31_000);
+    expect(s.reroute).toBe(true);
+  });
+
+  it("starts the run again the moment one fix lands back on the route", () => {
+    let s = rerouteDecision({}, off, t0);
+    s = rerouteDecision(s.state, off, t0 + 1000);
+    s = rerouteDecision(s.state, on, t0 + 2000);
+    expect(s.state.offFixes).toBe(0);
+    s = rerouteDecision(s.state, off, t0 + 3000);
+    s = rerouteDecision(s.state, off, t0 + 25_000);
+    expect(s.reroute).toBe(false); // two fixes into the new run, however long it has been
+  });
+
   it("ignores fixes too inaccurate to say anything", () => {
     const s = rerouteDecision({ offSince: t0 - 60_000 }, { offRouteMeters: 300, accuracyMeters: 200 }, t0);
     expect(s.reroute).toBe(false);

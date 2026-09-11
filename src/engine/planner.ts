@@ -13,8 +13,7 @@ import { buildItinerary, findContinuityBreaks, type LegSpec } from "./transition
 import { resolveBestRoute, type BestRoute, type RouteFetcher, type RouteRequest } from "./bestRoute";
 import { assessResolvedFeasibility } from "./feasibility";
 import { analyzeHomeReturn, type ResolvedLeg } from "./homeReturn";
-import { indoorIsReasonable, indoorRouteBetween } from "./indoorRoute";
-import { clampDeparture, expectedArrival, recommendedDeparture } from "./departure";
+import { selectRoute } from "./selectRoute";
 import { findGymWindows, gymForGap } from "./gym";
 import { nearestSpot, priceGapOptions, recommendGapOption } from "./gapOptions";
 import { resolveStudySpots } from "@/data/study";
@@ -104,24 +103,18 @@ function requestFor(t: ClassTransition): RouteRequest {
 }
 
 async function resolveTransition(t: ClassTransition, resolver: LegResolver, memo: RouteMemo, cfg: PlannerConfig, routePreference: RoutePreference): Promise<ClassTransition> {
-  const best = await resolver.resolve(requestFor(t));
-  let recommended = best.recommended;
-  let departure = best.departure;
-  let arrival = best.arrival;
-  let reason = best.reason;
-
-  // The winter route comes from the campus indoor network; a place off the network is joined
-  // to it by a short walk priced through the same memo as every other walk. It is always
-  // offered as the alternative; it is taken only when asked for and not unreasonably slower
-  // than the fastest walk. A chosen bus is never overridden: that decision was about time.
-  const indoorRoute = await indoorRouteBetween(t.from, t.to, memo);
-  if (indoorRoute && routePreference === "INDOORS" && recommended?.mode === "WALK" && best.walking && indoorIsReasonable(indoorRoute, best.walking, cfg)) {
-    recommended = indoorRoute;
-    departure = t.hasDeadline ? clampDeparture(recommendedDeparture(t.arriveBy, indoorRoute.durationMinutes, cfg.arrivalBufferMinutes), t.departAfter) : t.departAfter;
-    arrival = expectedArrival(departure, indoorRoute.durationMinutes);
-    const extra = indoorRoute.durationMinutes - best.walking.durationMinutes;
-    reason = extra > 0 ? `Indoor route: ${extra} min slower than the fastest walk, but you stay inside.` : "Indoor route: as fast as the outdoor walk.";
-  }
+  // Walking, transit and the winter route are all priced and chosen between by `selectRoute`,
+  // the same function Trip Mode reroutes through. The leg resolver keeps its per-request cache
+  // of the walk-vs-transit answer; the indoor joins are priced through the same memo as every
+  // other walk. The winter route is always offered as the alternative; it is taken only when
+  // asked for and not unreasonably slower than the fastest walk. A chosen bus is never
+  // overridden: that decision was about time.
+  const best = await selectRoute(
+    { ...requestFor(t), preference: routePreference },
+    { best: (req) => resolver.resolve(req), connector: memo },
+    cfg,
+  );
+  const { recommended, departure, arrival, reason, indoor: indoorRoute } = best;
 
   let feasibility: ClassTransition["feasibility"] = "UNKNOWN";
   if (recommended && departure && arrival) {
