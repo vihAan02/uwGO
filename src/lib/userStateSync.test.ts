@@ -5,6 +5,7 @@ import { DEFAULT_PLANNER_CONFIG } from "@/domain/config";
 import { asAnon, asUser, createTestDb, createUser, pgUserStateStore, rawRow } from "../../test/helpers/supabaseTestDb";
 import { emptyState, type AppState } from "./storage";
 import { parseUserStateRow, toUserStateWrite } from "./userState";
+import { FALL_2026 } from "../../test/fixtures/fall2026Schedule";
 import type { UserStateStore } from "./userStateStore";
 import { createUserStateSync, type Timers } from "./userStateSync";
 
@@ -222,6 +223,76 @@ describe("a returning student", () => {
     expect(await deleting).toBe(true);
     await device.settle();
     expect(await rawRow(db, user.id)).toBeUndefined();
+  });
+});
+
+describe("a returning student on a brand-new device (empty local storage)", () => {
+  // A realistic term: TBA rooms, ONLINE and unscheduled meetings, one-off test dates. The whole
+  // thing must survive the round-trip, or a device 2 would drop the schedule and show onboarding.
+  const realState = (): AppState => ({
+    ...emptyState(),
+    schedule: { meetings: FALL_2026, term: { season: "Fall", year: 2026, termId: 1269 }, importedAt: "2026-09-10T12:00:00.000Z", source: "QUEST" },
+    home: { name: "UW Place (UWP)", latitude: 43.4708, longitude: -80.5352, preset: { university: "UW", buildingCode: "UWP" } },
+    config: { ...DEFAULT_PLANNER_CONFIG, arrivalBufferMinutes: 5 },
+    gym: { enabled: true, durationMinutes: 60, preferredTime: "NONE" },
+    routePreference: "FASTEST",
+    endOfDay: "LIBRARY",
+  });
+
+  it("restores the whole schedule and preferences from Supabase, from truly empty local storage, so onboarding is skipped", async () => {
+    const user = await createUser(db);
+    await saveDirectly(user, realState()); // device 1 saved it; the row is the only source of truth
+    const before = await rawRow(db, user.id);
+
+    // Device 2: a different browser with nothing in local storage.
+    const device = openDevice(user, emptyState());
+    expect(device.state.schedule).toBeUndefined();
+    expect(device.state.home).toBeUndefined();
+
+    await device.sync.load();
+    await device.settle();
+
+    expect(device.sync.snapshot().status).toBe("ready");
+    // The schedule is back in full (every meeting, including TBA/ONLINE/unscheduled ones).
+    expect(device.state.schedule?.meetings.map((m) => m.id)).toEqual(FALL_2026.map((m) => m.id));
+    expect(device.state.schedule?.term).toEqual({ season: "Fall", year: 2026, termId: 1269 });
+    // ...and the preferences, so the app is fully set up: onboarding is skipped, not re-shown.
+    expect(device.state.home?.preset).toEqual({ university: "UW", buildingCode: "UWP" });
+    expect(device.state.config.arrivalBufferMinutes).toBe(5);
+    expect(device.state.gym).toEqual({ enabled: true, durationMinutes: 60, preferredTime: "NONE" });
+    expect(device.state.routePreference).toBe("FASTEST");
+    expect(device.state.endOfDay).toBe("LIBRARY");
+    // A pure read rewrites nothing.
+    expect((await rawRow(db, user.id))?.updated_at.getTime()).toBe(before?.updated_at.getTime());
+  });
+
+  it("a new student with no row still gets onboarding, and nothing is written", async () => {
+    const user = await createUser(db);
+    const device = openDevice(user, emptyState());
+    await device.sync.load();
+    await device.settle();
+    expect(device.sync.snapshot().status).toBe("ready");
+    expect(device.state.schedule).toBeUndefined(); // no schedule -> the app shows onboarding
+    expect(await rawRow(db, user.id)).toBeUndefined();
+  });
+
+  it("a failed read never masquerades as a new student: it errors for retry, then hydrates once the network is back", async () => {
+    const user = await createUser(db);
+    await saveDirectly(user, realState());
+    const { store, net } = switchable(pgUserStateStore(db, user));
+
+    const device = openDevice(user, emptyState(), store);
+    await device.sync.load();
+    // Not "ready with an empty schedule" (which would send them to onboarding) — an explicit error.
+    expect(device.sync.snapshot()).toMatchObject({ status: "error", loadError: "Failed to fetch" });
+    expect(device.state.schedule).toBeUndefined();
+
+    net.up = true;
+    await device.sync.retry();
+    await device.settle();
+    expect(device.sync.snapshot().status).toBe("ready");
+    expect(device.state.schedule?.meetings).toHaveLength(FALL_2026.length);
+    expect(device.state.endOfDay).toBe("LIBRARY");
   });
 });
 
