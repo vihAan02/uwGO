@@ -58,26 +58,35 @@ export function floorLabel(room: ScheduledClass["room"]): string {
   return pos?.description ? `${base} · ${pos.description}` : base;
 }
 
-function WalkChoiceRow({ label, r, chosen, note }: { label: string; r: RouteOption; chosen: boolean; note: string }) {
+function WalkChoiceRow({ label, r, chosen, note, onSelect }: { label: string; r: RouteOption; chosen: boolean; note: string; onSelect: () => void }) {
   return (
-    <div className={cn("flex items-baseline justify-between gap-2 rounded-lg px-2 py-1", chosen ? "bg-brand-soft text-brand" : "text-ink-muted")}>
+    <button
+      type="button"
+      aria-pressed={chosen}
+      // The leg row underneath is pressable too; without this it would take the click and show its own route.
+      onClick={(e) => { e.stopPropagation(); onSelect(); }}
+      className={cn("flex w-full cursor-pointer items-baseline justify-between gap-2 rounded-lg px-2 py-1 text-left", chosen ? "bg-brand-soft text-brand" : "text-ink-muted")}
+    >
       <span><span className="font-semibold">{label}</span> · {formatDuration(r.durationMinutes)}</span>
       <span className="text-xs">{note}</span>
-    </div>
+    </button>
   );
 }
 
-/** The two ways to walk: Google's fastest and the indoor path, side by side. */
-function IndoorComparison({ t }: { t: ClassTransition }) {
+/** The two ways to walk: Google's fastest and the indoor path, side by side. Tapping one shows that way on the map. */
+export function IndoorComparison({ t, id, label, sel }: { t: ClassTransition; id: string; label: string; sel: Selectable }) {
   const rec = t.recommendedRoute;
   const indoor = t.indoorRoute;
   const fastest = t.walkingRoute;
   if (!rec || !indoor || !fastest || rec.mode === "TRANSIT") return null;
-  const chosenIndoor = Boolean(rec.indoorPath);
+  // Lit: the way the map is showing for this leg, or until one is tapped, the way the plan took.
+  const winterShown = sel.selectedId === `${id}-winter` || (sel.selectedId !== `${id}-fastest` && Boolean(rec.indoorPath));
+  const show = (which: "fastest" | "winter", route: RouteOption) =>
+    sel.onSelect(`${id}-${which}`, { kind: "LEG", label, from: t.from, to: t.to, route, walkFallback: fastest });
   return (
     <div className="mt-2 space-y-1 text-sm">
-      <WalkChoiceRow label="Fastest" r={fastest} chosen={!chosenIndoor} note="mostly outdoors" />
-      <WalkChoiceRow label="Winter route" r={indoor} chosen={chosenIndoor} note={`${indoorPathLabel(indoor)} · mostly indoors`} />
+      <WalkChoiceRow label="Fastest" r={fastest} chosen={!winterShown} note="mostly outdoors" onSelect={() => show("fastest", fastest)} />
+      <WalkChoiceRow label="Winter route" r={indoor} chosen={winterShown} note={`${indoorPathLabel(indoor)} · mostly indoors`} onSelect={() => show("winter", indoor)} />
     </div>
   );
 }
@@ -112,12 +121,16 @@ const ROW = "flex gap-3 px-3 py-3 transition-colors duration-150 sm:gap-4 sm:px-
 const SELECTED = "bg-brand/[0.045] shadow-[inset_3px_0_0_0_var(--color-brand)]";
 const PRESSABLE = "-m-1 min-w-0 flex-1 cursor-pointer rounded-lg p-1 outline-none focus-visible:ring-[3px] focus-visible:ring-brand/35";
 
-function pressable(select: () => void) {
+export function pressable(select: () => void) {
   return {
     role: "button" as const,
     tabIndex: 0,
     onClick: select,
-    onKeyDown: (e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(); } },
+    onKeyDown: (e: React.KeyboardEvent) => {
+      // A key pressed on a control inside the row (Google Maps, Remind me, a route choice) is that control's.
+      if (e.target !== e.currentTarget) return;
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(); }
+    },
   };
 }
 
@@ -127,7 +140,7 @@ function LeaveRow({ t, id, sel, label, day }: { t: ClassTransition; id: string; 
   const sameSpot = rec.durationMinutes === 0;
   const select = () => sel.onSelect(id, { kind: "LEG", label, from: t.from, to: t.to, route: rec, walkFallback: t.walkingRoute });
   return (
-    <li data-reveal className={cn(ROW, sel.selectedId === id && SELECTED)}>
+    <li data-reveal className={cn(ROW, (sel.selectedId === id || sel.selectedId?.startsWith(`${id}-`)) && SELECTED)}>
       <Time at={t.recommendedDeparture!} />
       <div className={PRESSABLE} {...pressable(select)}>
         <div className="flex items-start justify-between gap-3">
@@ -139,7 +152,7 @@ function LeaveRow({ t, id, sel, label, day }: { t: ClassTransition; id: string; 
           <span>{routeSummary(rec)}{t.hasDeadline && t.expectedArrival ? ` · arrive ${formatClock(t.expectedArrival)}` : ""}</span>
         </div>
         {rec.mode === "TRANSIT" && <TransitSteps route={rec} />}
-        <IndoorComparison t={t} />
+        <IndoorComparison t={t} id={id} label={label} sel={sel} />
         {alt && (
           <div className="mt-1.5 flex items-center gap-1.5 text-xs text-ink-muted">
             <ModeIcon route={alt} className="size-3.5" />
