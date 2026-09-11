@@ -12,8 +12,9 @@ const RESEND_MS = 30_000;
 const lastSent = new Map<string, number>();
 
 /**
- * Starts sign-in: validates the Waterloo domain on the server, then asks Supabase to email
- * a magic link (and a 6-digit code, if the email template includes {{ .Token }}).
+ * Starts sign-in: validates the Waterloo domain on the server, then asks Supabase to email a
+ * one-time sign-in code. Sign-in is code only: no redirect URL is sent, and the Supabase "Magic
+ * Link" and "Confirm signup" templates must show {{ .Token }} (docs/SUPABASE_SETUP.md).
  * The domain is also enforced in the database (supabase/migrations), so calling Supabase
  * directly with the public anon key does not get around this check either.
  */
@@ -32,11 +33,7 @@ export async function POST(req: Request) {
   if (last && Date.now() - last < RESEND_MS) return NextResponse.json({ error: "A sign-in email was just sent. Check your inbox, then try again in a moment." } satisfies SendCodeResponse, { status: 429 });
   lastSent.set(email, Date.now());
 
-  const origin = new URL(req.url).origin;
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: `${origin}/auth/callback`, shouldCreateUser: true },
-  });
+  const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
   if (error) {
     // The database trigger rejects non-Waterloo addresses with this text; anything else is Supabase's own message.
     const blocked = /uwaterloo|not allowed|Database error saving new user/i.test(error.message);

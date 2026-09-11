@@ -1,6 +1,6 @@
 /**
  * The routing decision the request proxy makes, kept pure so it can be tested without
- * Next or Supabase. The landing page at / and everything under /login and /auth are public; the app
+ * Next or Supabase. The landing page at / and everything under /login are public; the app
  * itself (/setup, /plan) and its API routes need a verified Waterloo user. A signed-in user who opens the
  * landing page or the login screen is sent straight into the app.
  */
@@ -19,7 +19,7 @@ export interface DecisionInput {
   configured: boolean;
 }
 
-export const PUBLIC_PREFIXES = ["/login", "/auth/"];
+export const PUBLIC_PREFIXES = ["/login"];
 
 export function isPublicPath(pathname: string): boolean {
   return pathname === "/" || PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p));

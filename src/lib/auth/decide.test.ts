@@ -21,9 +21,9 @@ describe("request proxy decisions", () => {
     expect(decideAuth({ ...base, hasUser: true, pathname: "/" })).toEqual({ kind: "TO_APP" });
     expect(decideAuth({ ...base, rejected: true, pathname: "/" })).toEqual({ kind: "SIGN_OUT_DOMAIN" });
   });
-  it("login and the auth callback stay reachable", () => {
+  it("login stays reachable; sign-in is code only, so there is no public link callback", () => {
     expect(decideAuth({ ...base, pathname: "/login" })).toEqual({ kind: "ALLOW" });
-    expect(decideAuth({ ...base, pathname: "/auth/callback" })).toEqual({ kind: "ALLOW" });
+    expect(decideAuth({ ...base, pathname: "/auth/callback" }).kind).toBe("TO_LOGIN");
   });
   it("a verified Waterloo user enters the app and is bounced away from the login screen", () => {
     expect(decideAuth({ ...base, hasUser: true, pathname: "/plan" })).toEqual({ kind: "ALLOW" });

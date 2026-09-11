@@ -10,9 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Reveal } from "@/components/ui/reveal";
 import { Wordmark } from "@/components/ui/wordmark";
 
+/** Only these codes are ever shown; anything else in ?error= is ignored rather than printed. */
 const ERRORS: Record<string, string> = {
   domain: ACCESS_MESSAGE,
-  link: "That sign-in link is not valid any more. Enter your email to get a new one.",
   unconfigured: "Sign-in is not configured on this server yet.",
 };
 
@@ -22,7 +22,7 @@ export function LoginForm({ initialError }: { initialError?: string }) {
   const [step, setStep] = useState<"EMAIL" | "SENT">("EMAIL");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | undefined>(initialError ? ERRORS[initialError] ?? initialError : undefined);
+  const [error, setError] = useState<string | undefined>(initialError ? ERRORS[initialError] : undefined);
 
   const submitEmail = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,13 +48,13 @@ export function LoginForm({ initialError }: { initialError?: string }) {
     e.preventDefault();
     setError(undefined);
     const token = code.replace(/\D/g, "");
-    if (token.length < 6) { setError("Enter the 6-digit code from the email."); return; }
+    if (token.length < 6) { setError("Enter the code from the email."); return; }
     const supabase = getBrowserSupabase();
     if (!supabase) { setError(ERRORS.unconfigured); return; }
     setBusy(true);
     try {
       const { data, error: err } = await supabase.auth.verifyOtp({ email, token, type: "email" });
-      if (err || !data.user?.email) { setError("That code did not work. Check it, or use the link in the email."); return; }
+      if (err || !data.user?.email) { setError("That code did not work. Check the email and try again."); return; }
       if (!isAllowedEmail(data.user.email)) { await supabase.auth.signOut(); setError(ACCESS_MESSAGE); return; }
       router.replace("/plan");
       router.refresh();
@@ -74,7 +74,7 @@ export function LoginForm({ initialError }: { initialError?: string }) {
           <form onSubmit={submitEmail} noValidate>
             <h1 data-reveal className="text-[1.75rem] font-semibold leading-tight tracking-[-0.02em]">Sign in</h1>
             <p data-reveal className="mt-2 text-ink-muted">
-              Use your @uwaterloo.ca email. We send you a sign-in link, so there is no password to remember.
+              Use your @uwaterloo.ca email. We email you a sign-in code, so there is no password to remember.
             </p>
             <div data-reveal className="mt-8 flex flex-col gap-2">
               <Label htmlFor="email">Waterloo email</Label>
@@ -92,31 +92,33 @@ export function LoginForm({ initialError }: { initialError?: string }) {
               {error && <p className="text-sm text-bad" role="alert">{error}</p>}
             </div>
             <Button data-reveal size="lg" className="mt-4 w-full" type="submit" disabled={busy || !email.trim()}>
-              {busy ? "Sending…" : "Continue"}
+              {busy ? "Sending…" : "Send code"}
             </Button>
           </form>
         ) : (
           <form onSubmit={submitCode} noValidate>
             <h1 data-reveal className="text-[1.75rem] font-semibold leading-tight tracking-[-0.02em]">Check your inbox</h1>
             <p data-reveal className="mt-2 text-ink-muted">
-              We sent a sign-in link to <span className="font-medium text-ink">{email}</span>. Open it on this device to enter UW GO.
+              We sent a sign-in code to <span className="font-medium text-ink">{email}</span>. It can take a minute to arrive.
             </p>
             <div data-reveal className="mt-8 flex flex-col gap-2">
-              <Label htmlFor="code">Or enter the 6-digit code from the email</Label>
+              <Label htmlFor="code">Sign-in code</Label>
               <Input
                 id="code"
-                className="font-mono text-lg tracking-[0.3em]"
+                className="font-mono text-lg tracking-[0.3em] placeholder:font-sans placeholder:text-base placeholder:tracking-normal"
                 inputMode="numeric"
                 autoComplete="one-time-code"
-                placeholder="123456"
+                autoFocus
+                maxLength={10}
+                placeholder="Enter the code"
                 value={code}
                 aria-invalid={Boolean(error) || undefined}
-                onChange={(e) => setCode(e.target.value)}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
               />
               {error && <p className="text-sm text-bad" role="alert">{error}</p>}
             </div>
-            <Button data-reveal size="lg" className="mt-4 w-full" type="submit" disabled={busy || code.replace(/\D/g, "").length < 6}>
-              {busy ? "Checking…" : "Enter UW GO"}
+            <Button data-reveal size="lg" className="mt-4 w-full" type="submit" disabled={busy || code.length < 6}>
+              {busy ? "Checking…" : "Sign in"}
             </Button>
             <Button data-reveal variant="ghost" className="mt-2 w-full" type="button" onClick={() => { setStep("EMAIL"); setCode(""); setError(undefined); }}>
               Use a different email
