@@ -214,7 +214,9 @@ export type TransitionKind =
   /** Between two stops in one gap: PAC, then the rez to shower. */
   | "STOP_TO_STOP"
   /** Last hop of such a gap, back to the next class. */
-  | "STOP_TO_CLASS";
+  | "STOP_TO_CLASS"
+  /** End of the day to somewhere other than home (the gym or a library). */
+  | "CLASS_TO_END";
 
 /**
  * Somewhere a student can go and work during a gap. Coordinates are deliberately absent: they
@@ -401,6 +403,13 @@ export interface GymPreferences {
 
 /** FASTEST: Google's route. INDOORS: prefer UW tunnels/bridges when the cost is reasonable. */
 export type RoutePreference = "FASTEST" | "INDOORS";
+
+/**
+ * Where the day ends, after the last class. HOME (the default) keeps the existing behaviour;
+ * GYM routes to the PAC and LIBRARY to the nearest study spot, using the same route resolver as
+ * every other leg. It reuses the gap destinations REZ/GYM/STUDY, named for the end of the day.
+ */
+export type EndOfDayDestination = "HOME" | "GYM" | "LIBRARY";
 
 export type CrowdLevel = "QUIET" | "BEARABLE" | "BUSY" | "VERY_BUSY";
 

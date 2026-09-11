@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import type { CourseMeeting, GymPreferences, RoutePreference, UserHome, WeekPlan } from "@/domain/types";
+import type { CourseMeeting, EndOfDayDestination, GymPreferences, RoutePreference, UserHome, WeekPlan } from "@/domain/types";
 import type { GapChoices } from "@/domain/gapChoices";
 import type { PlannerConfig } from "@/domain/config";
 import type { PacReading, PacSample } from "@/data/pac/crowd";
@@ -34,6 +34,7 @@ export interface PlanExtras {
   gym?: GymPreferences;
   gapChoices?: GapChoices;
   routePreference?: RoutePreference;
+  endOfDay?: EndOfDayDestination;
   pacLive?: PacReading;
   pacSamples?: readonly PacSample[];
 }
@@ -53,14 +54,14 @@ export function usePlan(meetings: CourseMeeting[] | undefined, home: UserHome | 
   }, [extras.gapChoices]);
 
   const key = useMemo(
-    () => JSON.stringify({ m: meetings?.map((x) => [x.id, x.includeInPlan]), h: home, c: config, w: mondayISO, g: extras.gym, r: extras.routePreference ?? "FASTEST", l: liveKey, gc: gapChoiceKey }),
-    [meetings, home, config, mondayISO, extras.gym, extras.routePreference, liveKey, gapChoiceKey],
+    () => JSON.stringify({ m: meetings?.map((x) => [x.id, x.includeInPlan]), h: home, c: config, w: mondayISO, g: extras.gym, r: extras.routePreference ?? "FASTEST", e: extras.endOfDay ?? "HOME", l: liveKey, gc: gapChoiceKey }),
+    [meetings, home, config, mondayISO, extras.gym, extras.routePreference, extras.endOfDay, liveKey, gapChoiceKey],
   );
 
   useEffect(() => {
     if (!meetings) return;
     let cancelled = false;
-    buildWeekPlan({ meetings, home, mondayISO, config, gym: extras.gym, routePreference: extras.routePreference, gapChoices: extras.gapChoices, pacLive: extras.pacLive, pacSamples: extras.pacSamples }, getClientProvider())
+    buildWeekPlan({ meetings, home, mondayISO, config, gym: extras.gym, routePreference: extras.routePreference, gapChoices: extras.gapChoices, endOfDay: extras.endOfDay, pacLive: extras.pacLive, pacSamples: extras.pacSamples }, getClientProvider())
       .then((plan) => { if (!cancelled) setResult({ key, plan }); })
       .catch((e: unknown) => { if (!cancelled) setResult({ key, error: e instanceof Error ? e.message : String(e) }); });
     return () => { cancelled = true; };

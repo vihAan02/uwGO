@@ -33,7 +33,7 @@ const TripMode = dynamic(() => import("../map/TripMode").then((m) => m.TripMode)
 
 export function WeekView() {
   const router = useRouter();
-  const { state, hydrated, setGapChoice } = useStore();
+  const { state, hydrated, setGapChoice, setEndOfDay } = useStore();
   const account = useUserState();
   // The device's copy is only trusted once the account has answered (or there is no account).
   const accountSettled = account.status === "ready" || account.status === "local" || account.status === "offline";
@@ -50,7 +50,7 @@ export function WeekView() {
 
   const monday = useMemo(() => weekOverride ?? (meetings ? defaultWeekStart(meetings) : mondayOfWeek(todayISO())), [weekOverride, meetings]);
   const pac = usePacLive(Boolean(hydrated && state.gym?.enabled));
-  const { plan, loading, error } = usePlan(hydrated && account.status !== "loading" ? meetings : undefined, state.home, state.config, monday, { gym: state.gym, routePreference: state.routePreference, gapChoices: state.gapChoices, pacLive: pac.reading, pacSamples: pac.samples });
+  const { plan, loading, error } = usePlan(hydrated && account.status !== "loading" ? meetings : undefined, state.home, state.config, monday, { gym: state.gym, routePreference: state.routePreference, gapChoices: state.gapChoices, endOfDay: state.endOfDay, pacLive: pac.reading, pacSamples: pac.samples });
   const pacNow = pac.reading ? estimateFromPct(pac.reading.occupancyPct, "LIVE") : undefined;
   const visibleDays = useMemo(() => DAYS_IN_ORDER.filter((d) => ["M", "T", "W", "Th", "F"].includes(d) || (plan?.days[d]?.classes.length ?? 0) > 0), [plan]);
   const dayPlan = plan?.days[day];
@@ -166,7 +166,7 @@ export function WeekView() {
           )}
           {error && <div className="rounded-xl bg-bad-soft p-3 text-sm text-bad">{error}</div>}
           {loading && !dayPlan && <p className="py-12 text-center text-ink-muted">Building your routes&hellip;</p>}
-          {dayPlan && <DayTimeline plan={dayPlan} home={state.home} busy={loading} sel={{ selectedId: picked?.id, onSelect: (id, sl) => setPicked({ id, selection: sl }) }} focusClassId={focusClassId} onChooseGap={setGapChoice} />}
+          {dayPlan && <DayTimeline plan={dayPlan} home={state.home} busy={loading} sel={{ selectedId: picked?.id, onSelect: (id, sl) => setPicked({ id, selection: sl }) }} focusClassId={focusClassId} onChooseGap={setGapChoice} endOfDay={state.endOfDay ?? "HOME"} onChooseEndOfDay={setEndOfDay} />}
           {plan && plan.skipped.length > 0 && (
             <details className="group px-1 pt-2 text-sm text-ink-muted">
               <summary className="flex min-h-9 cursor-pointer list-none items-center gap-1.5 [&::-webkit-details-marker]:hidden">

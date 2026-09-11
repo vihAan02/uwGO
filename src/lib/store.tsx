@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import type { CourseMeeting, GapChoice, GymPreferences, RoutePreference, TermInfo, UserHome } from "@/domain/types";
+import type { CourseMeeting, EndOfDayDestination, GapChoice, GymPreferences, RoutePreference, TermInfo, UserHome } from "@/domain/types";
 import type { PlannerConfig } from "@/domain/config";
 import { type AppState, emptyState, loadState, saveState, clearState } from "./storage";
 import { forgetMissingClasses, setGapChoice } from "./gapChoices";
@@ -16,6 +16,8 @@ interface StoreApi {
   setConfig(patch: Partial<PlannerConfig>): void;
   setGym(gym: GymPreferences | undefined): void;
   setRoutePreference(pref: RoutePreference): void;
+  /** Where the day ends after the last class (HOME clears it back to the default). */
+  setEndOfDay(dest: EndOfDayDestination): void;
   /** Answer one gap. `everyWeek` makes it the standing answer for that class; undefined clears both. */
   setGapChoice(dateISO: string, classId: string, choice: GapChoice | undefined, everyWeek: boolean): void;
   /** Replace the whole state at once, e.g. with the copy saved to the student's account. */
@@ -69,6 +71,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setConfig: (patch) => update((s) => ({ ...s, config: { ...s.config, ...patch } })),
     setGym: (gym) => update((s) => ({ ...s, gym })),
     setRoutePreference: (routePreference) => update((s) => ({ ...s, routePreference })),
+    setEndOfDay: (endOfDay) => update((s) => ({ ...s, endOfDay: endOfDay === "HOME" ? undefined : endOfDay })),
     setGapChoice: (dateISO, classId, choice, everyWeek) =>
       update((s) => ({ ...s, gapChoices: setGapChoice(s.gapChoices, dateISO, classId, choice, everyWeek) })),
     replaceState: (next) => update(() => next),

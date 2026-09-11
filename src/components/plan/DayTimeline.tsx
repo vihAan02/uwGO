@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { AlertTriangle, Check, ExternalLink, MapPin, X } from "lucide-react";
-import type { CampusLocation, ClassTransition, DayPlan, DayPlanItem, HomeReturnAnalysis, RouteOption, ScheduledClass, UserHome } from "@/domain/types";
+import type { CampusLocation, ClassTransition, DayPlan, DayPlanItem, EndOfDayDestination, HomeReturnAnalysis, RouteOption, ScheduledClass, UserHome } from "@/domain/types";
 import { formatClock, formatDuration, minutesBetween } from "@/time/toronto";
 import { googleMapsDirectionsUrl, travelModeFor } from "@/lib/mapsLinks";
 import { indoorPathLabel } from "@/engine/indoorRoute";
@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { MapSelection } from "../map/MapPanel";
 import { RemindButton } from "./RemindButton";
 import { GymCard } from "./GymCard";
@@ -274,7 +275,23 @@ function neighbouringClasses(items: DayPlanItem[], index: number): { prev?: Sche
   return { prev, next };
 }
 
-export function DayTimeline({ plan, home, busy, sel, focusClassId, onChooseGap }: { plan: DayPlan; home: UserHome | undefined; busy: boolean; sel: Selectable; focusClassId?: string; onChooseGap?: ChooseGap }) {
+const END_OF_DAY_LABELS: Record<EndOfDayDestination, string> = { HOME: "Home", GYM: "Gym", LIBRARY: "Library" };
+
+/** After the last class: home (the default), the gym, or the nearest library. Same idiom as the gap picker. */
+function EndOfDayPicker({ value, onChoose }: { value: EndOfDayDestination; onChoose: (d: EndOfDayDestination) => void }) {
+  return (
+    <div className="mt-3 border-t border-line px-1 pt-3">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-muted">After your last class</div>
+      <ToggleGroup type="single" className="mt-2" value={value} onValueChange={(v) => { if (v) onChoose(v as EndOfDayDestination); }} aria-label="After your last class">
+        {(Object.keys(END_OF_DAY_LABELS) as EndOfDayDestination[]).map((d) => (
+          <ToggleGroupItem key={d} value={d} className="min-w-[5.5rem] flex-none">{END_OF_DAY_LABELS[d]}</ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+    </div>
+  );
+}
+
+export function DayTimeline({ plan, home, busy, sel, focusClassId, onChooseGap, endOfDay, onChooseEndOfDay }: { plan: DayPlan; home: UserHome | undefined; busy: boolean; sel: Selectable; focusClassId?: string; onChooseGap?: ChooseGap; endOfDay?: EndOfDayDestination; onChooseEndOfDay?: (d: EndOfDayDestination) => void }) {
   const focusEl = useRef<HTMLLIElement | null>(null);
   const scrolledFor = useRef<string | undefined>(undefined);
 
@@ -360,6 +377,7 @@ export function DayTimeline({ plan, home, busy, sel, focusClassId, onChooseGap }
           }
         })}
       </Reveal>
+      {onChooseEndOfDay && <EndOfDayPicker value={endOfDay ?? "HOME"} onChoose={onChooseEndOfDay} />}
     </div>
   );
 }

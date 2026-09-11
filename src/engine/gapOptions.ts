@@ -40,7 +40,7 @@ function openWindow(dateISO: string, hours: { open: number; close: number } | un
  * purpose: a library two minutes closer that shuts in twenty is the worse answer.
  * Costs one inbound leg per spot; only the winner's outbound leg is then priced.
  */
-async function nearestSpot(
+export async function nearestSpot(
   spots: readonly ResolvedStudySpot[],
   from: CampusLocation,
   departAfter: Date,

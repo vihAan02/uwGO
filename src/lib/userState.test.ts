@@ -30,6 +30,7 @@ const signedUpState = (): AppState => ({
   config: { ...DEFAULT_PLANNER_CONFIG, arrivalBufferMinutes: 15 },
   gym: { enabled: true, durationMinutes: 90, preferredTime: "EVENING" },
   routePreference: "INDOORS",
+  endOfDay: "LIBRARY",
 });
 
 const account = (over: Partial<SavedAccountState> = {}): SavedAccountState => ({
@@ -52,8 +53,19 @@ describe("mapping app state to the account row", () => {
     expect(restored.home).toEqual(original.home);
     expect(restored.gym).toEqual(original.gym);
     expect(restored.routePreference).toBe("INDOORS");
+    expect(restored.endOfDay).toBe("LIBRARY");
     expect(restored.config.arrivalBufferMinutes).toBe(15);
     expect(restored.sync).toEqual({ ownerId: UID });
+  });
+
+  it("the end-of-day destination persists and a bad one is dropped", () => {
+    expect(sanitizePreferences({ endOfDay: "GYM" }).preferences.endOfDay).toBe("GYM");
+    const bad = sanitizePreferences({ endOfDay: "MARS" });
+    expect(bad.preferences.endOfDay).toBeUndefined();
+    expect(bad.dropped).toBe(1);
+    // It changes the saved-state key, so a change to it is actually saved.
+    const s = signedUpState();
+    expect(persistedKey({ ...s, endOfDay: "GYM" })).not.toBe(persistedKey(s));
   });
 
   it("onboarding is complete only with both a schedule and a home", () => {

@@ -1,8 +1,8 @@
 import { ARRIVAL_BUFFER_CHOICES, DEFAULT_PLANNER_CONFIG } from "@/domain/config";
-import type { Component, CourseMeeting, DayOfWeek, GymPreferences, RawLocation, RoutePreference, TermInfo, University, UserHome } from "@/domain/types";
+import type { Component, CourseMeeting, DayOfWeek, EndOfDayDestination, GymPreferences, RawLocation, RoutePreference, TermInfo, University, UserHome } from "@/domain/types";
 import { DAYS_IN_ORDER } from "@/domain/types";
 import { forgetMissingClasses } from "./gapChoices";
-import { migrateGym, type AppState } from "./storage";
+import { migrateEndOfDay, migrateGym, type AppState } from "./storage";
 
 /**
  * The signed-in student's saved app state in Supabase: one `public.user_state` row per account
@@ -26,6 +26,7 @@ export interface SavedPreferences {
   arrivalBufferMinutes: number;
   gym?: GymPreferences;
   routePreference?: RoutePreference;
+  endOfDay?: EndOfDayDestination;
 }
 
 /** What the app writes. `created_at` and `updated_at` are set by the database. */
@@ -182,6 +183,11 @@ export function sanitizePreferences(raw: unknown): { preferences: SavedPreferenc
     if (raw.routePreference === "FASTEST" || raw.routePreference === "INDOORS") preferences.routePreference = raw.routePreference;
     else dropped++;
   }
+  if (!absent(raw.endOfDay)) {
+    const e = migrateEndOfDay(raw.endOfDay);
+    if (e) preferences.endOfDay = e;
+    else dropped++;
+  }
   return { preferences, dropped };
 }
 
@@ -218,6 +224,7 @@ export function persistedFrom(state: AppState): { schedule?: SavedSchedule; pref
       arrivalBufferMinutes: state.config.arrivalBufferMinutes,
       gym: state.gym,
       routePreference: state.routePreference,
+      endOfDay: state.endOfDay,
     },
   };
 }
@@ -289,6 +296,7 @@ export function applyAccount(local: AppState, account: SavedAccountState, userId
     config: { ...local.config, arrivalBufferMinutes: account.preferences.arrivalBufferMinutes },
     gym: account.preferences.gym,
     routePreference: account.preferences.routePreference,
+    endOfDay: account.preferences.endOfDay,
     gapChoices: local.gapChoices && forgetMissingClasses(local.gapChoices, account.schedule?.meetings.map((m) => m.id) ?? []),
     sync: { ownerId: userId },
   };
