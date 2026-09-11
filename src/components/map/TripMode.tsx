@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { APIProvider, AdvancedMarker, Map, Pin, useAdvancedMarkerRef, useMap } from "@vis.gl/react-google-maps";
 import { decode } from "@googlemaps/polyline-codec";
-import type { CampusLocation, RouteOption } from "@/domain/types";
+import type { CampusLocation, RouteOption, RoutePreference } from "@/domain/types";
 import { formatClock, formatDuration } from "@/time/toronto";
-import { rerouteWalk, resolveTripRoute, type TripRouteStatus } from "@/lib/tripRoute";
-import { ARRIVED_METERS, formatRemaining, pathMetrics, projectOntoPath, remainingFrom, rerouteDecision, type PathMetrics, type Point, type Projection, type RerouteState } from "@/lib/routeProgress";
+import { rerouteFrom, resolveTripRoute, type TripRouteStatus } from "@/lib/tripRoute";
+import { TripRerouter } from "@/lib/tripReroute";
+import { ARRIVED_METERS, formatRemaining, pathMetrics, projectOntoPath, remainingFrom, type PathMetrics, type Point, type Projection } from "@/lib/routeProgress";
 import { currentHeading, useDeviceHeading, type HeadingSample } from "@/lib/useDeviceHeading";
 import { headingDelta } from "@/lib/deviceHeading";
 import { NAV_ZOOM, comfortablyVisible, navigationPose, poseSettled, stepPose, type CameraPose } from "@/lib/tripCamera";
@@ -22,6 +23,8 @@ export interface Trip {
   route: RouteOption;
   /** Used if the transit option turns out to have gone. */
   walkFallback?: RouteOption;
+  /** The student's route preference, so a reroute is chosen by the same rule that chose this route. */
+  preference?: RoutePreference;
 }
 
 const pt = (l: { latitude: number; longitude: number }): Point => ({ lat: l.latitude, lng: l.longitude });
@@ -188,6 +191,7 @@ function TripCamera({ path, live, heading, headingUp, follow, hasPos, onUserGest
 }
 
 function modeLabel(r: RouteOption): string {
+  if (r.indoorPath) return "Indoors";
   if (r.mode === "WALK") return "Walking";
   const first = r.steps?.find((s) => s.mode === "TRANSIT")?.transit;
   const vehicle = (first?.vehicle ?? "").toLowerCase();
@@ -212,6 +216,9 @@ export function TripMode({ trip, onEnd }: { trip: Trip; onEnd: () => void }) {
   const [progress, setProgress] = useState<Progress | undefined>();
   const live = useRef<Live>({});
   const compass = useDeviceHeading();
+  // One rerouter per trip: the destination and the preference are fixed for its whole life, so
+  // a reroute can never quietly change where the student is going or how they want to get there.
+  const rerouter = useMemo(() => new TripRerouter(trip.to, trip.preference ?? "FASTEST", rerouteFrom), [trip.to, trip.preference]);
 
   // A trip that starts now must not show a bus that has already left.
   useEffect(() => {
@@ -230,7 +237,6 @@ export function TripMode({ trip, onEnd }: { trip: Trip; onEnd: () => void }) {
   const metrics = useMemo<PathMetrics>(() => pathMetrics(path), [path]);
   const metricsRef = useRef(metrics);
   const routeRef = useRef(route);
-  const rerouteRef = useRef<{ state: RerouteState; busy: boolean }>({ state: {}, busy: false });
   // A new route (refreshed transit, or a reroute) restarts progress from scratch.
   useEffect(() => { metricsRef.current = metrics; routeRef.current = route; live.current.proj = undefined; }, [metrics, route]);
 
@@ -247,19 +253,14 @@ export function TripMode({ trip, onEnd }: { trip: Trip; onEnd: () => void }) {
     const arrived = m.total - proj.alongMeters <= ARRIVED_METERS && proj.offRouteMeters <= ARRIVED_METERS * 2;
     setProgress((p) => (p && p.time === f.time && p.distance === f.distance && p.arrived === arrived ? p : { ...f, arrived }));
 
-    // Leaving the route is judged over time and rerouting is spaced out; transit is never rerouted
-    // (a bus off its usual road is still the bus).
-    if (routeRef.current.mode !== "WALK") return;
-    const d = rerouteDecision(rerouteRef.current.state, { offRouteMeters: proj.offRouteMeters, accuracyMeters: fix.accuracy }, now.getTime());
-    rerouteRef.current.state = d.state;
-    if (d.reroute && !rerouteRef.current.busy) {
-      rerouteRef.current.busy = true;
-      rerouteWalk({ latitude: fix.lat, longitude: fix.lng }, trip.to)
-        .then((r) => { if (r) setResolved(r); })
-        .catch(() => { /* keep the planned route; the next decision will try again after the gap */ })
-        .finally(() => { rerouteRef.current.busy = false; });
-    }
-  }, [trip.to]);
+    // Judging whether the student has left the route runs on every fix: it is only arithmetic.
+    // Asking for a new one is rationed by the rerouter, which picks it through the same
+    // selection the plan uses, so an outdoor trip can become a winter one and a winter one can
+    // go back outside, whichever is now the better way to the same destination. A failed or
+    // refused reroute returns nothing and the route already on screen simply stays.
+    rerouter.consider({ at: { latitude: fix.lat, longitude: fix.lng }, offRouteMeters: proj.offRouteMeters, accuracyMeters: fix.accuracy }, routeRef.current, now)
+      .then((r) => { if (r) setResolved(r); });
+  }, [rerouter]);
 
   // Location is requested only here, when the student actually starts a trip. GPS fixes go
   // into a ref; the only state touched is the status and the remaining numbers on screen.
