@@ -5,18 +5,21 @@ const base = { hasUser: false, rejected: false, configured: true };
 
 describe("request proxy decisions", () => {
   it("unauthenticated users are sent to the login screen from the app pages", () => {
-    expect(decideAuth({ ...base, pathname: "/" })).toEqual({ kind: "TO_LOGIN" });
+    expect(decideAuth({ ...base, pathname: "/setup" })).toEqual({ kind: "TO_LOGIN" });
     expect(decideAuth({ ...base, pathname: "/plan" })).toEqual({ kind: "TO_LOGIN" });
   });
-  it("the landing preview is public without opening similarly named or nested app routes", () => {
+  it("the landing page at the root is public, without opening any other path", () => {
     for (const configured of [true, false]) {
-      expect(decideAuth({ ...base, configured, pathname: "/landing" })).toEqual({ kind: "ALLOW" });
-      for (const pathname of ["/landing-private", "/landing/admin"]) {
+      expect(decideAuth({ ...base, configured, pathname: "/" })).toEqual({ kind: "ALLOW" });
+      // /landing is redirected to / by next.config before the proxy runs; it is not public on its own.
+      for (const pathname of ["/landing", "/setup", "/plan", "/x"]) {
         expect(decideAuth({ ...base, configured, pathname }).kind).toBe("TO_LOGIN");
       }
     }
-    expect(decideAuth({ ...base, hasUser: true, pathname: "/landing" })).toEqual({ kind: "ALLOW" });
-    expect(decideAuth({ ...base, rejected: true, pathname: "/landing" })).toEqual({ kind: "SIGN_OUT_DOMAIN" });
+  });
+  it("a signed-in user who opens the landing page goes straight into the app", () => {
+    expect(decideAuth({ ...base, hasUser: true, pathname: "/" })).toEqual({ kind: "TO_APP" });
+    expect(decideAuth({ ...base, rejected: true, pathname: "/" })).toEqual({ kind: "SIGN_OUT_DOMAIN" });
   });
   it("login and the auth callback stay reachable", () => {
     expect(decideAuth({ ...base, pathname: "/login" })).toEqual({ kind: "ALLOW" });
@@ -24,6 +27,7 @@ describe("request proxy decisions", () => {
   });
   it("a verified Waterloo user enters the app and is bounced away from the login screen", () => {
     expect(decideAuth({ ...base, hasUser: true, pathname: "/plan" })).toEqual({ kind: "ALLOW" });
+    expect(decideAuth({ ...base, hasUser: true, pathname: "/setup" })).toEqual({ kind: "ALLOW" });
     expect(decideAuth({ ...base, hasUser: true, pathname: "/login" })).toEqual({ kind: "TO_APP" });
   });
   it("a session with a non-Waterloo email is signed out, wherever it goes", () => {

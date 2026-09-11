@@ -10,8 +10,6 @@ export const metadata: Metadata = {
   title: "UW GO | Know where to go. And when to leave.",
   description:
     "Paste your Quest class schedule. UW GO turns it into your day: the building, the walk, and the minute to leave.",
-  // Preview route. Lift this when /landing is promoted to /.
-  robots: { index: false, follow: false },
 };
 
 const STEPS = [
@@ -39,7 +37,7 @@ export default function LandingPage() {
 
       <header className={styles.header}>
         <div className={cn(styles.container, styles.headerInner)}>
-          <Link href="/landing" className={styles.wordmark}>
+          <Link href="/" className={styles.wordmark}>
             UW GO
           </Link>
           <Link href="/login" className={buttonVariants({ variant: "outline", size: "sm" })}>

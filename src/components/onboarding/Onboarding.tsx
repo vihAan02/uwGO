@@ -58,13 +58,13 @@ function OnboardingForm({ initialHome, initialBuffer, initialGym }: { initialHom
     setHome(home);
     setConfig({ arrivalBufferMinutes: buffer });
     setGym(gym ?? { enabled: false, durationMinutes: 60, preferredTime: "NONE" });
-    router.push("/plan");
+    router.replace("/plan");
   };
 
   return (
     <main className="app mx-auto w-full max-w-xl px-5 pb-40 sm:px-6">
       <header className="flex h-14 items-center">
-        <Wordmark href="/" />
+        <Wordmark href="/setup" />
       </header>
 
       <Reveal step={60}>

@@ -56,4 +56,4 @@ private/
 Screenshot*.png
 
 # Share only the landing workspace Claude instructions.
-!/src/app/landing/CLAUDE.md
+!/src/app/(landing)/CLAUDE.md

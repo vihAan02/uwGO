@@ -107,7 +107,7 @@ export function SettingsSheet({ open, onOpenChange }: { open: boolean; onOpenCha
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Keep it</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => { reset(); onOpenChange(false); router.replace("/"); }}>Delete everything</AlertDialogAction>
+                  <AlertDialogAction onClick={() => { reset(); onOpenChange(false); router.replace("/setup"); }}>Delete everything</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>

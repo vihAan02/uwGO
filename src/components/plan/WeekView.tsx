@@ -40,7 +40,7 @@ export function WeekView() {
   const [trip, setTrip] = useState<Trip | undefined>();
 
   useEffect(() => {
-    if (hydrated && !meetings?.length) router.replace("/");
+    if (hydrated && !meetings?.length) router.replace("/setup");
   }, [hydrated, meetings, router]);
 
   const monday = useMemo(() => weekOverride ?? (meetings ? defaultWeekStart(meetings) : mondayOfWeek(todayISO())), [weekOverride, meetings]);

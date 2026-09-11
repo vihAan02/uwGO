@@ -66,7 +66,7 @@ export function LoginForm({ initialError }: { initialError?: string }) {
   return (
     <main className="app flex min-h-screen flex-col">
       <header className="flex h-14 shrink-0 items-center px-5 sm:px-8">
-        <Wordmark href="/landing" />
+        <Wordmark href="/" />
       </header>
 
       <Reveal key={step} className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-5 pb-28 sm:px-0">
