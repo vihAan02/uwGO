@@ -1,9 +1,10 @@
 # Supabase setup for UW GO sign-in
 
-UW GO uses Supabase Auth with passwordless email sign-in (magic link, plus a 6-digit code
-for reading the email on another device). Only `@uwaterloo.ca` addresses may sign in; that
-is enforced in the form, in `/api/auth/send`, in the auth callback, in the request proxy, and
-by a database trigger on `auth.users`, so calling Supabase directly does not get around it.
+UW GO uses Supabase Auth with passwordless email sign-in by one-time code. There is no
+sign-in link: the student types the code from the email into the sign-in page. Only
+`@uwaterloo.ca` addresses may sign in; that is enforced in the form, in `/api/auth/send`, in
+the request proxy, and by a database trigger on `auth.users`, so calling Supabase directly
+does not get around it.
 
 ## Dashboard, once
 
@@ -15,20 +16,22 @@ by a database trigger on `auth.users`, so calling Supabase directly does not get
    trigger that creates a profile row for each new user.
 3. Authentication -> Providers -> Email: keep **Enable email provider** on. Turn **Confirm
    email** on (it is the default). Leave passwords off if you like; the app never uses them.
-4. Authentication -> URL Configuration:
-   - Site URL: your deployed origin (e.g. `https://uwgo.example`).
-   - Redirect URLs: `https://uwgo.example/auth/callback` and `http://localhost:3010/auth/callback`
-     (and any other local port you use).
-5. Authentication -> Email Templates -> **Magic Link**: recommended body, which gives both a
-   link that works on the device that asked and a code that works anywhere:
+4. Authentication -> URL Configuration: set Site URL to your deployed origin (e.g.
+   `https://uwgo.example`). No redirect URLs are needed, because sign-in never uses a link.
+5. Authentication -> Email Templates: put the code, and no link, in **both** templates.
+   **Magic Link** is sent to a returning student; **Confirm signup** is sent the first time an
+   address signs in. The default templates contain only a link, so a student would get an
+   email with nothing to type. Subject: `Your UW GO sign-in code`. Body:
 
    ```html
-   <h2>Sign in to UW GO</h2>
-   <p><a href="{{ .ConfirmationURL }}">Open UW GO</a> on the device you signed in from.</p>
-   <p>On another device, enter this code instead: <strong>{{ .Token }}</strong></p>
+   <h2>Your UW GO sign-in code</h2>
+   <p>Enter this code on the UW GO sign-in page:</p>
+   <p style="font-size:28px;font-weight:700;letter-spacing:6px">{{ .Token }}</p>
+   <p>If you did not try to sign in, you can ignore this email.</p>
    ```
 
-   The default template (link only) also works.
+   The sign-in page accepts codes of 6 to 10 digits, so the **Email OTP Length** setting
+   under Providers -> Email can stay at its default.
 6. Authentication -> Rate Limits: the defaults are fine. Supabase's built-in email sender is
    limited to a few emails per hour per project; set up a custom SMTP sender before sharing
    the app widely.

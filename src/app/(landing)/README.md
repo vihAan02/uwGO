@@ -34,7 +34,7 @@ redirect to `/` in `next.config.ts`.
 The page inherits the root layout, global base styles, auth/store providers, profile sync,
 and service worker. Do not move or change those shared systems for landing design.
 
-The journey: Get Started -> `/login` (email link or 6-digit code) -> `/plan`, which sends a
+The journey: Get Started -> `/login` (a sign-in code sent by email) -> `/plan`, which sends a
 student without a schedule to `/setup` to paste it, then back to `/plan`. Login and setup
 both replace their history entry on success, so back from the app returns to the landing
 page rather than into a form.
