@@ -18,6 +18,8 @@ interface StoreApi {
   setRoutePreference(pref: RoutePreference): void;
   /** Answer one gap. `everyWeek` makes it the standing answer for that class; undefined clears both. */
   setGapChoice(dateISO: string, classId: string, choice: GapChoice | undefined, everyWeek: boolean): void;
+  /** Replace the whole state at once, e.g. with the copy saved to the student's account. */
+  replaceState(next: AppState): void;
   reset(): void;
 }
 
@@ -69,6 +71,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setRoutePreference: (routePreference) => update((s) => ({ ...s, routePreference })),
     setGapChoice: (dateISO, classId, choice, everyWeek) =>
       update((s) => ({ ...s, gapChoices: setGapChoice(s.gapChoices, dateISO, classId, choice, everyWeek) })),
+    replaceState: (next) => update(() => next),
     reset: () => { clearState(); setState(emptyState()); },
   }), [state, hydrated, update]);
 

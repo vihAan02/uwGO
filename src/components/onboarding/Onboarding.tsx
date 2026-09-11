@@ -4,7 +4,10 @@ import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
 import type { CourseMeeting, GymPreferences, ParsedSchedule, UserHome } from "@/domain/types";
 import { questParser } from "@/parsers/quest/QuestParser";
+import Link from "next/link";
 import { useStore } from "@/lib/store";
+import { useUserState } from "@/lib/UserStateProvider";
+import { AccountLoadError, AccountLoading } from "@/components/account/AccountGate";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
 import { Wordmark } from "@/components/ui/wordmark";
@@ -15,14 +18,26 @@ import { HomePicker } from "./HomePicker";
 import { BufferPicker } from "./BufferPicker";
 import { GymPrefsPicker } from "../prefs/GymPrefsPicker";
 
-export function Onboarding() {
+/**
+ * `replace`: pasting a new schedule over an existing one, from Settings. Otherwise a student who
+ * already has a schedule (on this device or in their account) goes straight to the plan.
+ */
+export function Onboarding({ replace = false }: { replace?: boolean }) {
   const router = useRouter();
   const { state, hydrated } = useStore();
+  const account = useUserState();
+  const hasSchedule = Boolean(state.schedule?.meetings.length);
+  const settled = account.status === "ready" || account.status === "local" || account.status === "offline";
+  // After a failed read, a device that already has a schedule is still usable.
+  const usable = settled || (account.status === "error" && hasSchedule);
   useEffect(() => {
-    if (hydrated && state.schedule?.meetings.length) router.replace("/plan");
-  }, [hydrated, state.schedule, router]);
-  if (!hydrated) return null;
-  return <OnboardingForm key="form" initialHome={state.home} initialBuffer={state.config.arrivalBufferMinutes} initialGym={state.gym} />;
+    if (hydrated && usable && hasSchedule && !replace) router.replace("/plan");
+  }, [hydrated, usable, hasSchedule, replace, router]);
+
+  if (!hydrated || account.status === "loading") return <AccountLoading />;
+  if (!usable) return <AccountLoadError />;
+  if (hasSchedule && !replace) return <AccountLoading />;
+  return <OnboardingForm key="form" replace={replace} initialHome={state.home} initialBuffer={state.config.arrivalBufferMinutes} initialGym={state.gym} />;
 }
 
 /** One numbered group, in the landing page's 01 / 02 / 03 idiom. Hairlines separate them; no cards. */
@@ -39,7 +54,7 @@ function Step({ n, title, hint, children, ...rest }: { n: string; title: string;
   );
 }
 
-function OnboardingForm({ initialHome, initialBuffer, initialGym }: { initialHome: UserHome | undefined; initialBuffer: number; initialGym: GymPreferences | undefined }) {
+function OnboardingForm({ replace, initialHome, initialBuffer, initialGym }: { replace: boolean; initialHome: UserHome | undefined; initialBuffer: number; initialGym: GymPreferences | undefined }) {
   const router = useRouter();
   const { setSchedule, addMeeting, setHome, setConfig, setGym } = useStore();
   const [gym, setLocalGym] = useState<GymPreferences | undefined>(initialGym);
@@ -63,15 +78,22 @@ function OnboardingForm({ initialHome, initialBuffer, initialGym }: { initialHom
 
   return (
     <main className="app mx-auto w-full max-w-xl px-5 pb-40 sm:px-6">
-      <header className="flex h-14 items-center">
+      <header className="flex h-14 items-center justify-between">
         <Wordmark href="/setup" />
+        {replace && (
+          <Button asChild variant="ghost" size="sm" className="-mr-3">
+            <Link href="/plan">Cancel</Link>
+          </Button>
+        )}
       </header>
 
       <Reveal step={60}>
         <div data-reveal className="mt-6 sm:mt-10">
-          <h1 className="text-[2rem] font-semibold leading-[1.1] tracking-[-0.025em] sm:text-[2.5rem]">Paste your schedule.</h1>
+          <h1 className="text-[2rem] font-semibold leading-[1.1] tracking-[-0.025em] sm:text-[2.5rem]">{replace ? "Paste your new schedule." : "Paste your schedule."}</h1>
           <p className="mt-3 max-w-md text-[1.0625rem] leading-relaxed text-ink-muted">
-            UW GO turns it into your week: the buildings, the walks, and the minute to leave for each class.
+            {replace
+              ? "It replaces the classes from your last paste. Classes you added by hand stay."
+              : "UW GO turns it into your week: the buildings, the walks, and the minute to leave for each class."}
           </p>
         </div>
 

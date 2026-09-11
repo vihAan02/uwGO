@@ -16,16 +16,29 @@ export interface AppState {
   routePreference?: RoutePreference;
   /**
    * What to do with each gap. Per device on purpose: this is a day-to-day decision about one
-   * afternoon, not a preference, so it is never synced to the profile.
+   * afternoon, not a preference, so it is never saved to the account.
    */
   gapChoices?: GapChoices;
+  /** Which account this device's copy belongs to, and whether it has changes the account has not confirmed. */
+  sync?: SyncMeta;
+}
+
+/**
+ * Bookkeeping for the account copy in Supabase (src/lib/userStateSync.ts). `ownerId` stops one
+ * student's schedule being shown to, or uploaded by, the next student on a shared device.
+ * `dirtySince` is when the first unconfirmed change was made, so a device that edited offline
+ * can tell whether its copy is newer than the account's.
+ */
+export interface SyncMeta {
+  ownerId?: string;
+  dirtySince?: string;
 }
 
 export const DEFAULT_GYM: GymPreferences = { enabled: false, durationMinutes: 60, preferredTime: "NONE" };
 
 const GYM_TIMES = new Set<GymPreferences["preferredTime"]>(["MORNING", "AFTERNOON", "EVENING", "LEAST_BUSY", "NONE"]);
 
-function migrateGym(raw: unknown): GymPreferences | undefined {
+export function migrateGym(raw: unknown): GymPreferences | undefined {
   if (!raw || typeof raw !== "object") return undefined;
   const g = raw as Partial<GymPreferences>;
   return {
@@ -33,6 +46,14 @@ function migrateGym(raw: unknown): GymPreferences | undefined {
     durationMinutes: (GYM_DURATIONS as readonly number[]).includes(g.durationMinutes as number) ? (g.durationMinutes as GymPreferences["durationMinutes"]) : 60,
     preferredTime: GYM_TIMES.has(g.preferredTime as GymPreferences["preferredTime"]) ? (g.preferredTime as GymPreferences["preferredTime"]) : "NONE",
   };
+}
+
+function migrateSync(raw: unknown): SyncMeta | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const s = raw as Partial<SyncMeta>;
+  const ownerId = typeof s.ownerId === "string" && s.ownerId.length > 0 && s.ownerId.length <= 64 ? s.ownerId : undefined;
+  const dirtySince = typeof s.dirtySince === "string" && !Number.isNaN(Date.parse(s.dirtySince)) ? s.dirtySince : undefined;
+  return ownerId || dirtySince ? { ownerId, dirtySince } : undefined;
 }
 
 export const STORAGE_KEY = "uwgo.state.v1";
@@ -55,7 +76,7 @@ function migrate(raw: unknown): AppState {
   const routePreference: RoutePreference | undefined = obj.routePreference === "INDOORS" ? "INDOORS" : obj.routePreference === "FASTEST" ? "FASTEST" : undefined;
   // Everything below has to come AFTER the spread: `...obj` is raw parsed JSON, so a field
   // that is not explicitly overridden here arrives unvalidated.
-  return { ...emptyState(), ...obj, config, gym: migrateGym(obj.gym), routePreference, gapChoices: migrateGapChoices(obj.gapChoices, todayISO()) };
+  return { ...emptyState(), ...obj, config, gym: migrateGym(obj.gym), routePreference, gapChoices: migrateGapChoices(obj.gapChoices, todayISO()), sync: migrateSync(obj.sync) };
 }
 
 export function loadState(storage: Pick<Storage, "getItem"> | undefined = typeof window !== "undefined" ? window.localStorage : undefined): AppState {

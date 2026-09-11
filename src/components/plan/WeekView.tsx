@@ -7,6 +7,8 @@ import { AlertTriangle, Bell, ChevronDown, ChevronLeft, ChevronRight, Dumbbell, 
 import type { CampusLocation, DayOfWeek } from "@/domain/types";
 import { DAY_LABELS, DAYS_IN_ORDER } from "@/domain/types";
 import { useStore } from "@/lib/store";
+import { useUserState } from "@/lib/UserStateProvider";
+import { AccountLoadError, AccountLoading, AccountSyncNotice } from "@/components/account/AccountGate";
 import { defaultWeekStart, usePlan } from "@/lib/usePlan";
 import { findNextUp } from "@/lib/nextClass";
 import { usePacLive } from "@/lib/usePacLive";
@@ -32,6 +34,9 @@ const TripMode = dynamic(() => import("../map/TripMode").then((m) => m.TripMode)
 export function WeekView() {
   const router = useRouter();
   const { state, hydrated, setGapChoice } = useStore();
+  const account = useUserState();
+  // The device's copy is only trusted once the account has answered (or there is no account).
+  const accountSettled = account.status === "ready" || account.status === "local" || account.status === "offline";
   const meetings = state.schedule?.meetings;
   const [weekOverride, setWeekStart] = useState<string | undefined>();
   const [day, setDay] = useState<DayOfWeek>(() => { const d = weekdayOf(todayISO()); return d === "S" || d === "Su" ? "M" : d; });
@@ -40,12 +45,12 @@ export function WeekView() {
   const [trip, setTrip] = useState<Trip | undefined>();
 
   useEffect(() => {
-    if (hydrated && !meetings?.length) router.replace("/setup");
-  }, [hydrated, meetings, router]);
+    if (hydrated && accountSettled && !meetings?.length) router.replace("/setup");
+  }, [hydrated, accountSettled, meetings, router]);
 
   const monday = useMemo(() => weekOverride ?? (meetings ? defaultWeekStart(meetings) : mondayOfWeek(todayISO())), [weekOverride, meetings]);
   const pac = usePacLive(Boolean(hydrated && state.gym?.enabled));
-  const { plan, loading, error } = usePlan(hydrated ? meetings : undefined, state.home, state.config, monday, { gym: state.gym, routePreference: state.routePreference, gapChoices: state.gapChoices, pacLive: pac.reading, pacSamples: pac.samples });
+  const { plan, loading, error } = usePlan(hydrated && account.status !== "loading" ? meetings : undefined, state.home, state.config, monday, { gym: state.gym, routePreference: state.routePreference, gapChoices: state.gapChoices, pacLive: pac.reading, pacSamples: pac.samples });
   const pacNow = pac.reading ? estimateFromPct(pac.reading.occupancyPct, "LIVE") : undefined;
   const visibleDays = useMemo(() => DAYS_IN_ORDER.filter((d) => ["M", "T", "W", "Th", "F"].includes(d) || (plan?.days[d]?.classes.length ?? 0) > 0), [plan]);
   const dayPlan = plan?.days[day];
@@ -89,6 +94,9 @@ export function WeekView() {
     </div>
   );
 
+  if (account.status === "loading") return <AccountLoading />;
+  if (account.status === "error" && !meetings?.length) return <AccountLoadError />;
+
   return (
     <RemindersProvider plan={plan}>
     <Tabs value={day} onValueChange={(d) => { setDay(d as DayOfWeek); setPicked(undefined); }} asChild>
@@ -123,6 +131,8 @@ export function WeekView() {
           })}
         </TabsList>
       </header>
+
+      <div className="px-4 pt-4 empty:hidden sm:px-6"><AccountSyncNotice /></div>
 
       {/*
         One map instance only. A second, CSS-hidden copy would double the Dynamic Maps
