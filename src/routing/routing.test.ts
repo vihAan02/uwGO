@@ -9,6 +9,7 @@ import type { LatLng, RouteOption } from "@/domain/types";
 const MC: LatLng = { latitude: 43.4720751, longitude: -80.5439474 };
 const DC: LatLng = { latitude: 43.472761, longitude: -80.542164 };
 const LH: LatLng = { latitude: 43.4750921, longitude: -80.529488 };
+const UWP: LatLng = { latitude: 43.4708351, longitude: -80.53525 };
 
 describe("estimate provider", () => {
   it("MC -> DC is a short walk, MC -> Lazaridis Hall is a long one, and results are flagged as estimates", async () => {
@@ -87,6 +88,43 @@ describe("cached provider", () => {
 
   it("pairKey rounds to 5 decimals", () => {
     expect(pairKey(MC, DC)).toBe("43.47208,-80.54395->43.47276,-80.54216");
+  });
+});
+
+describe("cached provider and straight-line estimates", () => {
+  const google = () => {
+    const state = { calls: 0 };
+    const provider: import("./RoutingProvider").RoutingProvider = {
+      id: "google-routes",
+      async getWalkingRoute() { state.calls++; return { mode: "WALK", durationMinutes: 13, polyline: "real", provider: "google-routes", computedAt: "x", isEstimate: false }; },
+      async getTransitRoute() { return undefined; },
+    };
+    return { state, provider };
+  };
+
+  it("never serves a cached estimate once a real provider answers: UWP -> MC is re-asked and replaced", async () => {
+    // What a browser kept after planning against a server with no GOOGLE_MAPS_SERVER_KEY.
+    const store = new MemoryRouteCacheStore();
+    const key = `WALK|${pairKey(UWP, MC)}`;
+    store.set(key, { route: await new EstimateRoutingProvider().getWalkingRoute(UWP, MC), expiresAt: Date.now() + WALK_CACHE_TTL_MS });
+    expect(store.get(key)!.route).toMatchObject({ isEstimate: true, durationMinutes: 12 });
+
+    const g = google();
+    const c = new CachedRoutingProvider(g.provider, store);
+    expect(await c.getWalkingRoute(UWP, MC)).toMatchObject({ provider: "google-routes", isEstimate: false, durationMinutes: 13 });
+    expect(g.state.calls).toBe(1);
+    expect(store.get(key)!.route).toMatchObject({ provider: "google-routes", isEstimate: false });
+    // Real routes are still cached as before.
+    await c.getWalkingRoute(UWP, MC);
+    expect(g.state.calls).toBe(1);
+  });
+
+  it("still answers with an estimate when no key is configured, but keeps none of them", async () => {
+    const store = new MemoryRouteCacheStore();
+    const c = new CachedRoutingProvider(new EstimateRoutingProvider(), store);
+    expect(await c.getWalkingRoute(UWP, MC)).toMatchObject({ provider: "estimate", isEstimate: true });
+    expect(await c.getWalkingRoute(MC, UWP)).toMatchObject({ provider: "estimate", isEstimate: true });
+    expect(store.size).toBe(0);
   });
 });
 

@@ -35,13 +35,16 @@ export class CachedRoutingProvider implements RoutingProvider {
 
   private async through(key: string, ttlMs: number, compute: () => Promise<RouteOption | undefined>): Promise<RouteOption | undefined> {
     const hit = this.store.get(key);
-    if (hit && hit.expiresAt > this.now()) return hit.route;
+    // An estimate only ever stands in for a routing provider that was not configured when it was
+    // made. Serving it from the cache would outlive that: a browser that planned once against a
+    // server without a key kept showing straight-line times for those pairs for 30 days.
+    if (hit && hit.expiresAt > this.now() && !hit.route?.isEstimate) return hit.route;
     const pending = this.inflight.get(key);
     if (pending) return pending;
     const p = compute()
       .then((route) => {
-        // Only cache successes; a failed call should be retried next time.
-        if (route) this.store.set(key, { route, expiresAt: this.now() + ttlMs });
+        // Only cache real routes; a failed call or an estimate should be asked for again next time.
+        if (route && !route.isEstimate) this.store.set(key, { route, expiresAt: this.now() + ttlMs });
         return route;
       })
       .finally(() => this.inflight.delete(key));
