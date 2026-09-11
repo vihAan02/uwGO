@@ -31,7 +31,7 @@ Waterloo user. A signed-in visitor at `/` is redirected to `/plan`, and a sessio
 non-Waterloo email is signed out as before. `/landing`, the old preview path, is a permanent
 redirect to `/` in `next.config.ts`.
 
-The page inherits the root layout, global base styles, auth/store providers, profile sync,
+The page inherits the root layout, global base styles, auth/store providers, account sync,
 and service worker. Do not move or change those shared systems for landing design.
 
 The journey: Get Started -> `/login` (a sign-in code sent by email) -> `/plan`, which sends a
