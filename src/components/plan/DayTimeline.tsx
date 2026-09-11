@@ -1,13 +1,19 @@
 "use client";
 import { useEffect, useRef } from "react";
+import { AlertTriangle, Check, ExternalLink, MapPin, X } from "lucide-react";
 import type { CampusLocation, ClassTransition, DayPlan, DayPlanItem, HomeReturnAnalysis, RouteOption, ScheduledClass, UserHome } from "@/domain/types";
 import { formatClock, formatDuration, minutesBetween } from "@/time/toronto";
 import { googleMapsDirectionsUrl, travelModeFor } from "@/lib/mapsLinks";
 import { indoorPathLabel } from "@/engine/indoorRoute";
 import { findRoomPosition } from "@/data/floorplans";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Reveal } from "@/components/ui/reveal";
 import type { MapSelection } from "../map/MapPanel";
 import { RemindButton } from "./RemindButton";
 import { GymCard } from "./GymCard";
+import { ModeIcon } from "./ModeIcon";
 import { GapChoicePicker, type ChooseGap } from "./GapChoicePicker";
 
 export interface Selectable {
@@ -15,16 +21,22 @@ export interface Selectable {
   onSelect: (id: string, selection: MapSelection) => void;
 }
 
-function Time({ at }: { at: Date }) {
-  return <time className="w-16 shrink-0 pt-0.5 text-right font-mono text-xs font-semibold tabular-nums sm:w-20 sm:text-sm">{formatClock(at)}</time>;
+/** The time rail on the left of every row. */
+function Time({ at, end }: { at: Date; end?: Date }) {
+  return (
+    <div className="w-16 shrink-0 pt-0.5 text-right font-mono text-xs font-semibold tabular-nums sm:w-[4.5rem] sm:text-[13px]">
+      <time>{formatClock(at)}</time>
+      {end && <div className="font-normal text-ink-muted"><time>{formatClock(end)}</time></div>}
+    </div>
+  );
 }
 
-function feasibilityChip(f: ClassTransition["feasibility"]) {
+function feasibilityBadge(f: ClassTransition["feasibility"]) {
   switch (f) {
-    case "COMFORTABLE": return <span className="chip bg-ok-soft text-ok">On time</span>;
-    case "TIGHT": return <span className="chip bg-warn-soft text-warn">Tight</span>;
-    case "LIKELY_LATE": return <span className="chip bg-bad-soft text-bad">Likely late</span>;
-    default: return <span className="chip bg-canvas text-ink-muted">No route</span>;
+    case "COMFORTABLE": return <Badge variant="ok">On time</Badge>;
+    case "TIGHT": return <Badge variant="warn">Tight</Badge>;
+    case "LIKELY_LATE": return <Badge variant="bad">Likely late</Badge>;
+    default: return <Badge>No route</Badge>;
   }
 }
 
@@ -33,11 +45,6 @@ function routeSummary(r: RouteOption): string {
   if (r.mode === "WALK") return r.durationMinutes === 0 ? "Same building" : `${formatDuration(r.durationMinutes)} walk${r.isEstimate ? " (est.)" : ""}`;
   const names = (r.steps ?? []).filter((s) => s.mode === "TRANSIT").map((s) => s.transit?.lineShort ?? s.transit?.line).filter(Boolean).join(" → ");
   return `${formatDuration(r.durationMinutes)} · ${names || "transit"}${r.transferCount ? ` · ${r.transferCount} transfer${r.transferCount > 1 ? "s" : ""}` : ""}`;
-}
-
-function modeIcon(r: RouteOption | undefined) {
-  if (r?.indoorPath) return "\u{1F3E2}";
-  return r?.mode === "TRANSIT" ? "\u{1F68C}" : "\u{1F6B6}";
 }
 
 /**
@@ -53,7 +60,7 @@ export function floorLabel(room: ScheduledClass["room"]): string {
 
 function WalkChoiceRow({ label, r, chosen, note }: { label: string; r: RouteOption; chosen: boolean; note: string }) {
   return (
-    <div className={`flex items-baseline justify-between gap-2 rounded-lg px-2 py-1 ${chosen ? "bg-brand-soft text-brand" : "text-ink-muted"}`}>
+    <div className={cn("flex items-baseline justify-between gap-2 rounded-lg px-2 py-1", chosen ? "bg-brand-soft text-brand" : "text-ink-muted")}>
       <span><span className="font-semibold">{label}</span> · {formatDuration(r.durationMinutes)}</span>
       <span className="text-xs">{note}</span>
     </div>
@@ -93,19 +100,26 @@ function TransitSteps({ route }: { route: RouteOption }) {
 
 function MapsLink({ from, to, route }: { from: CampusLocation; to: CampusLocation; route?: RouteOption }) {
   return (
-    <a
-      className="-mx-1 inline-flex min-h-11 items-center px-1 text-xs font-medium text-ink-muted underline decoration-dotted"
-      href={googleMapsDirectionsUrl(from, to, travelModeFor(route))}
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={(e) => e.stopPropagation()}
-    >
-      Open in Google Maps &#8599;
-    </a>
+    <Button asChild variant="ghost" size="xs" className="-ml-2 text-ink-muted">
+      <a href={googleMapsDirectionsUrl(from, to, travelModeFor(route))} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+        <ExternalLink /> Google Maps
+      </a>
+    </Button>
   );
 }
 
-const SELECTED = "ring-2 ring-brand";
+const ROW = "flex gap-3 px-3 py-3 transition-colors duration-150 sm:gap-4 sm:px-4";
+const SELECTED = "bg-brand/[0.045] shadow-[inset_3px_0_0_0_var(--color-brand)]";
+const PRESSABLE = "-m-1 min-w-0 flex-1 cursor-pointer rounded-lg p-1 outline-none focus-visible:ring-[3px] focus-visible:ring-brand/35";
+
+function pressable(select: () => void) {
+  return {
+    role: "button" as const,
+    tabIndex: 0,
+    onClick: select,
+    onKeyDown: (e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(); } },
+  };
+}
 
 function LeaveRow({ t, id, sel, label, day }: { t: ClassTransition; id: string; sel: Selectable; label: string; day: DayPlan }) {
   const rec = t.recommendedRoute!;
@@ -113,30 +127,26 @@ function LeaveRow({ t, id, sel, label, day }: { t: ClassTransition; id: string; 
   const sameSpot = rec.durationMinutes === 0;
   const select = () => sel.onSelect(id, { kind: "LEG", label, from: t.from, to: t.to, route: rec, walkFallback: t.walkingRoute });
   return (
-    <li className="flex gap-2 sm:gap-3">
+    <li data-reveal className={cn(ROW, sel.selectedId === id && SELECTED)}>
       <Time at={t.recommendedDeparture!} />
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={select}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(); } }}
-        className={`card flex-1 cursor-pointer p-3 ${sel.selectedId === id ? SELECTED : ""}`}
-      >
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <div className="font-semibold">Leave {t.from.name}</div>
-            <div className="text-sm text-ink-muted">{modeIcon(rec)} {routeSummary(rec)}{t.hasDeadline && t.expectedArrival ? ` · arrive ${formatClock(t.expectedArrival)}` : ""}</div>
-          </div>
-          {t.hasDeadline && feasibilityChip(t.feasibility)}
+      <div className={PRESSABLE} {...pressable(select)}>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 font-semibold leading-snug">Leave {t.from.name}</div>
+          {t.hasDeadline && feasibilityBadge(t.feasibility)}
+        </div>
+        <div className="mt-0.5 flex items-center gap-1.5 text-sm text-ink-muted">
+          <ModeIcon route={rec} />
+          <span>{routeSummary(rec)}{t.hasDeadline && t.expectedArrival ? ` · arrive ${formatClock(t.expectedArrival)}` : ""}</span>
         </div>
         {rec.mode === "TRANSIT" && <TransitSteps route={rec} />}
         <IndoorComparison t={t} />
         {alt && (
-          <div className="mt-2 rounded-lg border border-dashed border-line px-2 py-1 text-sm text-ink-muted">
-            Also: {modeIcon(alt)} {routeSummary(alt)}
-            {alt.mode === "TRANSIT" && alt.departureTime && alt.arrivalTime
-              ? ` · leave ${formatClock(alt.departureTime)}, arrive ${formatClock(alt.arrivalTime)}`
-              : ""}
+          <div className="mt-1.5 flex items-center gap-1.5 text-xs text-ink-muted">
+            <ModeIcon route={alt} className="size-3.5" />
+            <span>
+              Also: {routeSummary(alt)}
+              {alt.mode === "TRANSIT" && alt.departureTime && alt.arrivalTime ? ` · leave ${formatClock(alt.departureTime)}, arrive ${formatClock(alt.arrivalTime)}` : ""}
+            </span>
           </div>
         )}
         {t.feasibility === "LIKELY_LATE" && <p className="mt-2 text-sm text-bad">Only {t.availableMinutes} min between classes; this trip needs more.</p>}
@@ -158,24 +168,15 @@ function ClassRow({ c, id, sel, focusRef }: { c: ScheduledClass; id: string; sel
   const isWlu = m.university === "WLU";
   const select = () => sel.onSelect(id, { kind: "PLACE", label: `${m.courseCode} · ${roomLabel}`, at: c.location });
   return (
-    <li ref={focusRef} className="flex gap-2 sm:gap-3">
-      <div className="w-16 shrink-0 pt-0.5 text-right font-mono text-xs tabular-nums sm:w-20 sm:text-sm">
-        <div className="font-semibold">{formatClock(c.start)}</div>
-        <div className="text-ink-muted">{formatClock(c.end)}</div>
-      </div>
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={select}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(); } }}
-        className={`card flex-1 cursor-pointer border-l-4 p-3 ${isWlu ? "border-l-wlu" : "border-l-brand"} ${sel.selectedId === id ? SELECTED : ""}`}
-      >
+    <li ref={focusRef} data-reveal className={cn(ROW, "py-3.5", sel.selectedId === id && SELECTED)}>
+      <Time at={c.start} end={c.end} />
+      <div className={PRESSABLE} {...pressable(select)}>
         <div className="flex items-baseline justify-between gap-2">
-          <div className="text-lg font-bold">{m.courseCode}</div>
-          <span className={`chip ${isWlu ? "bg-wlu-soft text-wlu" : "bg-brand-soft text-brand"}`}>{isWlu ? "Laurier" : "Waterloo"} · {m.component}{m.section ? ` ${m.section}` : ""}</span>
+          <div className="text-lg font-bold leading-tight tracking-[-0.01em]">{m.courseCode}</div>
+          <Badge variant={isWlu ? "wlu" : "neutral"}>{isWlu ? "Laurier · " : ""}{m.component}{m.section ? ` ${m.section}` : ""}</Badge>
         </div>
         {m.courseTitle && <div className="text-sm text-ink-muted">{m.courseTitle}</div>}
-        <div className="mt-2 text-base font-semibold">{roomLabel}</div>
+        <div className="mt-1.5 font-semibold">{roomLabel}</div>
         <div className="text-sm text-ink-muted">{c.room.buildingName ?? c.location.name} · {floor}</div>
       </div>
     </li>
@@ -202,12 +203,12 @@ function legLine(r: RouteOption | undefined, minutes: number): string {
  */
 function HomeCard({ h, home, from, to, gapStart, idBase, sel, day, backLeg }: { h: HomeReturnAnalysis; home: UserHome | undefined; from?: CampusLocation; to?: CampusLocation; gapStart: Date; idBase: string; sel: Selectable; day: DayPlan; backLeg?: ClassTransition }) {
   const verdict = h.recommendation === "WORTH_IT"
-    ? { icon: "\u2705", text: "You can go home", cls: "bg-ok-soft text-ok" }
+    ? { Icon: Check, text: "You can go home", cls: "text-ok" }
     : h.recommendation === "POSSIBLE"
-      ? { icon: "\u26A0\uFE0F", text: "Possible, but probably not worth it", cls: "bg-warn-soft text-warn" }
+      ? { Icon: AlertTriangle, text: "Possible, but probably not worth it", cls: "text-warn" }
       : h.possible
-        ? { icon: "\u274C", text: "Not worth going home", cls: "bg-bad-soft text-bad" }
-        : { icon: "\u274C", text: "Not enough time to go home", cls: "bg-bad-soft text-bad" };
+        ? { Icon: X, text: "Not worth going home", cls: "text-bad" }
+        : { Icon: X, text: "Not enough time to go home", cls: "text-bad" };
   const sub = h.recommendation === "WORTH_IT"
     ? undefined
     : h.possible
@@ -215,23 +216,26 @@ function HomeCard({ h, home, from, to, gapStart, idBase, sel, day, backLeg }: { 
       : `${formatDuration(h.travelHomeMinutes)} home and ${formatDuration(h.travelBackMinutes)} back don't fit in ${formatDuration(h.gapMinutes)} with your ${formatDuration(cfgBuffer(h))} buffer; you wouldn't make your next class safely.`;
   const homeLoc: CampusLocation | undefined = home ? { id: "home", name: home.name, latitude: home.latitude, longitude: home.longitude, kind: "HOME" } : undefined;
   return (
-    <div className={`mt-2 rounded-xl p-3 ${verdict.cls}`}>
-      <div className="font-semibold">{verdict.icon} {verdict.text}</div>
-      {sub && <p className="mt-1 text-sm">{sub}</p>}
+    <div className="mt-3 border-t border-line pt-3">
+      <div className={cn("flex items-center gap-1.5 font-semibold", verdict.cls)}>
+        <verdict.Icon className="size-4 shrink-0" aria-hidden="true" />
+        {verdict.text}
+      </div>
+      {sub && <p className="mt-1 text-sm text-ink-muted">{sub}</p>}
       {h.possible && h.arriveHomeAt && h.leaveHomeAt && (
         <>
-          <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm text-ink">
+          <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
             <dt className="text-ink-muted">Class ends</dt><dd className="font-mono tabular-nums">{formatClock(gapStart)}</dd>
             <dt className="text-ink-muted">Get home</dt><dd className="font-mono tabular-nums">{formatClock(h.arriveHomeAt)} <span className="font-sans text-ink-muted">· {legLine(h.routeHome, h.travelHomeMinutes)}</span></dd>
             <dt className="text-ink-muted">Time at home</dt><dd className="text-base font-bold">{formatDuration(h.usableHomeMinutes)}</dd>
-            <dt className="text-ink-muted">Leave home</dt><dd className="font-mono tabular-nums font-semibold">{formatClock(h.leaveHomeAt)} <span className="font-sans font-normal text-ink-muted">· {legLine(h.routeBack, h.travelBackMinutes)}</span></dd>
+            <dt className="text-ink-muted">Leave home</dt><dd className="font-mono font-semibold tabular-nums">{formatClock(h.leaveHomeAt)} <span className="font-sans font-normal text-ink-muted">· {legLine(h.routeBack, h.travelBackMinutes)}</span></dd>
             <dt className="text-ink-muted">Next class</dt><dd className="font-mono tabular-nums">{formatClock(h.nextClassStart)}</dd>
           </dl>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             {homeLoc && from && to && (
               <>
-                <button className="min-h-11 rounded-lg bg-surface px-3 font-medium text-ink" onClick={() => sel.onSelect(`${idBase}-out`, { kind: "LEG", label: `${from.name} → ${homeLoc.name}`, from, to: homeLoc, route: h.routeHome })}>Map trip home</button>
-                <button className="min-h-11 rounded-lg bg-surface px-3 font-medium text-ink" onClick={() => sel.onSelect(`${idBase}-back`, { kind: "LEG", label: `${homeLoc.name} → ${to.name}`, from: homeLoc, to, route: h.routeBack })}>Map trip back</button>
+                <Button variant="outline" size="xs" onClick={(e) => { e.stopPropagation(); sel.onSelect(`${idBase}-out`, { kind: "LEG", label: `${from.name} → ${homeLoc.name}`, from, to: homeLoc, route: h.routeHome }); }}><MapPin /> Trip home</Button>
+                <Button variant="outline" size="xs" onClick={(e) => { e.stopPropagation(); sel.onSelect(`${idBase}-back`, { kind: "LEG", label: `${homeLoc.name} → ${to.name}`, from: homeLoc, to, route: h.routeBack }); }}><MapPin /> Trip back</Button>
               </>
             )}
             {backLeg && <RemindButton day={day} t={backLeg} />}
@@ -271,13 +275,14 @@ export function DayTimeline({ plan, home, busy, sel, focusClassId, onChooseGap }
     el.scrollIntoView({ block: "center", behavior: "smooth" });
   }, [focusClassId, plan]);
 
-  if (plan.classes.length === 0) return <p className="py-10 text-center text-ink-muted">No classes on this day.</p>;
+  if (plan.classes.length === 0) return <p className="py-12 text-center text-ink-muted">No classes on this day.</p>;
   return (
-    <div className={busy ? "opacity-60" : ""}>
+    <div className={cn("transition-opacity duration-200", busy && "opacity-60")}>
       {plan.warnings.length > 0 && (
         <ul className="mb-3 space-y-1 rounded-xl bg-bad-soft p-3 text-sm text-bad">{plan.warnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
       )}
-      <ol className="space-y-3">
+      {/* One list, hairlines between rows: the day reads as a sequence, not a stack of cards. Replays its entrance when the day or the plan's shape changes. */}
+      <Reveal key={`${plan.date}-${plan.items.length}`} as="ol" step={30} duration={450} className="overflow-hidden rounded-2xl border border-line bg-surface divide-y divide-line">
         {plan.items.map((item, i) => {
           switch (item.kind) {
             case "LEAVE": {
@@ -286,19 +291,19 @@ export function DayTimeline({ plan, home, busy, sel, focusClassId, onChooseGap }
               return <LeaveRow key={i} t={t} id={`leg-${i}`} sel={sel} label={`${endpointLabel(t.from, prev)} → ${endpointLabel(t.to, next)}`} day={plan} />;
             }
             case "GYM": return (
-              <li key={i} className="flex gap-2 sm:gap-3">
-                <div className="w-16 shrink-0 sm:w-20" />
-                <div className="card flex-1 border-dashed p-3">
+              <li key={i} data-reveal className={cn(ROW, "bg-canvas/60")}>
+                <div className="w-16 shrink-0 sm:w-[4.5rem]" />
+                <div className="min-w-0 flex-1">
                   <div className="font-semibold">Gym after class?</div>
                   <GymCard w={item.window} />
                 </div>
               </li>
             );
             case "ARRIVE": return (
-              <li key={i} className="flex gap-2 sm:gap-3">
+              <li key={i} data-reveal className={cn(ROW, "py-2 text-sm text-ink-muted")}>
                 <Time at={item.at} />
                 {/* The real margin, not the configured buffer: a tight hop can land later than intended. */}
-                <div className="flex-1 px-3 text-sm text-ink-muted">
+                <div className="min-w-0 flex-1 pt-0.5">
                   Arrive {item.to.name}
                   {item.transition.hasDeadline ? ` · ${Math.max(0, minutesBetween(item.at, item.transition.arriveBy))} min before class` : ""}
                 </div>
@@ -316,12 +321,12 @@ export function DayTimeline({ plan, home, busy, sel, focusClassId, onChooseGap }
             case "GAP": {
               const { prev, next } = neighbouringClasses(plan.items, i);
               return (
-                <li key={i} className="flex gap-2 sm:gap-3">
-                  <div className="w-16 shrink-0 sm:w-20" />
-                  <div className="card flex-1 border-dashed p-3">
+                <li key={i} data-reveal className={cn(ROW, "bg-canvas/60")}>
+                  <div className="w-16 shrink-0 sm:w-[4.5rem]" />
+                  <div className="min-w-0 flex-1">
                     <div className="font-semibold">{formatDuration(item.minutes)} free</div>
                     <div className="text-sm text-ink-muted">{formatClock(item.from)} &ndash; {formatClock(item.to)}</div>
-                    {/* The detail cards only make sense once the student has committed to going. */}
+                    {/* The detail blocks only make sense once the student has committed to going. */}
                     {item.choice?.value.kind === "REZ" && item.homeReturn && (
                       <HomeCard h={item.homeReturn} home={home} from={prev?.location} to={next?.location} gapStart={item.from} idBase={`home-${i}`} sel={sel} day={plan} backLeg={plan.transitions.find((t) => t.from.kind === "HOME" && next && t.arriveBy.getTime() === next.start.getTime() && t.to.id === next.location.id)} />
                     )}
@@ -333,10 +338,15 @@ export function DayTimeline({ plan, home, busy, sel, focusClassId, onChooseGap }
                 </li>
               );
             }
-            case "NOTE": return <li key={i} className="pl-[4.5rem] text-sm text-ink-muted sm:pl-24">{item.text}</li>;
+            case "NOTE": return (
+              <li key={i} data-reveal className={cn(ROW, "py-2 text-sm text-ink-muted")}>
+                <div className="w-16 shrink-0 sm:w-[4.5rem]" />
+                <div className="min-w-0 flex-1">{item.text}</div>
+              </li>
+            );
           }
         })}
-      </ol>
+      </Reveal>
     </div>
   );
 }

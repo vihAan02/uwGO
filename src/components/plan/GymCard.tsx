@@ -1,14 +1,16 @@
 "use client";
+import { Dumbbell } from "lucide-react";
 import type { GymWindow } from "@/domain/types";
 import { CROWD_LABELS, waitLabel } from "@/data/pac/crowd";
 import { formatClock, formatDuration } from "@/time/toronto";
+import { Badge } from "@/components/ui/badge";
 
-function crowdClass(level: GymWindow["crowd"]["level"]): string {
+function crowdVariant(level: GymWindow["crowd"]["level"]): "ok" | "brand" | "warn" | "bad" {
   switch (level) {
-    case "QUIET": return "bg-ok-soft text-ok";
-    case "BEARABLE": return "bg-brand-soft text-brand";
-    case "BUSY": return "bg-warn-soft text-warn";
-    default: return "bg-bad-soft text-bad";
+    case "QUIET": return "ok";
+    case "BEARABLE": return "brand";
+    case "BUSY": return "warn";
+    default: return "bad";
   }
 }
 
@@ -24,15 +26,16 @@ function sourceNote(w: GymWindow): string {
 export function GymCard({ w, heading, compact }: { w: GymWindow; heading?: string; compact?: boolean }) {
   const crowd = w.crowd;
   return (
-    <div className="mt-2 rounded-xl bg-canvas p-3">
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          {heading && <div className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{heading}</div>}
-          <div className="font-semibold">{"\u{1F3CB}️"} PAC {formatClock(w.start)}–{formatClock(w.end)}</div>
-        </div>
-        <span className={`chip ${crowdClass(crowd.level)}`}>{CROWD_LABELS[crowd.level]}</span>
+    <div className="mt-2">
+      {heading && <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-muted">{heading}</div>}
+      <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span className="flex items-center gap-1.5 font-semibold">
+          <Dumbbell className="size-4 text-ink-muted" aria-hidden="true" />
+          PAC {formatClock(w.start)}–{formatClock(w.end)}
+        </span>
+        <Badge variant={crowdVariant(crowd.level)}>{CROWD_LABELS[crowd.level]}</Badge>
       </div>
-      <div className="mt-1 text-sm text-ink">
+      <div className="mt-1 text-sm">
         {formatDuration(w.workoutMinutes)} workout fits · {CROWD_LABELS[crowd.level].toLowerCase()} {sourceNote(w)}
       </div>
       <div className="text-sm text-ink-muted">Estimated machine wait: {waitLabel(crowd)}</div>

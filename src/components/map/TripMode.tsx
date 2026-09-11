@@ -1,4 +1,6 @@
 "use client";
+import { ArrowLeft, ChevronDown, Locate } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { APIProvider, AdvancedMarker, Map, Pin, useMap } from "@vis.gl/react-google-maps";
 import { decode } from "@googlemaps/polyline-codec";
@@ -144,12 +146,12 @@ export function TripMode({ trip, onEnd }: { trip: Trip; onEnd: () => void }) {
       */}
       <header className="px-4 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
         <div className="flex items-center gap-2">
-          <button onClick={onEnd} aria-label="End trip" className="-ml-1 flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full bg-white/15 text-lg leading-none">&larr;</button>
+          <Button onClick={onEnd} aria-label="End trip" variant="inverse-soft" size="icon" className="-ml-1 shrink-0 rounded-full"><ArrowLeft /></Button>
           <h1 className="min-w-0 flex-1 truncate text-lg font-bold">{trip.to.name}</h1>
           {hasDetails && (
-            <button onClick={() => setShowDetails((v) => !v)} aria-expanded={showDetails} className="flex min-h-11 shrink-0 items-center rounded-full px-2 text-sm font-medium text-white/70">
-              Details {showDetails ? "\u25b4" : "\u25be"}
-            </button>
+            <Button onClick={() => setShowDetails((v) => !v)} aria-expanded={showDetails} variant="ghost" size="sm" className="shrink-0 text-white/70 hover:bg-white/10 hover:text-white">
+              Details <ChevronDown className={showDetails ? "rotate-180 transition-transform" : "transition-transform"} />
+            </Button>
           )}
         </div>
 
@@ -209,19 +211,21 @@ export function TripMode({ trip, onEnd }: { trip: Trip; onEnd: () => void }) {
         )}
 
         {geoState === "on" && (
-          <button
+          <Button
             onClick={() => setFollow((f) => !f)}
             aria-pressed={follow}
-            className={`absolute bottom-9 right-3 min-h-12 rounded-full px-4 text-sm font-semibold shadow-lg ${follow ? "bg-white text-ink" : "bg-ink/85 text-white"}`}
+            variant="inverse"
+            size="lg"
+            className={`absolute right-3 bottom-9 rounded-full shadow-lg ${follow ? "" : "bg-ink/85 text-white hover:bg-ink"}`}
           >
-            {follow ? "Following" : "Follow me"}
-          </button>
+            <Locate /> {follow ? "Following" : "Follow me"}
+          </Button>
         )}
       </div>
 
       <footer className="px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
         {geoState === "denied" && <p className="mb-2 text-center text-xs text-white/60">Location is off, so the planned route is shown without your position.</p>}
-        <button onClick={onEnd} className="w-full rounded-2xl bg-white py-4 text-base font-bold text-ink">End Trip</button>
+        <Button onClick={onEnd} variant="inverse" size="xl" className="w-full rounded-2xl font-bold">End Trip</Button>
       </footer>
     </div>
   );

@@ -1,8 +1,10 @@
 "use client";
 import { useState } from "react";
+import { Bell, BellRing } from "lucide-react";
 import type { ClassTransition, DayPlan } from "@/domain/types";
 import { useReminders } from "@/lib/useReminders";
 import { formatClock } from "@/time/toronto";
+import { Button } from "@/components/ui/button";
 
 /** "Remind me" for one leg. Toggles; asks for notification permission on the first use. */
 export function RemindButton({ day, t, dark }: { day: DayPlan; t: ClassTransition; dark?: boolean }) {
@@ -11,18 +13,18 @@ export function RemindButton({ day, t, dark }: { day: DayPlan; t: ClassTransitio
   if (!t.recommendedDeparture || !t.recommendedRoute) return null;
   if (t.recommendedDeparture.getTime() < mountedAt) return null;
   const set = rem.get(day, t);
-  const base = dark
-    ? set ? "bg-white text-ink" : "bg-white/15 text-white"
-    : set ? "bg-brand text-white" : "bg-brand-soft text-brand";
   return (
-    <button
+    <Button
       type="button"
-      className={`inline-flex min-h-9 items-center gap-1 rounded-lg px-3 text-xs font-semibold ${base}`}
+      size="xs"
+      variant={dark ? (set ? "inverse" : "inverse-soft") : "outline"}
+      className={!dark && set ? "border-brand/25 bg-brand-soft text-brand hover:bg-brand-soft" : undefined}
       onClick={(e) => { e.stopPropagation(); void rem.toggle(day, t); }}
       aria-pressed={Boolean(set)}
       title={rem.permission === "denied" ? "Notifications are blocked for this site; the reminder will show inside the app while it is open." : undefined}
     >
-      {set ? `✓ Reminder ${formatClock(new Date(set.at))}` : "\u{1F514} Remind me"}
-    </button>
+      {set ? <BellRing /> : <Bell />}
+      {set ? `Reminder ${formatClock(new Date(set.at))}` : "Remind me"}
+    </Button>
   );
 }
