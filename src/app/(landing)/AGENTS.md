@@ -1,16 +1,16 @@
 # Landing-page workspace rules
 
-These rules apply to all work in src/app/landing. Read README.md here first.
+These rules apply to all work in src/app/(landing). Read README.md here first.
 
 ## Scope
 
-- Develop only the one-page landing at /landing. Do not replace / or redesign the app.
+- This folder is the one-page landing served at /. Do not redesign the app from here.
 - Keep components, shadcn/ui source, animation code, design notes, and CSS in this folder.
   Use private Next folders such as _components/ui and _lib when needed.
 - Use CSS Modules or selectors scoped to the landing root. Never edit shared globals,
   root providers/layout, existing app components, auth flows, schedule parsing, or APIs
-  as part of landing design work. Any integration beyond the existing /login link is
-  a separate user-authorized task.
+  as part of landing design work. The page links to /login; any further integration
+  is a separate user-authorized task.
 - Do not run a root shadcn initializer that rewrites the app theme or shared UI.
   Inspect generated changes and keep component files and theme tokens local.
 - Check Git status before work. Stage explicit paths only; do not include unrelated changes.
@@ -53,5 +53,5 @@ The checked-in page is scaffolding only, not the approved visual design.
 ## Validation
 
 From the repository root: npm run typecheck, npm run lint, npm test.
-Run relevant checks before committing. For design work also verify /landing through
+Run relevant checks before committing. For design work also verify / through
 Poly as above and check that /, /login, and /plan retain their existing behavior.

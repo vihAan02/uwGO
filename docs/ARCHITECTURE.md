@@ -181,8 +181,10 @@ All wall-clock construction goes through `torontoDate(dateISO, minutesOfDay): TZ
 
 ## 8. Frontend structure (`src/app`, `src/components`)
 
-- `/` — `Onboarding`: paste box, parse preview with warnings, WLU manual add, home picker, buffer picker, "Build my routes". Redirects to `/plan` once a schedule is stored.
-- `/plan` — `WeekView`: week navigation (previous/next/Today), weekday tabs, the next-class card, the day timeline, and one map, with a settings sheet over the top. Redirects back to `/` when there is no schedule.
+- `/` — the landing page (`src/app/(landing)`, a route group so its components, styles and design notes stay together). Public; its Get Started buttons go to `/login`. A signed-in user who opens `/` is redirected to `/plan` by the proxy (`decideAuth` → `TO_APP`). The old preview path `/landing` is a permanent redirect to `/` in `next.config.ts`.
+- `/login` — email sign-in. On success it replaces itself with `/plan`, so back never returns to the form.
+- `/setup` — `Onboarding`: paste box, parse preview with warnings, WLU manual add, home picker, buffer picker, "Build my routes". Redirects to `/plan` once a schedule is stored, and "Build my routes" replaces the history entry so back from the plan does not bounce through setup.
+- `/plan` — `WeekView`: week navigation (previous/next/Today), weekday tabs, the next-class card, the day timeline, and one map, with a settings sheet over the top. Redirects to `/setup` when there is no schedule.
 - `NextClassCard` leads with what matters now — course, room, floor, travel time and the exact minute to leave, counting down live — using `lib/nextClass.ts` (`findNextUp`), which prefers a class in progress, then the next unfinished class in the week, and falls back to a labelled preview when a past or future week is being browsed.
 - `DayTimeline` renders `DayPlanItem`s only; it computes nothing. Tapping a class or a leg calls back into `WeekView` to retarget the map.
 - **One map instance.** `MapPanel` (`@vis.gl/react-google-maps`, lazily imported, `ssr: false`) takes a `MapSelection` — a `LEG`, a `PLACE`, or the whole `DAY` — and re-frames itself. A second CSS-hidden copy would double Dynamic Maps billing and compute its zoom from a zero-size box, so the map is placed by grid position rather than duplicated. Without a route polyline it draws a dashed geodesic line.

@@ -14,7 +14,9 @@ cp .env.example .env.local   # then fill in the keys below (optional for a first
 npm run dev
 ```
 
-Open http://localhost:3000, paste a Quest schedule (Quest → Class Schedule → List View → Select All → Copy), choose where you live, and press **Build my routes**.
+Open http://localhost:3000 for the landing page and press **Get Started**. Sign in with a @uwaterloo.ca email, then paste a Quest schedule (Quest → Class Schedule → List View → Select All → Copy), choose where you live, and press **Build my routes**.
+
+Routes: `/` landing (signed-in users go straight to `/plan`), `/login` sign-in, `/setup` first-run schedule paste, `/plan` the app.
 
 The plan screen leads with the next class: course, room, floor, how long the trip takes and the exact time to leave, counting down live. Below it is one interactive Google map. Tapping any class or any trip in the timeline retargets the map to that place or that route; "Show whole day" pins every stop of the day including home. Desktop keeps the map beside the timeline; mobile stacks them.
 
