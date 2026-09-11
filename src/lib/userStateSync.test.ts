@@ -325,6 +325,9 @@ describe("failures", () => {
     expect(device.state.schedule?.meetings).toHaveLength(2);
 
     device.sync.continueOffline();
+    // Only an edit made after the account's copy counts as newer. Both times are read in whole
+    // milliseconds, so an edit in the same millisecond as the save would tie and lose.
+    await new Promise((r) => setTimeout(r, 5));
     device.edit((s) => ({ ...s, routePreference: "FASTEST" }));
     expect(device.timers.delays()).toEqual([]);
     expect(device.state.sync?.dirtySince).toBeDefined();
