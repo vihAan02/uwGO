@@ -6,6 +6,7 @@ import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
 import { getServerAuth } from "@/lib/supabase/server";
 import { ProfileSync } from "@/lib/profileSync";
+import { Analytics } from "@vercel/analytics/next";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -38,6 +39,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </StoreProvider>
         </AuthProvider>
         <ServiceWorkerRegistrar />
+        <Analytics />
       </body>
     </html>
   );
