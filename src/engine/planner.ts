@@ -103,17 +103,18 @@ function requestFor(t: ClassTransition): RouteRequest {
   return { from: t.from, to: t.to, departAfter: t.departAfter, arriveBy: t.hasDeadline ? t.arriveBy : undefined, crossCampus: t.crossCampus };
 }
 
-async function resolveTransition(t: ClassTransition, resolver: LegResolver, cfg: PlannerConfig, routePreference: RoutePreference): Promise<ClassTransition> {
+async function resolveTransition(t: ClassTransition, resolver: LegResolver, memo: RouteMemo, cfg: PlannerConfig, routePreference: RoutePreference): Promise<ClassTransition> {
   const best = await resolver.resolve(requestFor(t));
   let recommended = best.recommended;
   let departure = best.departure;
   let arrival = best.arrival;
   let reason = best.reason;
 
-  // An indoor way exists only between UW buildings on the verified graph. It is always
+  // The winter route comes from the campus indoor network; a place off the network is joined
+  // to it by a short walk priced through the same memo as every other walk. It is always
   // offered as the alternative; it is taken only when asked for and not unreasonably slower
   // than the fastest walk. A chosen bus is never overridden: that decision was about time.
-  const indoorRoute = indoorRouteBetween(t.from, t.to);
+  const indoorRoute = await indoorRouteBetween(t.from, t.to, memo);
   if (indoorRoute && routePreference === "INDOORS" && recommended?.mode === "WALK" && best.walking && indoorIsReasonable(indoorRoute, best.walking, cfg)) {
     recommended = indoorRoute;
     departure = t.hasDeadline ? clampDeparture(recommendedDeparture(t.arriveBy, indoorRoute.durationMinutes, cfg.arrivalBufferMinutes), t.departAfter) : t.departAfter;
@@ -228,7 +229,7 @@ async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledC
     const spec: LegSpec = earliest && earliest.getTime() > leg.departAfter.getTime()
       ? { ...leg, departAfter: earliest, availableMinutes: leg.hasDeadline ? minutesBetween(earliest, leg.arriveBy) : 0 }
       : leg;
-    const resolved = await resolveTransition(spec, resolver, cfg, extras.routePreference);
+    const resolved = await resolveTransition(spec, resolver, memo, cfg, extras.routePreference);
     transitions.push(resolved);
     readyAt = resolved.expectedArrival ?? spec.arriveBy;
   }

@@ -33,14 +33,14 @@ function text(node: ReactNode): string {
 const place = (code: string): CampusLocation => buildingLocation(findBuilding("UW", code)!)!;
 
 /** STC -> MC: Google's 4 minute walk, with the STC -> B2 -> QNC -> MC tunnel as the winter alternative. */
-function stcToMc(): ClassTransition {
+async function stcToMc(): Promise<ClassTransition> {
   const from = place("STC");
   const to = place("MC");
   const fastest: RouteOption = { mode: "WALK", durationMinutes: 4, distanceMeters: 300, polyline: "google", provider: "google-routes", computedAt: "x", isEstimate: false };
   return {
     id: "stc->mc", kind: "CLASS_TO_CLASS", from, to,
     departAfter: new Date("2026-09-11T15:20:00Z"), arriveBy: new Date("2026-09-11T15:30:00Z"), hasDeadline: true, availableMinutes: 10,
-    walkingRoute: fastest, indoorRoute: indoorRouteBetween(from, to), recommendedRoute: fastest,
+    walkingRoute: fastest, indoorRoute: await indoorRouteBetween(from, to), recommendedRoute: fastest,
     recommendedDeparture: new Date("2026-09-11T15:21:00Z"), expectedArrival: new Date("2026-09-11T15:25:00Z"),
     feasibility: "TIGHT", crossCampus: false,
   };
@@ -49,8 +49,8 @@ function stcToMc(): ClassTransition {
 const LABEL = "MATH 137 (STC) → CS 135 (MC)";
 
 describe("the Fastest / Winter route choice on a leg", () => {
-  it("Winter route is a button that shows the indoor path, and the leg row underneath does not take the click", () => {
-    const t = stcToMc();
+  it("Winter route is a button that shows the indoor path, and the leg row underneath does not take the click", async () => {
+    const t = await stcToMc();
     expect(t.indoorRoute?.indoorPath).toEqual(["STC", "B2", "QNC", "MC"]);
     const onSelect = vi.fn();
     const sel: Selectable = { selectedId: undefined, onSelect };
@@ -67,8 +67,8 @@ describe("the Fastest / Winter route choice on a leg", () => {
     expect(onSelect).toHaveBeenLastCalledWith("leg-3-fastest", { kind: "LEG", label: LABEL, from: t.from, to: t.to, route: t.walkingRoute, walkFallback: t.walkingRoute });
   });
 
-  it("lights the way the map is showing, and the plan's own choice until one is tapped", () => {
-    const t = stcToMc();
+  it("lights the way the map is showing, and the plan's own choice until one is tapped", async () => {
+    const t = await stcToMc();
     const pressed = (selectedId: string | undefined, tt = t) =>
       buttons(expand(createElement(IndoorComparison, { t: tt, id: "leg-3", label: LABEL, sel: { selectedId, onSelect: () => {} } }))).map((b) => b.props["aria-pressed"]);
     expect(pressed(undefined)).toEqual([true, false]);

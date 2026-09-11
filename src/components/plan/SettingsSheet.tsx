@@ -121,7 +121,7 @@ export function SettingsSheet({ open, onOpenChange }: { open: boolean; onOpenCha
             </AlertDialog>
           </Section>
 
-          <p className="py-5 text-xs leading-relaxed text-ink-muted">Building data: University of Waterloo campus map (used as-is) and Wilfrid Laurier University pages. Laurier coordinates © OpenStreetMap contributors (ODbL). Routes and maps by Google. PAC hours and live occupancy from Waterloo Athletics; indoor connections from the UW Campus Accessibility building pages.</p>
+          <p className="py-5 text-xs leading-relaxed text-ink-muted">Building data: University of Waterloo campus map (used as-is) and Wilfrid Laurier University pages. Laurier coordinates © OpenStreetMap contributors (ODbL). Routes and maps by Google. PAC hours and live occupancy from Waterloo Athletics. Winter routes run over the campus tunnel and bridge network surveyed by WATIsGrass (Ricky Qin and Manasva Katyal, github.com/rickyqin005/WATIsGrass, GPL-3.0), cross-checked against the UW Campus Accessibility building pages.</p>
         </SheetBody>
       </SheetContent>
     </Sheet>

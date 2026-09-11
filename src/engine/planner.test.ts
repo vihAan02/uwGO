@@ -156,8 +156,9 @@ describe("planner", () => {
     const same = day.transitions.find((t) => t.kind === "CLASS_TO_CLASS" && t.from.id === t.to.id)!;
     expect(same.recommendedRoute!.durationMinutes).toBe(0);
     expect(same.reason).toBe("Same building.");
-    // walking pairs used: UWP->DC, DC->UWP (home routes reuse), DC->UWP for last leg is the same pair -> 2 calls total
-    expect(provider.calls.walk).toBe(2);
+    // walking pairs used: UWP->DC, DC->UWP (home routes reuse), DC->UWP for last leg is the same pair -> 2 calls,
+    // plus the winter route's two connectors from home to its nearest network doors, fetched once for the whole plan.
+    expect(provider.calls.walk).toBe(4);
   });
 
   it("missing routes produce warnings, never invented durations; estimates are surfaced", async () => {
