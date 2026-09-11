@@ -2,7 +2,7 @@
 
 Turn a University of Waterloo (Quest) or Wilfrid Laurier class schedule into a day-by-day movement plan: when to leave, what building and floor the room is in, walk vs. bus/ION, and whether a gap is long enough to go home.
 
-Mobile-first Next.js app. No accounts, no database, no AI. Everything about the schedule stays in the browser; only building coordinates and times are sent to the routing proxy.
+Mobile-first Next.js app. No AI. Students sign in with a Waterloo email, and their parsed schedule and preferences are saved to their account, so a returning student opens straight into their week. The raw Quest paste never leaves the browser, and routing only receives building coordinates and times.
 
 Planning docs: [docs/PRODUCT.md](docs/PRODUCT.md) · [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md) · [docs/BUILD_PLAN.md](docs/BUILD_PLAN.md)
 
@@ -28,7 +28,7 @@ Create one Google Cloud project with billing enabled and turn on three APIs: **R
 
 | Key | Env var | Application restriction | API restriction | Used for |
 |---|---|---|---|---|
-| Supabase | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | n/a (public by design; RLS + the Waterloo-only trigger protect data) | Supabase Auth (emailed sign-in code), `profiles` table | Sign-in and the per-user preference backup. See docs/SUPABASE_SETUP.md. |
+| Supabase | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | n/a (public by design; RLS + the Waterloo-only trigger protect data) | Supabase Auth (emailed sign-in code), `user_state` table | Sign-in, and each student's saved schedule and preferences. See docs/SUPABASE_SETUP.md. |
 | Server key | `GOOGLE_MAPS_SERVER_KEY` | none (or your server IPs if self-hosting) | Routes API, Geocoding API | `/api/routes` (walking + transit) and `/api/geocode` (custom home address). Never shipped to the browser. |
 | Browser key | `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` | HTTP referrers: `https://your-domain/*`, `http://localhost:3000/*`, `http://localhost:3010/*` | Maps JavaScript API | Rendering the embedded map. Inlined into the client bundle at build time. With only this key (no server key) the map shows a dashed straight line between buildings instead of a real path. |
 
@@ -42,7 +42,8 @@ Costs (verified September 2026): Compute Routes Essentials covers both WALK and 
 
 | Data | Sent? | Where |
 |---|---|---|
-| Pasted Quest text, course codes, titles, instructors | No | Parsed and stored in `localStorage` only |
+| Pasted Quest text, instructor names | No | Parsed in the browser; the raw paste and instructor names are never stored or sent |
+| Parsed schedule (course codes, titles, sections, days, times, rooms, term) and preferences (home, arrival buffer, gym, route) | Yes, when signed in | Supabase `user_state`, readable and writable only by that student (Row Level Security) |
 | Building coordinates + departure/arrival times | Yes | `/api/routes` → Google Routes API |
 | Home coordinate | Yes, for legs to/from home | same |
 | Custom home address text | Once | `/api/geocode` → Google Geocoding API |

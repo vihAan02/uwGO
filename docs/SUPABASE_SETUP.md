@@ -13,7 +13,11 @@ does not get around it.
    `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Do not copy the service_role key anywhere in this repo.
 2. SQL Editor: run `supabase/migrations/20260910000000_waterloo_only_and_profiles.sql`.
    It adds the Waterloo-only trigger, the `profiles` table with Row Level Security, and the
-   trigger that creates a profile row for each new user.
+   trigger that creates a profile row for each new user. Then run
+   `supabase/migrations/20260911000000_user_state.sql`: it adds `public.user_state`, where each
+   student's schedule and preferences are saved, and copies over any preferences already in
+   `profiles`. Run it before deploying an app version that reads `user_state`. To undo it, run
+   `supabase/rollbacks/20260911000000_user_state.down.sql`, which deletes every saved schedule.
 3. Authentication -> Providers -> Email: keep **Enable email provider** on. Turn **Confirm
    email** on (it is the default). Leave passwords off if you like; the app never uses them.
 4. Authentication -> URL Configuration: set Site URL to your deployed origin (e.g.
@@ -39,11 +43,18 @@ does not get around it.
 ## What is stored where
 
 - Supabase `auth.users`: the Waterloo email and Supabase's own session data.
-- Supabase `public.profiles`: one row per user with gym on/off, gym duration, preferred gym
-  time, route preference and arrival buffer. Readable and writable only by that user (RLS).
-- The device (localStorage): the schedule, home, the same preferences, reminders, PAC samples
-  and the route cache. The device is the source of truth; the profile is a backup that a new
-  device picks up when it has no local answers yet.
+- Supabase `public.user_state`: one row per student with the parsed schedule and preferences
+  (home, arrival buffer, gym, route preference) as JSON, and whether onboarding is complete.
+  Row Level Security allows select, insert, update and delete only where `auth.uid() = user_id`.
+  The app uses the public anon key and the student's session; no service-role key is used.
+- Supabase `public.profiles`: still created for each new account by the sign-up trigger, but the
+  app no longer reads or writes it. Its preferences were copied into `user_state`.
+- The device (localStorage): a copy of the schedule and preferences, tagged with the account it
+  belongs to, plus per-device state that is never uploaded: gap answers, reminders, PAC samples
+  and the route cache. On sign-in the account's copy wins, unless the device has newer unsaved
+  changes or has a schedule the account lacks. A copy tagged with another account is discarded.
+  Signing out clears the device copy.
+- Never stored by the app: sign-in codes, session tokens, API keys, computed routes and map state.
 
 ## Local development without a project
 

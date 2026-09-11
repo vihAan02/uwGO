@@ -11,17 +11,24 @@ import { Button } from "@/components/ui/button";
 
 type Mode = "UW" | "WLU" | "ADDRESS";
 
+/**
+ * The home a residence code stands for. The label the confirmation shows and the coordinates the
+ * plan routes to come from the same building, so the two can never disagree with the dropdown.
+ * Returns undefined for an unknown code or one whose building has no coordinates.
+ */
+export function residenceHome(university: University, code: string): UserHome | undefined {
+  const b = residencePresets(university).find((x) => x.code === code);
+  if (!b || b.latitude === undefined || b.longitude === undefined) return undefined;
+  return { name: b.residenceLabel ?? b.name, latitude: b.latitude, longitude: b.longitude, address: b.address, preset: { university, buildingCode: b.code } };
+}
+
 export function HomePicker({ value, onChange }: { value: UserHome | undefined; onChange: (h: UserHome | undefined) => void }) {
   const [mode, setMode] = useState<Mode>(value?.preset?.university ?? (value?.address ? "ADDRESS" : "UW"));
   const [address, setAddress] = useState(value?.address ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | undefined>();
 
-  const choosePreset = (u: University, code: string) => {
-    const b = residencePresets(u).find((x) => x.code === code);
-    if (!b || b.latitude === undefined || b.longitude === undefined) { onChange(undefined); return; }
-    onChange({ name: b.residenceLabel ?? b.name, latitude: b.latitude, longitude: b.longitude, address: b.address, preset: { university: u, buildingCode: b.code } });
-  };
+  const choosePreset = (u: University, code: string) => onChange(residenceHome(u, code));
 
   const lookup = async () => {
     setBusy(true); setError(undefined);

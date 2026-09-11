@@ -2,7 +2,7 @@
  * Async orchestrator: schedule + home + routing provider -> WeekPlan.
  * The only place that talks to a RoutingProvider. Every decision is delegated to the pure engines.
  */
-import type { CampusLocation, ClassTransition, CourseMeeting, CrowdEstimate, DayOfWeek, DayPlan, DayPlanItem, GapOption, GapRecommendation, GapStop, GymPreferences, GymWindow, HomeReturnAnalysis, LatLng, RoutePreference, RouteOption, ScheduledClass, UserHome, WeekPlan } from "@/domain/types";
+import type { CampusLocation, ClassTransition, CourseMeeting, CrowdEstimate, DayOfWeek, DayPlan, DayPlanItem, EndOfDayDestination, GapOption, GapRecommendation, GapStop, GymPreferences, GymWindow, HomeReturnAnalysis, LatLng, RoutePreference, RouteOption, ScheduledClass, UserHome, WeekPlan } from "@/domain/types";
 import { DAYS_IN_ORDER } from "@/domain/types";
 import type { PlannerConfig } from "@/domain/config";
 import type { RoutingProvider, TransitOptions } from "@/routing/RoutingProvider";
@@ -16,7 +16,7 @@ import { analyzeHomeReturn, type ResolvedLeg } from "./homeReturn";
 import { indoorIsReasonable, indoorRouteBetween } from "./indoorRoute";
 import { clampDeparture, expectedArrival, recommendedDeparture } from "./departure";
 import { findGymWindows, gymForGap } from "./gym";
-import { priceGapOptions, recommendGapOption } from "./gapOptions";
+import { nearestSpot, priceGapOptions, recommendGapOption } from "./gapOptions";
 import { resolveStudySpots } from "@/data/study";
 import { chosenFor, type ChosenGap, type GapChoices } from "@/domain/gapChoices";
 import { estimateCrowd, type PacReading, type PacSample } from "@/data/pac/crowd";
@@ -35,6 +35,8 @@ export interface PlanInput {
   routePreference?: RoutePreference;
   /** What the student chose to do with each gap. An unanswered gap builds no trip at all. */
   gapChoices?: GapChoices;
+  /** Where the day ends after the last class: HOME (default), GYM, or LIBRARY. */
+  endOfDay?: EndOfDayDestination;
   /** Latest live PAC reading and the samples kept so far, for crowd estimates. */
   pacLive?: PacReading;
   pacSamples?: readonly PacSample[];
@@ -101,17 +103,18 @@ function requestFor(t: ClassTransition): RouteRequest {
   return { from: t.from, to: t.to, departAfter: t.departAfter, arriveBy: t.hasDeadline ? t.arriveBy : undefined, crossCampus: t.crossCampus };
 }
 
-async function resolveTransition(t: ClassTransition, resolver: LegResolver, cfg: PlannerConfig, routePreference: RoutePreference): Promise<ClassTransition> {
+async function resolveTransition(t: ClassTransition, resolver: LegResolver, memo: RouteMemo, cfg: PlannerConfig, routePreference: RoutePreference): Promise<ClassTransition> {
   const best = await resolver.resolve(requestFor(t));
   let recommended = best.recommended;
   let departure = best.departure;
   let arrival = best.arrival;
   let reason = best.reason;
 
-  // An indoor way exists only between UW buildings on the verified graph. It is always
+  // The winter route comes from the campus indoor network; a place off the network is joined
+  // to it by a short walk priced through the same memo as every other walk. It is always
   // offered as the alternative; it is taken only when asked for and not unreasonably slower
   // than the fastest walk. A chosen bus is never overridden: that decision was about time.
-  const indoorRoute = indoorRouteBetween(t.from, t.to);
+  const indoorRoute = await indoorRouteBetween(t.from, t.to, memo);
   if (indoorRoute && routePreference === "INDOORS" && recommended?.mode === "WALK" && best.walking && indoorIsReasonable(indoorRoute, best.walking, cfg)) {
     recommended = indoorRoute;
     departure = t.hasDeadline ? clampDeparture(recommendedDeparture(t.arriveBy, indoorRoute.durationMinutes, cfg.arrivalBufferMinutes), t.departAfter) : t.departAfter;
@@ -147,6 +150,7 @@ interface DayExtras {
   gym?: GymPreferences;
   gapChoices?: GapChoices;
   routePreference: RoutePreference;
+  endOfDay?: EndOfDayDestination;
   crowdAt: (at: Date) => CrowdEstimate;
 }
 
@@ -199,8 +203,21 @@ async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledC
     if (option?.stops.length) gapStops.set(i, option.stops);
   }
 
+  // 1c. Where the day ends. HOME (default) keeps the home bookend; GYM and LIBRARY route the last
+  //     leg to the PAC or the nearest open library instead, resolved with the same shared resolver.
+  let endDestination = home;
+  if (classes.length && extras.endOfDay && extras.endOfDay !== "HOME") {
+    const last = classes[classes.length - 1];
+    if (extras.endOfDay === "GYM") {
+      endDestination = PAC_LOCATION ?? home;
+    } else if (extras.endOfDay === "LIBRARY") {
+      const spot = await nearestSpot(STUDY_SPOTS, last.location, last.end, dateISO, resolveLeg);
+      endDestination = spot?.spot.at ?? home;
+    }
+  }
+
   // 2. Build the chain of legs that follows from those decisions.
-  const legs = buildItinerary(classes, home, gapStops, dateISO);
+  const legs = buildItinerary(classes, home, gapStops, dateISO, endDestination);
 
   // 3. Resolve legs in order, carrying the running location and clock. A leg can never
   //    set off before the previous one has landed, and never from anywhere else. A stop the
@@ -212,7 +229,7 @@ async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledC
     const spec: LegSpec = earliest && earliest.getTime() > leg.departAfter.getTime()
       ? { ...leg, departAfter: earliest, availableMinutes: leg.hasDeadline ? minutesBetween(earliest, leg.arriveBy) : 0 }
       : leg;
-    const resolved = await resolveTransition(spec, resolver, cfg, extras.routePreference);
+    const resolved = await resolveTransition(spec, resolver, memo, cfg, extras.routePreference);
     transitions.push(resolved);
     readyAt = resolved.expectedArrival ?? spec.arriveBy;
   }
@@ -296,8 +313,8 @@ async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledC
   const afterLast = gym.find((w) => w.slot === "AFTER_LAST");
   if (afterLast) items.push({ kind: "GYM", window: afterLast });
 
-  if (home && classes.length) {
-    pushLeg(legAt((l) => l.kind === "CLASS_TO_HOME"));
+  if (endDestination && classes.length) {
+    pushLeg(legAt((l) => l.kind === "CLASS_TO_HOME" || l.kind === "CLASS_TO_END"));
   }
 
   for (const t of transitions) if (t.feasibility === "LIKELY_LATE") warnings.push(`${t.from.name} → ${t.to.name}: you will likely be late (${t.availableMinutes} min available).`);
@@ -315,6 +332,7 @@ export async function buildWeekPlan(input: PlanInput, provider: RoutingProvider)
     gym: input.gym,
     routePreference: input.routePreference ?? "FASTEST",
     gapChoices: input.gapChoices,
+    endOfDay: input.endOfDay,
     crowdAt: (at) => estimateCrowd(at, input.pacLive, input.pacSamples ?? []),
   };
   const plans = await Promise.all(days.map((d) => buildDayPlan(d, dateForDay(input.mondayISO, d), week.byDay[d], home, memo, input.config, extras)));

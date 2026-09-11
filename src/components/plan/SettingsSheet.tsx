@@ -1,8 +1,9 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { LogOut, Plus, Trash2 } from "lucide-react";
+import { ClipboardPaste, LogOut, Plus, Trash2 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { useUserState } from "@/lib/UserStateProvider";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Sheet, SheetBody, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -30,6 +31,7 @@ export function SettingsSheet({ open, onOpenChange }: { open: boolean; onOpenCha
   const router = useRouter();
   const { state, setHome, setConfig, setGym, setRoutePreference, setIncludeInPlan, removeMeeting, addMeeting, reset } = useStore();
   const auth = useAuth();
+  const account = useUserState();
   const meetings = state.schedule?.meetings ?? [];
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -44,8 +46,11 @@ export function SettingsSheet({ open, onOpenChange }: { open: boolean; onOpenCha
           {auth.user && (
             <Section title="Account">
               <div className="flex items-center justify-between gap-3">
-                <p className="min-w-0 truncate text-sm text-ink-muted">{auth.user.email}{auth.mode === "DEV_BYPASS" ? " (dev bypass)" : ""}</p>
-                <Button variant="outline" size="sm" className="shrink-0" onClick={() => void auth.signOut()}><LogOut /> Log out</Button>
+                <div className="min-w-0">
+                  <p className="truncate text-sm text-ink-muted">{auth.user.email}{auth.mode === "DEV_BYPASS" ? " (dev bypass)" : ""}</p>
+                  {account.status === "ready" && <p className="mt-0.5 text-xs text-ink-muted">Your schedule and preferences are saved to this account.</p>}
+                </div>
+                <Button variant="outline" size="sm" className="shrink-0" onClick={async () => { await account.flush(); await auth.signOut(); }}><LogOut /> Log out</Button>
               </div>
             </Section>
           )}
@@ -86,6 +91,9 @@ export function SettingsSheet({ open, onOpenChange }: { open: boolean; onOpenCha
                 );
               })}
             </ul>
+            <Button variant="outline" className="mt-3 w-full sm:w-auto" onClick={() => { onOpenChange(false); router.push("/setup?replace=1"); }}>
+              <ClipboardPaste /> Paste a new schedule
+            </Button>
             <details className="group mt-3">
               <summary className="flex min-h-9 cursor-pointer list-none items-center gap-1.5 text-sm font-medium text-brand [&::-webkit-details-marker]:hidden">
                 <Plus className="size-4 transition-transform group-open:rotate-45" aria-hidden="true" />
@@ -95,7 +103,7 @@ export function SettingsSheet({ open, onOpenChange }: { open: boolean; onOpenCha
             </details>
           </Section>
 
-          <Section title="Start over" hint="Removes the schedule and home from this device.">
+          <Section title="Start over" hint="Removes your schedule, home and preferences from this device and your account.">
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" className="w-full sm:w-auto"><Trash2 /> Delete everything</Button>
@@ -103,17 +111,17 @@ export function SettingsSheet({ open, onOpenChange }: { open: boolean; onOpenCha
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Delete your schedule and home?</AlertDialogTitle>
-                  <AlertDialogDescription>This removes everything UW GO keeps on this device. You can paste your schedule again any time.</AlertDialogDescription>
+                  <AlertDialogDescription>This removes everything UW GO has saved for you, on this device and in your account. You can paste your schedule again any time.</AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Keep it</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => { reset(); onOpenChange(false); router.replace("/setup"); }}>Delete everything</AlertDialogAction>
+                  <AlertDialogAction onClick={() => { reset(); void account.forget(); onOpenChange(false); router.replace("/setup"); }}>Delete everything</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
           </Section>
 
-          <p className="py-5 text-xs leading-relaxed text-ink-muted">Building data: University of Waterloo campus map (used as-is) and Wilfrid Laurier University pages. Laurier coordinates © OpenStreetMap contributors (ODbL). Routes and maps by Google. PAC hours and live occupancy from Waterloo Athletics; indoor connections from the UW Campus Accessibility building pages.</p>
+          <p className="py-5 text-xs leading-relaxed text-ink-muted">Building data: University of Waterloo campus map (used as-is) and Wilfrid Laurier University pages. Laurier coordinates © OpenStreetMap contributors (ODbL). Routes and maps by Google. PAC hours and live occupancy from Waterloo Athletics. Winter routes run over the campus tunnel and bridge network surveyed by WATIsGrass (Ricky Qin and Manasva Katyal, github.com/rickyqin005/WATIsGrass, GPL-3.0), cross-checked against the UW Campus Accessibility building pages.</p>
         </SheetBody>
       </SheetContent>
     </Sheet>

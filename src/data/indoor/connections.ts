@@ -1,9 +1,13 @@
 /**
- * Verified indoor connections between University of Waterloo buildings: tunnels, overpasses
- * (bridges) and internal links. Every edge below is taken from the university's own
- * Campus Accessibility building pages (uwaterloo.ca/accessibility/getting-around/
+ * Indoor connections between University of Waterloo buildings as STATED on the university's
+ * own Campus Accessibility building pages (uwaterloo.ca/accessibility/getting-around/
  * building-accessibility/<building>), read on 2026-09-09. Nothing here is inferred from a
  * map or from memory; if a page does not state a connection, the edge is not listed.
+ *
+ * Not used for routing. The winter route runs over the surveyed network in
+ * uw-indoor-network.generated.ts, which has geometry; this list is the independent source
+ * the audit (scripts/audit-indoor-network.mjs) cross-checks that network against, so a link
+ * one source has and the other lacks is reported rather than silently trusted.
  *
  * Known omissions (no statement on the pages, so deliberately absent): E5-E6, MC-M3 direct,
  * DC-CIM (CIM is not a routable building), the BMH/LHI/EXP health cluster (no codes).
@@ -69,18 +73,3 @@ export const INDOOR_CONNECTIONS: readonly IndoorConnection[] = [
   { a: "SCH", b: "AL", kind: "TUNNEL", note: "Tunnel from SCH Southwest side to AL", source: ACCESS + "south-campus-hall-sch" },
   { a: "PAS", b: "EV2", kind: "LINK", note: "Link at the North end of PAS to EV2", source: ACCESS + "psychology-anthropology-and-sociology-pas" },
 ];
-
-/** Adjacency over the verified edges, keyed by building code. */
-export function indoorNeighbours(): Map<string, { to: string; edge: IndoorConnection }[]> {
-  const m = new Map<string, { to: string; edge: IndoorConnection }[]>();
-  const add = (from: string, to: string, edge: IndoorConnection) => {
-    if (!m.has(from)) m.set(from, []);
-    m.get(from)!.push({ to, edge });
-  };
-  for (const e of INDOOR_CONNECTIONS) { add(e.a, e.b, e); add(e.b, e.a, e); }
-  return m;
-}
-
-export function isOnIndoorGraph(code: string | undefined): boolean {
-  return Boolean(code) && INDOOR_CONNECTIONS.some((e) => e.a === code || e.b === code);
-}

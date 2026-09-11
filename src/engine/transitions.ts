@@ -37,6 +37,8 @@ export function buildItinerary(
   home: CampusLocation | undefined,
   gapStops: ReadonlyMap<number, readonly GapStop[]>,
   dateISO: string,
+  /** Where the day ends after the last class; defaults to home. The morning leg always starts from home. */
+  endDestination: CampusLocation | undefined = home,
 ): LegSpec[] {
   const out: LegSpec[] = [];
   if (classes.length === 0) return out;
@@ -106,19 +108,20 @@ export function buildItinerary(
     });
   }
 
-  if (home) {
+  if (endDestination) {
     const last = classes[classes.length - 1];
+    const isHome = endDestination.kind === "HOME";
     out.push({
-      id: `${last.id}->home`,
-      kind: "CLASS_TO_HOME",
+      id: `${last.id}->${isHome ? "home" : endDestination.id}`,
+      kind: isHome ? "CLASS_TO_HOME" : "CLASS_TO_END",
       from: last.location,
-      to: home,
+      to: endDestination,
       departAfter: last.end,
       arriveBy: last.end,
       hasDeadline: false,
       availableMinutes: 0,
       feasibility: "UNKNOWN",
-      crossCampus: isCrossCampus(last.location, home),
+      crossCampus: isCrossCampus(last.location, endDestination),
       fromClassIndex: classes.length - 1,
     });
   }

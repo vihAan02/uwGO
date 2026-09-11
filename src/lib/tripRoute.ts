@@ -11,7 +11,7 @@ export const TRANSIT_USABLE_WINDOW_MINUTES = 45;
 /** Bypasses the route cache on purpose: a trip starting now needs a bus that has not left. */
 const live = new HttpRoutingProvider();
 
-export type TripRouteStatus = "PLANNED" | "REFRESHED" | "FELL_BACK_TO_WALKING" | "NO_TRANSIT";
+export type TripRouteStatus = "PLANNED" | "REFRESHED" | "FELL_BACK_TO_WALKING" | "NO_TRANSIT" | "REROUTED";
 
 export interface TripRoute {
   route: RouteOption;
@@ -90,4 +90,14 @@ export function bearing(from: { latitude: number; longitude: number }, to: { lat
   const y = Math.sin(Δλ) * Math.cos(φ2);
   const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
   return (Math.atan2(y, x) * 180) / Math.PI;
+}
+
+/**
+ * A fresh walking route from wherever the student actually is, for when they have left the
+ * planned route. Same provider and same server handler as every other route; the caller
+ * decides how rarely to ask (see `rerouteDecision`).
+ */
+export async function rerouteWalk(from: { latitude: number; longitude: number }, to: CampusLocation): Promise<TripRoute | undefined> {
+  const route = await live.getWalkingRoute(from, to);
+  return route ? { route, status: "REROUTED", note: "Route updated from where you are." } : undefined;
 }

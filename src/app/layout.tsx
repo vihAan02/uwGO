@@ -5,7 +5,7 @@ import { StoreProvider } from "@/lib/store";
 import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
 import { getServerAuth } from "@/lib/supabase/server";
-import { ProfileSync } from "@/lib/profileSync";
+import { UserStateProvider } from "@/lib/UserStateProvider";
 import { Analytics } from "@vercel/analytics/next";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -34,8 +34,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="min-h-full flex flex-col">
         <AuthProvider initial={{ mode: auth.mode, user: auth.user }}>
           <StoreProvider>
-            {children}
-            <ProfileSync />
+            <UserStateProvider>{children}</UserStateProvider>
           </StoreProvider>
         </AuthProvider>
         <ServiceWorkerRegistrar />
