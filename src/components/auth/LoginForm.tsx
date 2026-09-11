@@ -4,6 +4,11 @@ import { useRouter } from "next/navigation";
 import { ACCESS_MESSAGE, isAllowedEmail, normalizeEmail } from "@/lib/auth/domain";
 import { getBrowserSupabase } from "@/lib/supabase/client";
 import type { SendCodeResponse } from "@/app/api/auth/send/route";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Reveal } from "@/components/ui/reveal";
+import { Wordmark } from "@/components/ui/wordmark";
 
 const ERRORS: Record<string, string> = {
   domain: ACCESS_MESSAGE,
@@ -59,48 +64,67 @@ export function LoginForm({ initialError }: { initialError?: string }) {
   };
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-4 py-10">
-      <p className="text-sm font-semibold uppercase tracking-wide text-brand">UW GO</p>
-      <h1 className="mt-1 text-3xl font-bold tracking-tight">Your Waterloo day,<br />figured out.</h1>
+    <main className="app flex min-h-screen flex-col">
+      <header className="flex h-14 shrink-0 items-center px-5 sm:px-8">
+        <Wordmark href="/landing" />
+      </header>
 
-      {step === "EMAIL" ? (
-        <form className="card mt-6 p-4" onSubmit={submitEmail}>
-          <label htmlFor="email" className="text-lg font-semibold">Sign in with your Waterloo email</label>
-          <input
-            id="email"
-            className="field mt-3"
-            type="email"
-            inputMode="email"
-            autoComplete="email"
-            autoFocus
-            placeholder="d123mugh@uwaterloo.ca"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          {error && <p className="mt-2 text-sm text-bad" role="alert">{error}</p>}
-          <button className="btn btn-primary mt-3 w-full text-lg" type="submit" disabled={busy || !email.trim()}>{busy ? "Sending…" : "Continue"}</button>
-          <p className="mt-3 text-xs text-ink-muted">We email you a sign-in link. No password to remember.</p>
-        </form>
-      ) : (
-        <form className="card mt-6 p-4" onSubmit={submitCode}>
-          <h2 className="text-lg font-semibold">Check your Waterloo inbox</h2>
-          <p className="mt-1 text-sm text-ink-muted">We sent a sign-in link to <span className="font-semibold text-ink">{email}</span>. Open it on this device to enter UW GO.</p>
-          <p className="mt-3 text-sm text-ink-muted">Reading the email on another device? Enter the 6-digit code from it here instead.</p>
-          <input
-            className="field mt-2 font-mono text-lg tracking-widest"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            placeholder="123456"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-          />
-          {error && <p className="mt-2 text-sm text-bad" role="alert">{error}</p>}
-          <button className="btn btn-primary mt-3 w-full" type="submit" disabled={busy || code.replace(/\D/g, "").length < 6}>{busy ? "Checking…" : "Enter UW GO"}</button>
-          <button className="btn btn-ghost mt-1 w-full" type="button" onClick={() => { setStep("EMAIL"); setCode(""); setError(undefined); }}>Use a different email</button>
-        </form>
-      )}
-
-      <p className="mt-6 text-center text-sm text-ink-muted">Currently available to University of Waterloo students.</p>
+      <Reveal key={step} className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-5 pb-28 sm:px-0">
+        {step === "EMAIL" ? (
+          <form onSubmit={submitEmail} noValidate>
+            <h1 data-reveal className="text-[1.75rem] font-semibold leading-tight tracking-[-0.02em]">Sign in</h1>
+            <p data-reveal className="mt-2 text-ink-muted">
+              Use your @uwaterloo.ca email. We send you a sign-in link, so there is no password to remember.
+            </p>
+            <div data-reveal className="mt-8 flex flex-col gap-2">
+              <Label htmlFor="email">Waterloo email</Label>
+              <Input
+                id="email"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                autoFocus
+                placeholder="you@uwaterloo.ca"
+                value={email}
+                aria-invalid={Boolean(error) || undefined}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              {error && <p className="text-sm text-bad" role="alert">{error}</p>}
+            </div>
+            <Button data-reveal size="lg" className="mt-4 w-full" type="submit" disabled={busy || !email.trim()}>
+              {busy ? "Sending…" : "Continue"}
+            </Button>
+          </form>
+        ) : (
+          <form onSubmit={submitCode} noValidate>
+            <h1 data-reveal className="text-[1.75rem] font-semibold leading-tight tracking-[-0.02em]">Check your inbox</h1>
+            <p data-reveal className="mt-2 text-ink-muted">
+              We sent a sign-in link to <span className="font-medium text-ink">{email}</span>. Open it on this device to enter UW GO.
+            </p>
+            <div data-reveal className="mt-8 flex flex-col gap-2">
+              <Label htmlFor="code">Or enter the 6-digit code from the email</Label>
+              <Input
+                id="code"
+                className="font-mono text-lg tracking-[0.3em]"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                placeholder="123456"
+                value={code}
+                aria-invalid={Boolean(error) || undefined}
+                onChange={(e) => setCode(e.target.value)}
+              />
+              {error && <p className="text-sm text-bad" role="alert">{error}</p>}
+            </div>
+            <Button data-reveal size="lg" className="mt-4 w-full" type="submit" disabled={busy || code.replace(/\D/g, "").length < 6}>
+              {busy ? "Checking…" : "Enter UW GO"}
+            </Button>
+            <Button data-reveal variant="ghost" className="mt-2 w-full" type="button" onClick={() => { setStep("EMAIL"); setCode(""); setError(undefined); }}>
+              Use a different email
+            </Button>
+          </form>
+        )}
+        <p data-reveal className="mt-10 text-center text-xs text-ink-muted">Currently available to University of Waterloo students.</p>
+      </Reveal>
     </main>
   );
 }

@@ -1,8 +1,13 @@
 "use client";
 import { useState } from "react";
+import { Check } from "lucide-react";
 import type { University, UserHome } from "@/domain/types";
 import { residencePresets } from "@/data/buildings";
 import type { GeocodeResponse } from "@/app/api/geocode/route";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 type Mode = "UW" | "WLU" | "ADDRESS";
 
@@ -31,28 +36,37 @@ export function HomePicker({ value, onChange }: { value: UserHome | undefined; o
   };
 
   return (
-    <div className="mt-3 space-y-3">
-      <div className="flex gap-2">
-        {([["UW", "UW residence"], ["WLU", "Laurier residence"], ["ADDRESS", "Address"]] as [Mode, string][]).map(([m, label]) => (
-          <button key={m} className={`btn flex-1 px-2 text-sm ${mode === m ? "btn-primary" : "btn-secondary"}`} onClick={() => { setMode(m); onChange(undefined); }}>{label}</button>
-        ))}
-      </div>
+    <div className="space-y-3">
+      <ToggleGroup type="single" value={mode} onValueChange={(m) => { if (!m) return; setMode(m as Mode); onChange(undefined); }} aria-label="Kind of home">
+        <ToggleGroupItem value="UW">Waterloo</ToggleGroupItem>
+        <ToggleGroupItem value="WLU">Laurier</ToggleGroupItem>
+        <ToggleGroupItem value="ADDRESS">Address</ToggleGroupItem>
+      </ToggleGroup>
       {mode !== "ADDRESS" ? (
-        <select className="field" value={value?.preset?.university === mode ? value.preset.buildingCode : ""} onChange={(e) => choosePreset(mode, e.target.value)}>
-          <option value="">Choose a residence…</option>
+        <NativeSelect aria-label="Residence" value={value?.preset?.university === mode ? value.preset.buildingCode : ""} onChange={(e) => choosePreset(mode, e.target.value)}>
+          <NativeSelectOption value="">Choose a {mode === "UW" ? "Waterloo" : "Laurier"} residence…</NativeSelectOption>
           {residencePresets(mode).map((b) => (
-            <option key={b.id} value={b.code} disabled={b.latitude === undefined}>{b.residenceLabel}{b.latitude === undefined ? " (no coordinates yet)" : ""}</option>
+            <NativeSelectOption key={b.id} value={b.code} disabled={b.latitude === undefined}>
+              {b.residenceLabel}{b.latitude === undefined ? " (no coordinates yet)" : ""}
+            </NativeSelectOption>
           ))}
-        </select>
+        </NativeSelect>
       ) : (
         <div className="space-y-2">
-          <input className="field" placeholder="Street address in Waterloo" value={address} onChange={(e) => setAddress(e.target.value)} />
-          <button className="btn btn-secondary w-full" disabled={busy || address.trim().length < 4} onClick={lookup}>{busy ? "Looking up…" : "Find address"}</button>
+          <div className="flex gap-2">
+            <Input aria-label="Street address" placeholder="Street address in Waterloo" value={address} onChange={(e) => setAddress(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void lookup(); } }} />
+            <Button variant="outline" size="lg" className="shrink-0" disabled={busy || address.trim().length < 4} onClick={lookup}>{busy ? "Looking up…" : "Find"}</Button>
+          </div>
           {error && <p className="text-sm text-bad">{error}</p>}
           <p className="text-xs text-ink-muted">The address is sent once to Google to get a map position, then kept only on this device.</p>
         </div>
       )}
-      {value && <p className="text-sm text-ok">Home: {value.name}{value.address && value.name !== value.address ? ` · ${value.address}` : ""}</p>}
+      {value && (
+        <p className="flex items-start gap-1.5 text-sm text-ok">
+          <Check className="mt-0.5 size-4 shrink-0" />
+          <span>Home: {value.name}{value.address && value.name !== value.address ? ` · ${value.address}` : ""}</span>
+        </p>
+      )}
     </div>
   );
 }

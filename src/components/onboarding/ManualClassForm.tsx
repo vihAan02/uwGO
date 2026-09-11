@@ -4,6 +4,10 @@ import type { CourseMeeting, DayOfWeek, University } from "@/domain/types";
 import { DAYS_IN_ORDER, DAY_LABELS } from "@/domain/types";
 import { createManualMeeting } from "@/parsers/manual";
 import { allBuildings } from "@/data/buildings";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export function ManualClassForm({ defaultUniversity, onAdd }: { defaultUniversity: University; onAdd: (m: CourseMeeting) => void }) {
   const [university, setUniversity] = useState<University>(defaultUniversity);
@@ -27,36 +31,33 @@ export function ManualClassForm({ defaultUniversity, onAdd }: { defaultUniversit
   };
 
   return (
-    <div className="mt-3 space-y-3">
-      <div className="flex gap-2">
-        {(["WLU", "UW"] as University[]).map((u) => (
-          <button key={u} className={`btn flex-1 ${university === u ? "btn-primary" : "btn-secondary"}`} onClick={() => { setUniversity(u); setBuildingCode(""); }}>{u === "WLU" ? "Laurier" : "Waterloo"}</button>
-        ))}
+    <div className="space-y-3">
+      <ToggleGroup type="single" className="max-w-xs" value={university} onValueChange={(u) => { if (u) { setUniversity(u as University); setBuildingCode(""); } }} aria-label="University">
+        <ToggleGroupItem value="WLU">Laurier</ToggleGroupItem>
+        <ToggleGroupItem value="UW">Waterloo</ToggleGroupItem>
+      </ToggleGroup>
+      <div className="grid grid-cols-2 gap-2">
+        <Input aria-label="Course" placeholder="Course, e.g. BU 111" value={courseCode} onChange={(e) => setCourseCode(e.target.value)} />
+        <NativeSelect aria-label="Component" value={component} onChange={(e) => setComponent(e.target.value)}>
+          {["LEC", "TUT", "LAB", "SEM", "OTHER"].map((c) => <NativeSelectOption key={c}>{c}</NativeSelectOption>)}
+        </NativeSelect>
+      </div>
+      <ToggleGroup type="multiple" value={days} onValueChange={(v) => setDays(v as DayOfWeek[])} aria-label="Days">
+        {DAYS_IN_ORDER.map((d) => <ToggleGroupItem key={d} value={d} className="min-h-10 flex-none px-3">{DAY_LABELS[d]}</ToggleGroupItem>)}
+      </ToggleGroup>
+      <div className="grid grid-cols-2 gap-2">
+        <Input aria-label="Start time" placeholder="Start, e.g. 2:30PM" value={start} onChange={(e) => setStart(e.target.value)} />
+        <Input aria-label="End time" placeholder="End, e.g. 3:50PM" value={end} onChange={(e) => setEnd(e.target.value)} />
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <input className="field" placeholder="Course, e.g. BU 111" value={courseCode} onChange={(e) => setCourseCode(e.target.value)} />
-        <select className="field" value={component} onChange={(e) => setComponent(e.target.value)}>
-          {["LEC", "TUT", "LAB", "SEM", "OTHER"].map((c) => <option key={c}>{c}</option>)}
-        </select>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {DAYS_IN_ORDER.map((d) => (
-          <button key={d} className={`chip min-h-9 px-3 ${days.includes(d) ? "bg-brand text-white" : "bg-canvas text-ink"}`} onClick={() => setDays((cur) => (cur.includes(d) ? cur.filter((x) => x !== d) : [...cur, d]))}>{DAY_LABELS[d]}</button>
-        ))}
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <input className="field" placeholder="Start, e.g. 2:30PM" value={start} onChange={(e) => setStart(e.target.value)} />
-        <input className="field" placeholder="End, e.g. 3:50PM" value={end} onChange={(e) => setEnd(e.target.value)} />
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <select className="field" value={buildingCode} onChange={(e) => setBuildingCode(e.target.value)}>
-          <option value="">Building…</option>
-          {buildings.map((b) => <option key={b.id} value={b.code}>{b.code} · {b.name}</option>)}
-        </select>
-        <input className="field" placeholder="Room, e.g. 1001" value={roomNumber} onChange={(e) => setRoomNumber(e.target.value)} />
+        <NativeSelect aria-label="Building" value={buildingCode} onChange={(e) => setBuildingCode(e.target.value)}>
+          <NativeSelectOption value="">Building…</NativeSelectOption>
+          {buildings.map((b) => <NativeSelectOption key={b.id} value={b.code}>{b.code} · {b.name}</NativeSelectOption>)}
+        </NativeSelect>
+        <Input aria-label="Room" placeholder="Room, e.g. 1001" value={roomNumber} onChange={(e) => setRoomNumber(e.target.value)} />
       </div>
       {errors.length > 0 && <ul className="rounded-xl bg-bad-soft p-3 text-sm text-bad">{errors.map((e) => <li key={e}>{e}</li>)}</ul>}
-      <button className="btn btn-secondary w-full" onClick={submit}>Add class</button>
+      <Button variant="outline" className="w-full" onClick={submit}>Add class</Button>
     </div>
   );
 }

@@ -1,15 +1,15 @@
 "use client";
 import type { RoutePreference } from "@/domain/types";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export function RoutePrefPicker({ value, onChange }: { value: RoutePreference; onChange: (v: RoutePreference) => void }) {
   return (
-    <div className="mt-1">
+    <div>
       <p className="text-sm text-ink-muted">Winter option. &ldquo;Indoors when possible&rdquo; prefers Waterloo&rsquo;s tunnels, bridges and building links when they are not much slower than the fastest walk.</p>
-      <div className="mt-2 flex gap-2">
-        {([["FASTEST", "Fastest"], ["INDOORS", "Indoors when possible"]] as [RoutePreference, string][]).map(([v, label]) => (
-          <button key={v} type="button" className={`btn flex-1 px-2 text-sm ${value === v ? "btn-primary" : "btn-secondary"}`} onClick={() => onChange(v)}>{label}</button>
-        ))}
-      </div>
+      <ToggleGroup type="single" className="mt-3" value={value} onValueChange={(v) => { if (v) onChange(v as RoutePreference); }} aria-label="Route preference">
+        <ToggleGroupItem value="FASTEST">Fastest</ToggleGroupItem>
+        <ToggleGroupItem value="INDOORS">Indoors when possible</ToggleGroupItem>
+      </ToggleGroup>
     </div>
   );
 }

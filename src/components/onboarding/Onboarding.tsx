@@ -1,9 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Plus, X } from "lucide-react";
 import type { CourseMeeting, GymPreferences, ParsedSchedule, UserHome } from "@/domain/types";
 import { questParser } from "@/parsers/quest/QuestParser";
 import { useStore } from "@/lib/store";
+import { Button } from "@/components/ui/button";
+import { Reveal } from "@/components/ui/reveal";
+import { Wordmark } from "@/components/ui/wordmark";
 import { PasteStep } from "./PasteStep";
 import { ParsePreview } from "./ParsePreview";
 import { ManualClassForm } from "./ManualClassForm";
@@ -21,6 +25,20 @@ export function Onboarding() {
   return <OnboardingForm key="form" initialHome={state.home} initialBuffer={state.config.arrivalBufferMinutes} initialGym={state.gym} />;
 }
 
+/** One numbered group, in the landing page's 01 / 02 / 03 idiom. Hairlines separate them; no cards. */
+function Step({ n, title, hint, children, ...rest }: { n: string; title: string; hint?: string; children: React.ReactNode } & React.ComponentProps<"section">) {
+  return (
+    <section className="py-8 first:pt-0" {...rest}>
+      <div className="flex items-baseline gap-3">
+        <span className="w-5 shrink-0 font-mono text-xs tracking-wider text-ink-muted" aria-hidden="true">{n}</span>
+        <h2 className="text-[1.0625rem] font-semibold tracking-[-0.01em]">{title}</h2>
+      </div>
+      {hint && <p className="mt-1 text-sm text-ink-muted sm:pl-8">{hint}</p>}
+      <div className="mt-4 sm:pl-8">{children}</div>
+    </section>
+  );
+}
+
 function OnboardingForm({ initialHome, initialBuffer, initialGym }: { initialHome: UserHome | undefined; initialBuffer: number; initialGym: GymPreferences | undefined }) {
   const router = useRouter();
   const { setSchedule, addMeeting, setHome, setConfig, setGym } = useStore();
@@ -29,7 +47,6 @@ function OnboardingForm({ initialHome, initialBuffer, initialGym }: { initialHom
   const [manual, setManual] = useState<CourseMeeting[]>([]);
   const [home, setLocalHome] = useState<UserHome | undefined>(initialHome);
   const [buffer, setBuffer] = useState(initialBuffer);
-  const [showManual, setShowManual] = useState(false);
 
   const meetings = [...(parsed?.meetings ?? []), ...manual];
   const canBuild = meetings.some((m) => m.includeInPlan) && Boolean(home);
@@ -45,58 +62,70 @@ function OnboardingForm({ initialHome, initialBuffer, initialGym }: { initialHom
   };
 
   return (
-    <main className="mx-auto w-full max-w-xl px-4 pb-32 pt-8">
-      <header className="mb-6">
-        <p className="text-sm font-semibold uppercase tracking-wide text-brand">UW GO</p>
-        <h1 className="mt-1 text-3xl font-bold tracking-tight">Never wonder when to leave.</h1>
-        <p className="mt-2 text-ink-muted">Paste your Quest schedule. Get a day-by-day plan: when to leave, where the room is, walk or bus, and whether you can go home between classes.</p>
+    <main className="app mx-auto w-full max-w-xl px-5 pb-40 sm:px-6">
+      <header className="flex h-14 items-center">
+        <Wordmark href="/" />
       </header>
 
-      <section className="card p-4">
-        <h2 className="text-lg font-semibold">1. Paste your schedule</h2>
-        <PasteStep onText={(text) => setParsed(text.trim() ? questParser.parse(text) : undefined)} />
-        {parsed && <ParsePreview parsed={parsed} />}
-      </section>
-
-      <section className="card mt-4 p-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Laurier classes</h2>
-          <button className="btn btn-ghost px-2 py-1 min-h-0" onClick={() => setShowManual((v) => !v)}>{showManual ? "Hide" : "Add"}</button>
+      <Reveal step={60}>
+        <div data-reveal className="mt-6 sm:mt-10">
+          <h1 className="text-[2rem] font-semibold leading-[1.1] tracking-[-0.025em] sm:text-[2.5rem]">Paste your schedule.</h1>
+          <p className="mt-3 max-w-md text-[1.0625rem] leading-relaxed text-ink-muted">
+            UW GO turns it into your week: the buildings, the walks, and the minute to leave for each class.
+          </p>
         </div>
-        <p className="mt-1 text-sm text-ink-muted">Laurier uses LORIS, which has no paste import yet. Add Laurier (or any extra) classes by hand.</p>
-        {manual.length > 0 && (
-          <ul className="mt-3 space-y-2">
-            {manual.map((m) => (
-              <li key={m.id} className="flex items-center justify-between rounded-xl bg-wlu-soft px-3 py-2 text-sm">
-                <span><span className="font-semibold">{m.courseCode}</span> {m.component} · {m.days.join("")} · {m.location.kind === "ROOM" ? `${m.location.buildingCode} ${m.location.roomNumber}` : ""}</span>
-                <button className="text-bad" onClick={() => setManual((list) => list.filter((x) => x.id !== m.id))}>Remove</button>
-              </li>
-            ))}
-          </ul>
-        )}
-        {showManual && <ManualClassForm defaultUniversity="WLU" onAdd={(m) => { setManual((list) => (list.some((x) => x.id === m.id) ? list : [...list, m])); }} />}
-      </section>
 
-      <section className="card mt-4 p-4">
-        <h2 className="text-lg font-semibold">2. Where do you live?</h2>
-        <HomePicker value={home} onChange={setLocalHome} />
-      </section>
+        <div className="mt-10 divide-y divide-line">
+          <Step n="01" title="Your Quest schedule" data-reveal>
+            <PasteStep onText={(text) => setParsed(text.trim() ? questParser.parse(text) : undefined)} />
+            {parsed && <ParsePreview parsed={parsed} />}
 
-      <section className="card mt-4 p-4">
-        <h2 className="text-lg font-semibold">3. Arrival buffer</h2>
-        <p className="mt-1 text-sm text-ink-muted">How early you want to be at the door.</p>
-        <BufferPicker value={buffer} onChange={setBuffer} />
-      </section>
+            {manual.length > 0 && (
+              <ul className="mt-4 divide-y divide-line">
+                {manual.map((m) => (
+                  <li key={m.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                    <span>
+                      <span className="font-semibold">{m.courseCode}</span> {m.component} · {m.days.join("")} · {m.location.kind === "ROOM" ? `${m.location.buildingCode} ${m.location.roomNumber}` : ""}
+                    </span>
+                    <Button variant="ghost" size="xs" className="text-ink-muted" onClick={() => setManual((list) => list.filter((x) => x.id !== m.id))}>
+                      <X /> Remove
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <details className="group mt-4">
+              <summary className="flex min-h-9 cursor-pointer list-none items-center gap-1.5 text-sm font-medium text-brand [&::-webkit-details-marker]:hidden">
+                <Plus className="size-4 transition-transform group-open:rotate-45" />
+                Add a Laurier class by hand
+              </summary>
+              <p className="mt-1 text-sm text-ink-muted">Laurier uses LORIS, which has no paste import yet. Laurier (or any extra) classes go in here.</p>
+              <div className="mt-3">
+                <ManualClassForm defaultUniversity="WLU" onAdd={(m) => { setManual((list) => (list.some((x) => x.id === m.id) ? list : [...list, m])); }} />
+              </div>
+            </details>
+          </Step>
 
-      <section className="card mt-4 p-4">
-        <h2 className="text-lg font-semibold">4. Gym</h2>
-        <GymPrefsPicker value={gym} onChange={setLocalGym} />
-      </section>
+          <Step n="02" title="Where you live" data-reveal>
+            <HomePicker value={home} onChange={setLocalHome} />
+          </Step>
 
-      <div className="fixed inset-x-0 bottom-0 border-t border-line bg-surface/95 p-4 backdrop-blur">
-        <div className="mx-auto max-w-xl">
-          <button className="btn btn-primary w-full text-lg" disabled={!canBuild} onClick={build}>Build my routes</button>
-          {!canBuild && <p className="mt-2 text-center text-xs text-ink-muted">{meetings.length ? "Choose where you live to continue." : "Paste a schedule or add a class to continue."}</p>}
+          <Step n="03" title="Arrival buffer" hint="How early you want to be at the door." data-reveal>
+            <BufferPicker value={buffer} onChange={setBuffer} />
+          </Step>
+
+          <Step n="04" title="Gym" data-reveal>
+            <GymPrefsPicker value={gym} onChange={setLocalGym} />
+          </Step>
+        </div>
+      </Reveal>
+
+      <div className="fixed inset-x-0 bottom-0 z-10 border-t border-line bg-canvas/90 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
+        <div className="mx-auto max-w-xl px-5 sm:px-6">
+          <Button size="lg" className="w-full" disabled={!canBuild} onClick={build}>Build my routes</Button>
+          <p className="mt-2 min-h-4 text-center text-xs text-ink-muted">
+            {canBuild ? "" : meetings.length ? "Choose where you live to continue." : "Paste a schedule or add a class to continue."}
+          </p>
         </div>
       </div>
     </main>
