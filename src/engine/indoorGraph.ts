@@ -8,6 +8,7 @@
 import { UW_INDOOR_NETWORK } from "@/data/indoor/uw-indoor-network.generated";
 import type { IndoorEdge, IndoorEdgeKind, IndoorNetwork, IndoorNode } from "@/data/indoor/network";
 import { haversineMeters } from "@/routing/EstimateRoutingProvider";
+import { edgeId } from "@/data/indoor/edgeId";
 
 export const OUTSIDE = "OUT";
 
@@ -49,6 +50,8 @@ export interface IndoorGraphRoute {
   outdoorSeconds: number;
   /** Buildings passed through, in order, without repeats; never includes OUT. */
   buildings: string[];
+  /** Canonical ids of every segment travelled, in order. What a closure report targets. */
+  edgeIds: string[];
   /** The value Dijkstra minimised. */
   cost: number;
 }
@@ -150,6 +153,21 @@ class Heap {
 export interface RouteOptions {
   outdoorPenalty?: number;
   pace?: typeof INDOOR_PACE;
+  /**
+   * Canonical ids of segments students have reported shut (see engine/closures.ts). They are
+   * removed from the search entirely rather than made expensive: a locked tunnel is not a slow
+   * tunnel. The rest of the network still routes, so one closed link costs a detour, never the
+   * whole journey.
+   */
+  closedEdgeIds?: ReadonlySet<string>;
+}
+
+/** The edge objects a set of canonical ids refers to. Computed once per search, and only when there are closures. */
+function closedEdgesOf(g: Graph, ids: ReadonlySet<string> | undefined): ReadonlySet<IndoorEdge> | undefined {
+  if (!ids || ids.size === 0) return undefined;
+  const out = new Set<IndoorEdge>();
+  for (const e of g.net.edges) if (ids.has(edgeId(g.net, e))) out.add(e);
+  return out.size ? out : undefined;
 }
 
 /**
@@ -159,6 +177,7 @@ export interface RouteOptions {
 export function routeBetweenNodes(starts: readonly number[], ends: readonly number[], opts: RouteOptions = {}, g: Graph = theGraph()): IndoorGraphRoute | undefined {
   const penalty = opts.outdoorPenalty ?? OUTDOOR_PENALTY;
   const pace = opts.pace ?? INDOOR_PACE;
+  const closed = closedEdgesOf(g, opts.closedEdgeIds);
   const target = new Set(ends);
   const dist = new Map<number, number>();
   const prev = new Map<number, Arc>();
@@ -173,6 +192,7 @@ export function routeBetweenNodes(starts: readonly number[], ends: readonly numb
     if (target.has(node)) { reached = node; break; }
     for (const arc of g.adj[node]) {
       if (done.has(arc.to)) continue;
+      if (closed?.has(arc.edge)) continue;
       const t = edgeSeconds(arc.edge, pace);
       const next = cost + (t.seconds - t.outdoor) + t.outdoor * penalty;
       if (next < (dist.get(arc.to) ?? Infinity)) {
@@ -215,6 +235,7 @@ export function routeBetweenNodes(starts: readonly number[], ends: readonly numb
   const sum = (f: (s: IndoorSegment) => number) => segments.reduce((n, s) => n + f(s), 0);
   return {
     segments,
+    edgeIds: arcs.map((arc) => edgeId(g.net, arc.edge)),
     metres: sum((s) => s.metres),
     seconds: sum((s) => s.seconds),
     outdoorMetres: sum((s) => (s.kind === "OUTDOOR" ? s.metres : 0)),

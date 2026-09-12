@@ -36,6 +36,8 @@ export interface PlanInput {
   gapChoices?: GapChoices;
   /** Where the day ends after the last class: HOME (default), GYM, or LIBRARY. */
   endOfDay?: EndOfDayDestination;
+  /** Segments students have reported shut, by canonical id. Routing avoids them. */
+  closedEdgeIds?: ReadonlySet<string>;
   /** Latest live PAC reading and the samples kept so far, for crowd estimates. */
   pacLive?: PacReading;
   pacSamples?: readonly PacSample[];
@@ -102,7 +104,7 @@ function requestFor(t: ClassTransition): RouteRequest {
   return { from: t.from, to: t.to, departAfter: t.departAfter, arriveBy: t.hasDeadline ? t.arriveBy : undefined, crossCampus: t.crossCampus };
 }
 
-async function resolveTransition(t: ClassTransition, resolver: LegResolver, memo: RouteMemo, cfg: PlannerConfig, routePreference: RoutePreference): Promise<ClassTransition> {
+async function resolveTransition(t: ClassTransition, resolver: LegResolver, memo: RouteMemo, cfg: PlannerConfig, routePreference: RoutePreference, closedEdgeIds?: ReadonlySet<string>): Promise<ClassTransition> {
   // Walking, transit and the winter route are all priced and chosen between by `selectRoute`,
   // the same function Trip Mode reroutes through. The leg resolver keeps its per-request cache
   // of the walk-vs-transit answer; the indoor joins are priced through the same memo as every
@@ -110,7 +112,7 @@ async function resolveTransition(t: ClassTransition, resolver: LegResolver, memo
   // asked for and not unreasonably slower than the fastest walk. A chosen bus is never
   // overridden: that decision was about time.
   const best = await selectRoute(
-    { ...requestFor(t), preference: routePreference },
+    { ...requestFor(t), preference: routePreference, closedEdgeIds },
     { best: (req) => resolver.resolve(req), connector: memo },
     cfg,
   );
@@ -143,6 +145,7 @@ interface DayExtras {
   gym?: GymPreferences;
   gapChoices?: GapChoices;
   routePreference: RoutePreference;
+  closedEdgeIds?: ReadonlySet<string>;
   endOfDay?: EndOfDayDestination;
   crowdAt: (at: Date) => CrowdEstimate;
 }
@@ -222,7 +225,7 @@ async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledC
     const spec: LegSpec = earliest && earliest.getTime() > leg.departAfter.getTime()
       ? { ...leg, departAfter: earliest, availableMinutes: leg.hasDeadline ? minutesBetween(earliest, leg.arriveBy) : 0 }
       : leg;
-    const resolved = await resolveTransition(spec, resolver, memo, cfg, extras.routePreference);
+    const resolved = await resolveTransition(spec, resolver, memo, cfg, extras.routePreference, extras.closedEdgeIds);
     transitions.push(resolved);
     readyAt = resolved.expectedArrival ?? spec.arriveBy;
   }
@@ -324,6 +327,7 @@ export async function buildWeekPlan(input: PlanInput, provider: RoutingProvider)
   const extras: DayExtras = {
     gym: input.gym,
     routePreference: input.routePreference ?? "FASTEST",
+    closedEdgeIds: input.closedEdgeIds,
     gapChoices: input.gapChoices,
     endOfDay: input.endOfDay,
     crowdAt: (at) => estimateCrowd(at, input.pacLive, input.pacSamples ?? []),

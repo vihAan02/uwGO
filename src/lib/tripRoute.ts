@@ -117,13 +117,13 @@ function liveFetcher(): RouteFetcher {
  * the only setting a student can change, the arrival buffer, has no bearing on a trip already
  * under way: there is no deadline to work back from once you have set off.
  */
-export async function rerouteFrom(at: LatLng, to: CampusLocation, preference: RoutePreference, now: Date = new Date()): Promise<RouteOption | undefined> {
+export async function rerouteFrom(at: LatLng, to: CampusLocation, preference: RoutePreference, now: Date = new Date(), closedEdgeIds?: ReadonlySet<string>): Promise<RouteOption | undefined> {
   const cfg = DEFAULT_PLANNER_CONFIG;
   const selection = await selectRoute(
     // No deadline: the trip is already under way, so the question is simply what gets there
     // soonest from here. The winter route is only priced when the student actually prefers it,
     // because an option that cannot be recommended is not worth the lookups it costs.
-    { from: livePosition(at), to, departAfter: now, preference, indoorAlternative: false },
+    { from: livePosition(at), to, departAfter: now, preference, indoorAlternative: false, closedEdgeIds },
     fetcherDeps(liveFetcher(), cfg),
     cfg,
     now,

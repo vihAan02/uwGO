@@ -12,6 +12,7 @@ import { AccountLoadError, AccountLoading, AccountSyncNotice } from "@/component
 import { defaultWeekStart, usePlan } from "@/lib/usePlan";
 import { findNextUp } from "@/lib/nextClass";
 import { usePacLive } from "@/lib/usePacLive";
+import { useClosures } from "@/lib/ClosuresProvider";
 import { RemindersProvider, useReminders } from "@/lib/useReminders";
 import { CROWD_LABELS, estimateFromPct, waitLabel } from "@/data/pac/crowd";
 import { formatISODate, mondayOfWeek, todayISO, torontoDate, weekdayOf } from "@/time/toronto";
@@ -51,7 +52,8 @@ export function WeekView() {
 
   const monday = useMemo(() => weekOverride ?? (meetings ? defaultWeekStart(meetings) : mondayOfWeek(todayISO())), [weekOverride, meetings]);
   const pac = usePacLive(Boolean(hydrated && state.gym?.enabled));
-  const { plan, loading, error } = usePlan(hydrated && account.status !== "loading" ? meetings : undefined, state.home, state.config, monday, { gym: state.gym, routePreference: state.routePreference, gapChoices: state.gapChoices, endOfDay: state.endOfDay, pacLive: pac.reading, pacSamples: pac.samples });
+  const closures = useClosures();
+  const { plan, loading, error } = usePlan(hydrated && account.status !== "loading" ? meetings : undefined, state.home, state.config, monday, { gym: state.gym, routePreference: state.routePreference, gapChoices: state.gapChoices, endOfDay: state.endOfDay, closedEdgeIds: closures.closed, pacLive: pac.reading, pacSamples: pac.samples });
   const pacNow = pac.reading ? estimateFromPct(pac.reading.occupancyPct, "LIVE") : undefined;
   const visibleDays = useMemo(() => DAYS_IN_ORDER.filter((d) => ["M", "T", "W", "Th", "F"].includes(d) || (plan?.days[d]?.classes.length ?? 0) > 0), [plan]);
   const dayPlan = plan?.days[day];

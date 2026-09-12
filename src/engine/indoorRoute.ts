@@ -97,7 +97,12 @@ function stepsFor(r: IndoorGraphRoute): RouteStep[] {
  * Both ends are joined to the network first; the indoor search runs between every pair
  * of joins and the cheapest whole journey wins.
  */
-export async function indoorRouteBetween(from: CampusLocation, to: CampusLocation, fetcher?: ConnectorFetcher, now = new Date()): Promise<RouteOption | undefined> {
+export interface IndoorRouteOptions {
+  /** Canonical ids of segments reported shut; the search will not use them. */
+  closedEdgeIds?: ReadonlySet<string>;
+}
+
+export async function indoorRouteBetween(from: CampusLocation, to: CampusLocation, fetcher?: ConnectorFetcher, now = new Date(), opts: IndoorRouteOptions = {}): Promise<RouteOption | undefined> {
   if (from.id === to.id) return undefined;
   if (from.buildingCode && from.buildingCode === to.buildingCode) return undefined;
   const starts = await joinEnds(from, fetcher);
@@ -108,7 +113,7 @@ export async function indoorRouteBetween(from: CampusLocation, to: CampusLocatio
   let best: { start: End; end: End; route: IndoorGraphRoute; total: number } | undefined;
   for (const start of starts) {
     for (const end of ends) {
-      const route = routeBetweenNodes(start.nodes, end.nodes);
+      const route = routeBetweenNodes(start.nodes, end.nodes, { closedEdgeIds: opts.closedEdgeIds });
       if (!route) continue;
       const total = route.cost + (start.minutes + end.minutes) * 60;
       if (!best || total < best.total) best = { start, end, route, total };
@@ -116,6 +121,16 @@ export async function indoorRouteBetween(from: CampusLocation, to: CampusLocatio
   }
   if (!best) return undefined;
   const { start, end, route } = best;
+
+  // Which closures actually changed this answer. Only worth asking when there are any: the
+  // second search runs solely to find out what the student would otherwise have walked, so the
+  // note can name the segment rather than vaguely announcing that something is shut.
+  let avoidedClosures: string[] | undefined;
+  if (opts.closedEdgeIds?.size) {
+    const unclosed = routeBetweenNodes(start.nodes, end.nodes);
+    const blocked = unclosed?.edgeIds.filter((id) => opts.closedEdgeIds!.has(id)) ?? [];
+    if (blocked.length) avoidedClosures = [...new Set(blocked)];
+  }
 
   // The whole journey as one line: the way in, the network, the way out. Inside a building
   // the way in is the short walk from where the map places the building to where the
@@ -152,6 +167,8 @@ export async function indoorRouteBetween(from: CampusLocation, to: CampusLocatio
     steps,
     polyline: encode(line),
     indoorPath: route.buildings,
+    indoorEdgeIds: route.edgeIds,
+    avoidedClosures,
     indoorShare: Math.round(indoorShare * 100) / 100,
     provider: `uw-indoor-${how}`,
     computedAt: now.toISOString(),

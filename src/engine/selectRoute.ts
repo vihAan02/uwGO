@@ -11,6 +11,10 @@ import type { PlannerConfig } from "@/domain/config";
 import { resolveBestRoute, type BestRoute, type RouteFetcher, type RouteRequest } from "./bestRoute";
 import { indoorIsReasonable, indoorRouteBetween, type ConnectorFetcher } from "./indoorRoute";
 import { clampDeparture, expectedArrival, recommendedDeparture } from "./departure";
+import { decode } from "@googlemaps/polyline-codec";
+import { UW_INDOOR_NETWORK } from "@/data/indoor/uw-indoor-network.generated";
+import { edgeId } from "@/data/indoor/edgeId";
+import { closuresOnRoute, type LatLngTuple } from "./closureGeometry";
 
 export interface RouteSelectionRequest extends RouteRequest {
   /** FASTEST takes Google's answer; INDOORS takes the winter route when it is not unreasonably slower. */
@@ -21,6 +25,8 @@ export interface RouteSelectionRequest extends RouteRequest {
    * cannot win is not worth the walking-route lookups it costs to join the ends to the network.
    */
   indoorAlternative?: boolean;
+  /** Segments students have reported shut. The winter search routes around them. */
+  closedEdgeIds?: ReadonlySet<string>;
 }
 
 export interface RouteSelection extends BestRoute {
@@ -48,14 +54,41 @@ export function fetcherDeps(fetcher: RouteFetcher, cfg: PlannerConfig): Selectio
  * the fastest answer was on foot in the first place (a bus is never overridden: that decision
  * was about time), and staying inside does not cost unreasonably more.
  */
+/**
+ * Whether a walking route Google drew runs along a path students have reported shut, and which
+ * ones. Google's Routes API cannot be told to avoid a footpath, so the route is marked rather
+ * than altered; `selectRoute` then prefers an indoor way round when one exists.
+ */
+function outdoorClosuresOn(route: RouteOption | undefined, closedEdgeIds: ReadonlySet<string> | undefined): string[] {
+  if (!route?.polyline || !closedEdgeIds?.size || route.indoorPath) return [];
+  const path = decode(route.polyline) as LatLngTuple[];
+  return closuresOnRoute(UW_INDOOR_NETWORK, path, closedEdgeIds).map((e) => edgeId(UW_INDOOR_NETWORK, e));
+}
+
 export async function selectRoute(req: RouteSelectionRequest, deps: SelectionDeps, cfg: PlannerConfig, now?: Date): Promise<RouteSelection> {
-  const best = await deps.best(req);
+  const raw = await deps.best(req);
+  // A closed path outside is a fact about the fastest walk too, not only about the winter route.
+  const blockedBy = outdoorClosuresOn(raw.walking, req.closedEdgeIds);
+  const best: BestRoute = blockedBy.length && raw.walking
+    ? (() => {
+        const walking = { ...raw.walking, blockedBy };
+        return { ...raw, walking, recommended: raw.recommended === raw.walking ? walking : raw.recommended };
+      })()
+    : raw;
   const wantIndoor = req.indoorAlternative ?? true;
   const indoor = wantIndoor || req.preference === "INDOORS"
-    ? await indoorRouteBetween(req.from, req.to, deps.connector, now)
+    ? await indoorRouteBetween(req.from, req.to, deps.connector, now, { closedEdgeIds: req.closedEdgeIds })
     : undefined;
 
-  if (!indoor || req.preference !== "INDOORS" || best.recommended?.mode !== "WALK" || !best.walking || !indoorIsReasonable(indoor, best.walking, cfg)) {
+  // A fastest walk that runs along a closed path loses to an indoor way round that does not,
+  // whatever the student's preference: the closure is the point, not the weather.
+  // An indoor route is clear by construction: the search that produced it had the closed
+  // segments removed, so it cannot be running along one.
+  const walkIsBlocked = (best.walking?.blockedBy?.length ?? 0) > 0;
+  const preferIndoorForClosure = walkIsBlocked && Boolean(indoor) && best.recommended?.mode === "WALK";
+
+  if (!indoor || best.recommended?.mode !== "WALK" || !best.walking) return { ...best, indoor };
+  if (!preferIndoorForClosure && (req.preference !== "INDOORS" || !indoorIsReasonable(indoor, best.walking, cfg))) {
     return { ...best, indoor };
   }
 
@@ -64,13 +97,18 @@ export async function selectRoute(req: RouteSelectionRequest, deps: SelectionDep
     ? clampDeparture(recommendedDeparture(req.arriveBy!, indoor.durationMinutes, cfg.arrivalBufferMinutes), req.departAfter)
     : req.departAfter;
   const extra = indoor.durationMinutes - best.walking.durationMinutes;
+  const reason = preferIndoorForClosure
+    ? "The fastest way outside runs along a path reported closed, so this goes round it."
+    : extra > 0
+      ? `Indoor route: ${extra} min slower than the fastest walk, but you stay inside.`
+      : "Indoor route: as fast as the outdoor walk.";
   return {
     ...best,
     indoor,
     recommended: indoor,
     departure,
     arrival: expectedArrival(departure, indoor.durationMinutes),
-    reason: extra > 0 ? `Indoor route: ${extra} min slower than the fastest walk, but you stay inside.` : "Indoor route: as fast as the outdoor walk.",
+    reason,
   };
 }
 

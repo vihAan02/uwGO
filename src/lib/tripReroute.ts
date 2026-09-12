@@ -21,7 +21,7 @@ export interface RerouteFix {
 }
 
 /** Picks the best route to `to` from where the student is now. `rerouteFrom` in production. */
-export type RouteSelector = (at: LatLng, to: CampusLocation, preference: RoutePreference, now: Date) => Promise<RouteOption | undefined>;
+export type RouteSelector = (at: LatLng, to: CampusLocation, preference: RoutePreference, now: Date, closedEdgeIds?: ReadonlySet<string>) => Promise<RouteOption | undefined>;
 
 /**
  * Whether leaving this route is something a reroute can answer. Walking routes are, whether
@@ -63,8 +63,11 @@ export class TripRerouter {
    * Take one position update. Returns a replacement route only when the student has genuinely
    * left the route, the cooldown has passed, and a real route came back; otherwise nothing at
    * all, and whatever the trip is showing stays on screen.
+   *
+   * `closedEdgeIds` is passed in per fix rather than held, so a closure confirmed mid-walk is
+   * honoured on the next reroute without the caller having to rebuild the rerouter.
    */
-  async consider(fix: RerouteFix, current: RouteOption, now: Date = new Date()): Promise<TripRoute | undefined> {
+  async consider(fix: RerouteFix, current: RouteOption, now: Date = new Date(), closedEdgeIds?: ReadonlySet<string>): Promise<TripRoute | undefined> {
     if (!canReroute(current)) return undefined;
     // A request is already in flight: leave the timer alone rather than starting a second one.
     if (this.busy) return undefined;
@@ -77,7 +80,7 @@ export class TripRerouter {
     this.attempts++;
     let route: RouteOption | undefined;
     try {
-      route = await this.select(fix.at, this.to, this.preference, now);
+      route = await this.select(fix.at, this.to, this.preference, now, closedEdgeIds);
     } catch {
       route = undefined; // the cooldown set above means the next try is a minute away
     } finally {
