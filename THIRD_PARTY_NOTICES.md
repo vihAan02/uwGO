@@ -2,6 +2,13 @@
 
 ## UWFlow (MIT)
 Test fixtures under `test/fixtures/quest/uwflow-*.txt` are copied from https://github.com/UWFlow/uwflow.
+
+UW Flow was also read as a design reference for the Courses tab and weekly timetable: its canonical
+course-code normalisation (one lower-case unspaced key, formatted for display at the edges), its single
+hour-height grid constant, and its lane-packing approach to overlapping classes. No UW Flow code is
+copied for those, and none of its data is redistributed; `src/lib/timetable.ts`, `src/lib/courses.ts` and
+`src/data/courses/metadata.ts` are UW Go's own. The MIT notice below therefore covers the fixtures; the
+reference use imposes no further obligation, and is recorded here for honesty rather than necessity.
 The term-id scheme and `M/T/W/Th/F/S/Su` day-code convention were reimplemented after studying that code.
 
 MIT License
