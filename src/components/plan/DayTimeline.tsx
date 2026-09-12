@@ -16,6 +16,7 @@ import { RemindButton } from "./RemindButton";
 import { GymCard } from "./GymCard";
 import { ModeIcon } from "./ModeIcon";
 import { GapChoicePicker, type ChooseGap } from "./GapChoicePicker";
+import { ReportClosure, RouteAdjustedNote } from "./ClosureControls";
 
 export interface Selectable {
   selectedId: string | undefined;
@@ -153,7 +154,11 @@ function LeaveRow({ t, id, sel, label, day }: { t: ClassTransition; id: string; 
           <span>{routeSummary(rec)}{t.hasDeadline && t.expectedArrival ? ` · arrive ${formatClock(t.expectedArrival)}` : ""}</span>
         </div>
         {rec.mode === "TRANSIT" && <TransitSteps route={rec} />}
+        <RouteAdjustedNote route={rec} />
         <IndoorComparison t={t} id={id} label={label} sel={sel} />
+        {/* Reporting hangs off the winter route when there is one: its tunnels and bridges are
+            the segments worth reporting, whether or not the plan chose to take it today. */}
+        <ReportClosure route={t.indoorRoute ?? rec} />
         {alt && (
           <div className="mt-1.5 flex items-center gap-1.5 text-xs text-ink-muted">
             <ModeIcon route={alt} className="size-3.5" />

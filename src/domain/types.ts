@@ -39,6 +39,8 @@ export interface CourseMeeting {
   university: University;
   courseCode: string;
   courseTitle?: string;
+  /** For a Laurier-hosted course seen in Quest as "BUS 352W", its Laurier code "BU352". */
+  laurierCode?: string;
   classNumber?: number;
   section?: string;
   component: Component;
@@ -72,6 +74,7 @@ export interface ParseWarning {
     | "NO_TIME"
     | "UNKNOWN_DAY_TOKEN"
     | "DUPLICATE_DROPPED"
+    | "UNKNOWN_CROSS_REGISTERED_SUBJECT"
     | "PARSER_NOT_IMPLEMENTED";
   message: string;
   courseCode?: string;
@@ -196,6 +199,23 @@ export interface RouteOption {
   indoorPath?: string[];
   /** 0..1 share of the trip spent inside buildings; set for indoor-graph routes. */
   indoorShare?: number;
+  /**
+   * Canonical ids of the campus-network segments this route travels, for routes computed over
+   * the indoor graph. What a student's closure report targets, and how a changed route can name
+   * the segment that closed.
+   */
+  indoorEdgeIds?: string[];
+  /**
+   * Canonical ids of segments this route had to go round because students reported them shut.
+   * Present only when a closure actually changed the answer, so the UI can say what changed.
+   */
+  avoidedClosures?: string[];
+  /**
+   * Canonical ids of closed segments this route actually runs along. Only ever set on an outdoor
+   * route from Google, which cannot be told to avoid a footpath: the honest answer is to say the
+   * route uses something reported shut rather than pretend it does not.
+   */
+  blockedBy?: string[];
   provider: string;
   computedAt: string;
   /** True only for the straight-line fallback used when no routing API is configured. */

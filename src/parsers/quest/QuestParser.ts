@@ -9,6 +9,7 @@
  */
 import type { Component, CourseMeeting, DayOfWeek, ParsedSchedule, ParseWarning, RawLocation, TermInfo } from "@/domain/types";
 import { stableId } from "@/domain/ids";
+import { classifyCourse, type CourseClassification } from "@/domain/laurier";
 import { parseClock } from "@/time/toronto";
 import { parseDayTokens } from "./days";
 import { inferDateOrder, parseDateAs, termIdOf, type RawDateRange } from "./dates";
@@ -31,6 +32,9 @@ const HOMEPAGE_WIDGET = /^Class\s+Description\s+Days\/Times\s+Room/i;
 // The same widget when a browser puts each header cell on its own line: rely on the page furniture around it.
 const HOMEPAGE_MARKERS = [/^Collapse section My .*Class Schedule/i, /^Add Classes$/i, /^Enter Class Nbr$/i];
 const NOT_REGISTERED = /you are not registered for classes in this term/i;
+// Quest's Campus column names the institution offering the course. Not every paste carries it,
+// so it is used when present and the course-number convention answers otherwise.
+const LAURIER_CAMPUS_LINE = /wilfrid\s*laurier/i;
 const COURSE_SELECTION = /\bmy course selection\b/i;
 
 const KNOWN_COMPONENTS: readonly Component[] = ["LEC", "TUT", "LAB", "SEM", "PRJ", "PRA", "DIS", "TST", "STU", "FLD", "CLN"];
@@ -40,6 +44,7 @@ interface SectionContext { classNumber?: number; section?: string; component: Co
 interface RawMeeting {
   courseCode: string;
   courseTitle: string;
+  cls: CourseClassification;
   ctx: SectionContext;
   days: DayOfWeek[];
   start: number;
@@ -183,6 +188,19 @@ export function parseQuestSchedule(text: string): ParsedSchedule {
     const hm = COURSE_HEADER.exec(lines[startIdx])!;
     const courseCode = `${hm[1]} ${hm[2]}`;
     const courseTitle = hm[3].trim();
+    // A double-degree student's Laurier courses are already in Quest, under a Waterloo subject
+    // with a W on the number. Recognising them here is what makes a separate Laurier paste
+    // unnecessary: Quest establishes that the course exists and when it meets.
+    const campusLine = lines.slice(startIdx, endIdx).find((l) => LAURIER_CAMPUS_LINE.test(l));
+    const cls = classifyCourse(hm[1], hm[2], campusLine);
+    if (cls.unmappedSubject) {
+      warnings.push({
+        code: "UNKNOWN_CROSS_REGISTERED_SUBJECT",
+        message: `${courseCode}: the "W" suggests a Laurier-hosted course, but ${cls.unmappedSubject} has no known Laurier subject, so it is kept as a Waterloo course.`,
+        courseCode,
+        line: startIdx + 1,
+      });
+    }
 
     let i = startIdx + 1;
     const tableHeader = lines.slice(startIdx + 1, endIdx).findIndex((l) => CLASS_NBR_HEADER.test(l));
@@ -215,7 +233,7 @@ export function parseQuestSchedule(text: string): ParsedSchedule {
       if (meeting) {
         if (meeting.dayWarning) warnings.push({ code: "UNKNOWN_DAY_TOKEN", message: `${courseCode}: ${meeting.dayWarning}; meeting kept without a time.`, courseCode, line: i + 1 });
         raws.push({
-          courseCode, courseTitle,
+          courseCode, courseTitle, cls,
           ctx: ctx ?? { component: "OTHER", componentRaw: "" },
           days: meeting.days, start: meeting.start, end: meeting.end, unscheduled: meeting.unscheduled,
           location: meeting.location, instructors: meeting.instructors, rawStart: meeting.rawStart, rawEnd: meeting.rawEnd,
@@ -251,7 +269,7 @@ export function parseQuestSchedule(text: string): ParsedSchedule {
     const startDate = r.rawStart && inference.order !== "UNKNOWN" ? parseDateAs(r.rawStart, inference.order) : undefined;
     const endDate = r.rawEnd && inference.order !== "UNKNOWN" ? parseDateAs(r.rawEnd, inference.order) : undefined;
     const locKey = r.location.kind === "ROOM" ? `${r.location.buildingCode} ${r.location.roomNumber}` : r.location.kind;
-    const id = stableId("UW", r.courseCode, r.ctx.classNumber, r.ctx.section, r.ctx.component, r.days.join(""), r.start, r.end, r.unscheduled ? "U" : "S", locKey, startDate, endDate);
+    const id = stableId(r.cls.university, r.courseCode, r.ctx.classNumber, r.ctx.section, r.ctx.component, r.days.join(""), r.start, r.end, r.unscheduled ? "U" : "S", locKey, startDate, endDate);
     if (seen.has(id)) {
       warnings.push({ code: "DUPLICATE_DROPPED", message: `${r.courseCode} ${r.ctx.componentRaw || r.ctx.component} ${r.ctx.section ?? ""}: duplicate meeting row ignored.`.replace(/\s+/g, " ").trim(), courseCode: r.courseCode });
       continue;
@@ -259,9 +277,10 @@ export function parseQuestSchedule(text: string): ParsedSchedule {
     seen.add(id);
     meetings.push({
       id,
-      university: "UW",
+      university: r.cls.university,
       courseCode: r.courseCode,
       courseTitle: r.courseTitle,
+      laurierCode: r.cls.laurierCode,
       classNumber: r.ctx.classNumber,
       section: r.ctx.section,
       component: r.ctx.component,

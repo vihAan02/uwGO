@@ -8,6 +8,7 @@ import type { CampusLocation, RouteOption, RoutePreference } from "@/domain/type
 import { formatClock, formatDuration } from "@/time/toronto";
 import { rerouteFrom, resolveTripRoute, type TripRouteStatus } from "@/lib/tripRoute";
 import { TripRerouter } from "@/lib/tripReroute";
+import { useClosures } from "@/lib/ClosuresProvider";
 import { ARRIVED_METERS, formatRemaining, pathMetrics, projectOntoPath, remainingFrom, type PathMetrics, type Point, type Projection } from "@/lib/routeProgress";
 import { currentHeading, useDeviceHeading, type HeadingSample } from "@/lib/useDeviceHeading";
 import { headingDelta } from "@/lib/deviceHeading";
@@ -216,9 +217,17 @@ export function TripMode({ trip, onEnd }: { trip: Trip; onEnd: () => void }) {
   const [progress, setProgress] = useState<Progress | undefined>();
   const live = useRef<Live>({});
   const compass = useDeviceHeading();
+  // Closures are read through a ref, not a dependency: a background refresh of the tallies must
+  // not rebuild the rerouter and restart its off-route timer mid-trip. The getter is called at
+  // the moment a reroute happens, so a closure confirmed during the walk is still honoured.
+  const closures = useClosures();
   // One rerouter per trip: the destination and the preference are fixed for its whole life, so
   // a reroute can never quietly change where the student is going or how they want to get there.
   const rerouter = useMemo(() => new TripRerouter(trip.to, trip.preference ?? "FASTEST", rerouteFrom), [trip.to, trip.preference]);
+  // The closure set is read when a fix arrives, not captured in the callback: a background
+  // refresh of the tallies must not change `commitProgress` and restart the location watch.
+  const closedRef = useRef<ReadonlySet<string>>(closures.closed);
+  useEffect(() => { closedRef.current = closures.closed; }, [closures.closed]);
 
   // A trip that starts now must not show a bus that has already left.
   useEffect(() => {
@@ -258,7 +267,7 @@ export function TripMode({ trip, onEnd }: { trip: Trip; onEnd: () => void }) {
     // selection the plan uses, so an outdoor trip can become a winter one and a winter one can
     // go back outside, whichever is now the better way to the same destination. A failed or
     // refused reroute returns nothing and the route already on screen simply stays.
-    rerouter.consider({ at: { latitude: fix.lat, longitude: fix.lng }, offRouteMeters: proj.offRouteMeters, accuracyMeters: fix.accuracy }, routeRef.current, now)
+    rerouter.consider({ at: { latitude: fix.lat, longitude: fix.lng }, offRouteMeters: proj.offRouteMeters, accuracyMeters: fix.accuracy }, routeRef.current, now, closedRef.current)
       .then((r) => { if (r) setResolved(r); });
   }, [rerouter]);
 

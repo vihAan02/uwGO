@@ -1,0 +1,112 @@
+GO!
+Go To
+Student Name
+My Academics
+Course Selection (Undergrad only)
+Search for Classes
+Enroll
+     My Class Schedule              |              Shopping Cart              |              Add              |              Drop              |              Swap              |              Edit              |              Term Information              |              Exam Information
+My Class Schedule
+Select Display Option
+List View
+Weekly Calendar View
+Fall 2026 | Undergraduate | University of Waterloo
+Group Box
+Class Schedule Filter Options Collapsible section Class Schedule Filter Options 
+Show Enrolled Classes
+CS 245 - Logic and Computation
+Status    Units    Grading    Deadlines
+Enrolled
+0.50
+Numeric Grading Basis
+Academic Calendar Deadlines
+Class Nbr    Section    Component    Days & Times    Room    Instructor    Start/End Date
+4021
+001
+LEC
+TTh 10:00AM - 11:20AM
+MC 4045
+Ada Lovelace
+08/09/2026 - 04/12/2026
+ECON 101 - Introduction to Microeconomics
+Status    Units    Grading    Deadlines
+Enrolled
+0.50
+Numeric Grading Basis
+Academic Calendar Deadlines
+Class Nbr    Section    Component    Days & Times    Room    Instructor    Start/End Date
+4102
+002
+LEC
+MWF 9:30AM - 10:20AM
+HH 1101
+Joan Robinson
+08/09/2026 - 04/12/2026
+ARBUS 102 - Introduction to Business Analytics
+Status    Units    Grading    Deadlines
+Enrolled
+0.50
+Numeric Grading Basis
+Academic Calendar Deadlines
+Class Nbr    Section    Component    Days & Times    Room    Instructor    Start/End Date
+4210
+001
+LEC
+T 2:30PM - 5:20PM
+RCH 301
+Peter Drucker
+08/09/2026 - 04/12/2026
+BUS 111W - Introduction to Business Organization
+Status    Units    Grading    Deadlines
+Enrolled
+0.50
+Numeric Grading Basis
+Academic Calendar Deadlines
+Class Nbr    Section    Component    Days & Times    Room    Instructor    Start/End Date
+4330
+999
+LEC
+MW 11:30AM - 12:50PM
+TBA
+08/09/2026 - 04/12/2026
+BUS 352W - Business Finance
+Status    Units    Grading    Deadlines
+Enrolled
+0.50
+Numeric Grading Basis
+Academic Calendar Deadlines
+Class Nbr    Section    Component    Days & Times    Room    Instructor    Start/End Date
+4415
+999
+LEC
+TTh 2:30PM - 3:50PM
+LH 1001
+Ravi Patel
+08/09/2026 - 04/12/2026
+ECON 250W - Introductory Statistics
+Status    Units    Grading    Deadlines
+Enrolled
+0.50
+Numeric Grading Basis
+Academic Calendar Deadlines
+Class Nbr    Section    Component    Days & Times    Room    Instructor    Start/End Date
+4508
+999
+LEC
+F 1:00PM - 3:50PM
+BA 201
+Dana Lee
+08/09/2026 - 04/12/2026
+GESC 231W - Risks and Disasters
+Status    Units    Grading    Deadlines
+Enrolled
+0.50
+Numeric Grading Basis
+Academic Calendar Deadlines
+Class Nbr    Section    Component    Days & Times    Room    Instructor    Start/End Date
+4611
+999
+LEC
+W 7:00PM - 9:50PM
+TBA
+08/09/2026 - 04/12/2026

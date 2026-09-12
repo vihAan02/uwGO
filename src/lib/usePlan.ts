@@ -26,6 +26,8 @@ export interface PlanExtras {
   gapChoices?: GapChoices;
   routePreference?: RoutePreference;
   endOfDay?: EndOfDayDestination;
+  /** Segments students have reported shut. Routing avoids them; changing them rebuilds the week. */
+  closedEdgeIds?: ReadonlySet<string>;
   pacLive?: PacReading;
   pacSamples?: readonly PacSample[];
 }
@@ -44,15 +46,20 @@ export function usePlan(meetings: CourseMeeting[] | undefined, home: UserHome | 
     return flat.map(([k, v]) => `${k}=${v.kind}${v.gymThen ?? ""}`).sort().join(",");
   }, [extras.gapChoices]);
 
+  // A Set is not usefully comparable, so the closures become a sorted string like every other
+  // part of the key: a newly confirmed closure rebuilds the week, a re-read that changed nothing
+  // does not.
+  const closureKey = useMemo(() => [...(extras.closedEdgeIds ?? [])].sort().join(","), [extras.closedEdgeIds]);
+
   const key = useMemo(
-    () => JSON.stringify({ m: meetings?.map((x) => [x.id, x.includeInPlan]), h: home, c: config, w: mondayISO, g: extras.gym, r: extras.routePreference ?? "FASTEST", e: extras.endOfDay ?? "HOME", l: liveKey, gc: gapChoiceKey }),
-    [meetings, home, config, mondayISO, extras.gym, extras.routePreference, extras.endOfDay, liveKey, gapChoiceKey],
+    () => JSON.stringify({ m: meetings?.map((x) => [x.id, x.includeInPlan]), h: home, c: config, w: mondayISO, g: extras.gym, r: extras.routePreference ?? "FASTEST", e: extras.endOfDay ?? "HOME", l: liveKey, gc: gapChoiceKey, cl: closureKey }),
+    [meetings, home, config, mondayISO, extras.gym, extras.routePreference, extras.endOfDay, liveKey, gapChoiceKey, closureKey],
   );
 
   useEffect(() => {
     if (!meetings) return;
     let cancelled = false;
-    buildWeekPlan({ meetings, home, mondayISO, config, gym: extras.gym, routePreference: extras.routePreference, gapChoices: extras.gapChoices, endOfDay: extras.endOfDay, pacLive: extras.pacLive, pacSamples: extras.pacSamples }, clientRoutingProvider())
+    buildWeekPlan({ meetings, home, mondayISO, config, gym: extras.gym, routePreference: extras.routePreference, gapChoices: extras.gapChoices, endOfDay: extras.endOfDay, closedEdgeIds: extras.closedEdgeIds, pacLive: extras.pacLive, pacSamples: extras.pacSamples }, clientRoutingProvider())
       .then((plan) => { if (!cancelled) setResult({ key, plan }); })
       .catch((e: unknown) => { if (!cancelled) setResult({ key, error: e instanceof Error ? e.message : String(e) }); });
     return () => { cancelled = true; };

@@ -118,7 +118,7 @@ describe("a brand-new student", () => {
     expect(saved.schedule?.meetings.map((m) => m.id)).toEqual(["cs135-lec", "math135-lec"]);
     expect(saved.preferences.home?.name).toBe("Village 1 (V1)");
     expect(saved.preferences.gym).toEqual({ enabled: true, durationMinutes: 90, preferredTime: "EVENING" });
-    expect(JSON.stringify(row)).not.toContain("Someone, A");
+    expect(JSON.stringify(row)).toContain("Someone, A"); // the professor is saved with the schedule
     expect(device.state.sync?.dirtySince).toBeUndefined();
   });
 });
@@ -347,6 +347,42 @@ describe("one student's data is private to them", () => {
     expect(bDevice.state.schedule).toBeUndefined();
     expect(bDevice.state.home).toBeUndefined();
     expect(await rawRow(db, b.id)).toBeUndefined();
+  });
+});
+
+describe("a double degree student's Laurier courses", () => {
+  it("keep their Laurier code, room and professor across a new device and a fresh sign-in", async () => {
+    const user = await createUser(db);
+    const laurier: CourseMeeting = {
+      id: "bus352-lec", university: "WLU", courseCode: "BUS 352W", laurierCode: "BU352",
+      courseTitle: "Business Finance", section: "999", component: "LEC",
+      days: ["T", "Th"], start: 870, end: 950,
+      location: { kind: "ROOM", buildingCode: "LH", roomNumber: "1001" },
+      instructors: ["Ravi Patel"], source: "QUEST", includeInPlan: true,
+    };
+    const device = openDevice(user);
+    await device.sync.load();
+    device.edit((s) => ({
+      ...onboarded(),
+      schedule: { ...onboarded().schedule!, meetings: [...onboarded().schedule!.meetings, laurier] },
+      sync: s.sync,
+    }));
+    await device.settle();
+
+    // A different device, with nothing in local storage at all.
+    const fresh = openDevice(user);
+    await fresh.sync.load();
+    const restored = fresh.state.schedule?.meetings.find((m) => m.id === "bus352-lec");
+    expect(restored).toBeDefined();
+    expect(restored).toMatchObject({
+      university: "WLU",
+      laurierCode: "BU352",
+      instructors: ["Ravi Patel"],
+      location: { kind: "ROOM", buildingCode: "LH", roomNumber: "1001" },
+    });
+    // ...and the Waterloo courses and preferences came back untouched alongside it.
+    expect(fresh.state.schedule?.meetings.map((m) => m.id)).toContain("cs135-lec");
+    expect(fresh.state.home?.name).toBe("Village 1 (V1)");
   });
 });
 
