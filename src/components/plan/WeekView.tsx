@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Wordmark } from "@/components/ui/wordmark";
+import { AppTabs } from "@/components/nav/AppTabs";
 import { DayTimeline } from "./DayTimeline";
 import { NextClassCard } from "./NextClassCard";
 import { SettingsSheet } from "./SettingsSheet";
@@ -116,6 +117,7 @@ export function WeekView() {
           </div>
           <Button variant="outline" size="icon-sm" aria-label="Settings" onClick={() => setSettingsOpen(true)}><SlidersHorizontal /></Button>
         </div>
+        <div className="px-4 pb-2 sm:px-6"><AppTabs /></div>
         <TabsList className="px-4 pb-3 sm:px-6" aria-label="Day of the week">
           {visibleDays.map((d) => {
             const count = plan?.days[d]?.classes.length ?? 0;
