@@ -71,6 +71,21 @@ describe("mapping app state to the account row", () => {
     expect(persistedKey({ ...s, endOfDay: "GYM" })).not.toBe(persistedKey(s));
   });
 
+  it("course colours travel with the account, and a bad entry is dropped rather than trusted", () => {
+    const s: AppState = { ...signedUpState(), courseColors: { math135: "purple", cs135: "sky" } };
+    const read = parseUserStateRow(JSON.parse(JSON.stringify({ ...toUserStateWrite(UID, s), updated_at: "2026-09-11T10:00:00Z" })));
+    expect(read.malformed).toBe(false);
+    expect(applyAccount(emptyState(), read, UID).courseColors).toEqual({ math135: "purple", cs135: "sky" });
+    // A colour change is a change worth saving; a student who never picked one writes nothing new.
+    expect(persistedKey({ ...s, courseColors: { math135: "green" } })).not.toBe(persistedKey(s));
+    expect(JSON.stringify(toUserStateWrite(UID, signedUpState()))).not.toContain("courseColors");
+
+    const bad = sanitizePreferences({ courseColors: { math135: "neon", "CS 135": "blue", econ101: "green" } });
+    expect(bad.preferences.courseColors).toEqual({ econ101: "green" });
+    expect(bad.dropped).toBe(2);
+    expect(decideOnLoad(emptyState(), account({ preferences: { arrivalBufferMinutes: 10, courseColors: { cs135: "red" } } }))).toBe("HYDRATE");
+  });
+
   it("onboarding is complete only with both a schedule and a home", () => {
     const s = signedUpState();
     expect(toUserStateWrite(UID, { ...s, home: undefined }).onboarding_complete).toBe(false);

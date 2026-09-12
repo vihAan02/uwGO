@@ -3,13 +3,22 @@
 ## UWFlow (MIT)
 Test fixtures under `test/fixtures/quest/uwflow-*.txt` are copied from https://github.com/UWFlow/uwflow.
 
-UW Flow was also read as a design reference for the Courses tab and weekly timetable: its canonical
-course-code normalisation (one lower-case unspaced key, formatted for display at the edges), its single
-hour-height grid constant, and its lane-packing approach to overlapping classes. No UW Flow code is
-copied for those, and none of its data is redistributed; `src/lib/timetable.ts`, `src/lib/courses.ts` and
-`src/data/courses/metadata.ts` are UW Go's own. The MIT notice below therefore covers the fixtures; the
-reference use imposes no further obligation, and is recorded here for honesty rather than necessity.
-The term-id scheme and `M/T/W/Th/F/S/Su` day-code convention were reimplemented after studying that code.
+The Courses timetable is adapted from the UW Flow frontend, https://github.com/UWFlow/uwflow_frontend
+(read at commit `1f95a45`). The following UW Go files contain code adapted from it, and are covered by
+the MIT notice below:
+
+| UW Go file | Adapted from (UWFlow/uwflow_frontend) | What was adapted |
+|---|---|---|
+| `src/lib/timetable.ts` | `src/components/calendar/Calendar.tsx`, `src/components/calendar/calendarLayout.ts`, `src/pages/profilePage/ProfileCalendar.tsx` | The 64px hour height and time-to-pixel placement; lane packing for overlapping classes; the 9-to-5 hour range widened around early and late classes |
+| `src/lib/calendar.ts` | `src/pages/profilePage/ProfileCalendar.tsx` | Expanding meetings into dated occurrences within their start and end dates; the opening week; the date-range title ("Sep 21st – 25th, 2026"); "Mon 21" column labels; showing a weekend day only when it has classes; hours of class per week |
+| `src/lib/courseColors.ts` | `src/components/calendar/courseColors.ts` | One colour per course as a pale fill with a saturated rail, assigned in alphabetical order (the colour values are UW Go's, chosen for contrast) |
+| `src/components/courses/Timetable.tsx` | `src/components/calendar/Calendar.tsx` | The hour grid with its half-hour line, the course block's layout and truncating text, and the Current Week / previous / next header |
+
+UW Go's day and month views, the phone layout, the per-course colour picker and the height-based
+choice of what a block shows are UW Go's own. No UW Flow data is redistributed, and UW Go makes no
+request to UW Flow at runtime. UW Flow was also read for its canonical course-code normalisation (one
+lower-case unspaced key, formatted for display at the edges), and the term-id scheme and
+`M/T/W/Th/F/S/Su` day-code convention were reimplemented after studying its code.
 
 MIT License
 

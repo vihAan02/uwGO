@@ -1,21 +1,76 @@
 /**
- * Laying out a weekly timetable.
+ * The geometry of the timetable.
  *
- * One geometry constant drives both the grid and the blocks drawn on it, so a class's height is
- * always its real duration and nothing can drift out of step. The overlap handling is the lane
- * packing UW Flow uses (MIT; the idea, written here from scratch): classes that overlap share
- * the width of their group, and a group only closes once *every* lane in it has ended, which is
- * what makes a long lecture sitting across three short tutorials come out right.
+ * Adapted from UW Flow's calendar (MIT, see THIRD_PARTY_NOTICES.md): the hour grid and block
+ * placement from `src/components/calendar/Calendar.tsx`, the lane packing from
+ * `src/components/calendar/calendarLayout.ts`, and the hour range from
+ * `src/pages/profilePage/ProfileCalendar.tsx`.
+ *
+ * Every vertical measurement in the timetable goes through `timeToY` and `durationToHeight`. The
+ * grid lines, the time labels and the class blocks are all placed with them, so a class starting
+ * at 12:30 sits exactly halfway between the 12 and 1 lines and a 50-minute class is exactly 50
+ * minutes tall. Nothing else may turn a time into pixels.
  */
 
-/** Pixels per hour. The single source of truth for the grid's geometry. */
-export const HOUR_HEIGHT = 56;
+/** Pixels per hour: the single source of truth for the grid's vertical scale (UW Flow's value). */
+export const HOUR_HEIGHT = 64;
 
 export interface TimetableEvent {
   id: string;
   /** Minutes from midnight. */
   start: number;
   end: number;
+}
+
+export interface GridBounds {
+  /** The hour at the top edge of the grid. */
+  fromHour: number;
+  /** The hour at the bottom edge. */
+  toHour: number;
+}
+
+/** Vertical position of a time of day, in pixels from the top of the grid. */
+export function timeToY(minutes: number, bounds: GridBounds): number {
+  return ((minutes - bounds.fromHour * 60) / 60) * HOUR_HEIGHT;
+}
+
+/** Height of a stretch of time, in pixels. */
+export function durationToHeight(minutes: number): number {
+  return (Math.max(0, minutes) / 60) * HOUR_HEIGHT;
+}
+
+/** Where a block sits in the grid, in pixels. */
+export function blockGeometry(event: TimetableEvent, bounds: GridBounds): { top: number; height: number } {
+  return { top: timeToY(event.start, bounds), height: durationToHeight(event.end - event.start) };
+}
+
+export function gridHeight(bounds: GridBounds): number {
+  return durationToHeight((bounds.toHour - bounds.fromHour) * 60);
+}
+
+/** The hours whose lines and labels are drawn, top to bottom. */
+export function hourMarks(bounds: GridBounds): number[] {
+  const hours: number[] = [];
+  for (let h = bounds.fromHour; h < bounds.toHour; h++) hours.push(h);
+  return hours;
+}
+
+/** UW Flow opens on 9 to 5 and widens only for classes outside it. */
+export const DEFAULT_GRID: GridBounds = { fromHour: 9, toHour: 18 };
+
+/**
+ * The hours the grid shows: the default teaching day, widened out to whole hours around any
+ * class that starts earlier or ends later. Worked out over the whole term rather than the visible
+ * week, so moving between weeks never makes the grid jump.
+ */
+export function gridBounds(events: readonly Pick<TimetableEvent, "start" | "end">[], fallback: GridBounds = DEFAULT_GRID): GridBounds {
+  if (events.length === 0) return fallback;
+  const earliest = Math.min(...events.map((e) => e.start));
+  const latest = Math.max(...events.map((e) => e.end));
+  return {
+    fromHour: Math.max(0, Math.min(fallback.fromHour, Math.floor(earliest / 60))),
+    toHour: Math.min(24, Math.max(fallback.toHour, Math.ceil(latest / 60))),
+  };
 }
 
 export interface PlacedEvent<T extends TimetableEvent> {
@@ -29,7 +84,8 @@ export interface PlacedEvent<T extends TimetableEvent> {
 /**
  * Place a day's classes into lanes. Events are grouped by actual overlap; within a group each
  * event takes the first lane free at its start time, and every event in the group is given the
- * group's lane count so they divide the width evenly.
+ * group's lane count so they divide the width evenly. A group closes only once every lane in it
+ * has ended, which is what keeps a long lab beside the three short tutorials it spans.
  *
  * Touching is not overlapping: a class ending at 11:20 and one starting at 11:20 share a lane.
  */
@@ -50,7 +106,6 @@ export function layoutDay<T extends TimetableEvent>(events: readonly T[]): Place
   };
 
   for (const e of sorted) {
-    // The group ends only when nothing in it is still running.
     if (group.length && e.start >= groupEnd) flush();
     let lane = lanes.findIndex((end) => end <= e.start);
     if (lane === -1) { lanes.push(e.end); lane = lanes.length - 1; } else lanes[lane] = e.end;
@@ -61,36 +116,57 @@ export function layoutDay<T extends TimetableEvent>(events: readonly T[]): Place
   return placed;
 }
 
-export interface DayBounds {
-  /** Minutes from midnight at the top of the grid. */
-  from: number;
-  /** Minutes from midnight at the bottom. */
-  to: number;
-}
+/*
+ * What a block has room to say. The block's markup uses these exact numbers for its padding and
+ * line heights, so "fits" here means fits on screen, and whatever does not fit is never rendered
+ * rather than left to spill out of the block.
+ */
+
+/** Space kept clear under each block so back-to-back classes read as two. */
+export const BLOCK_GAP = 1;
+/** Padding above and below the text inside a block. */
+export const BLOCK_PADDING_Y = 3;
+/** Line height of the course code. */
+export const TITLE_LINE = 16;
+/** Line height of each detail line (time, section, room). */
+export const DETAIL_LINE = 14;
+
+export type BlockLine = "code" | "time" | "section" | "room" | "sectionAndRoom";
 
 /**
- * The window the grid needs to show, rounded out to whole hours. An empty week still gets a
- * sensible teaching day rather than a collapsed grid.
+ * The lines a block of this height shows, most important first: the course code, then the time,
+ * then the section and room. With room for three lines the section and room share the third; a
+ * block too short for even the code still shows it, clipped by the block rather than escaping it.
  */
-export function dayBounds(events: readonly TimetableEvent[], fallback: DayBounds = { from: 8 * 60, to: 18 * 60 }): DayBounds {
-  if (events.length === 0) return fallback;
-  const earliest = Math.min(...events.map((e) => e.start));
-  const latest = Math.max(...events.map((e) => e.end));
-  // Rounded out to whole hours so the hour marks line up; no extra padding, or a day of
-  // late-morning classes would open with an hour of empty grid.
-  return { from: Math.max(0, Math.floor(earliest / 60) * 60), to: Math.min(24 * 60, Math.ceil(latest / 60) * 60) };
+export function blockLines(heightPx: number): BlockLine[] {
+  const room = heightPx - BLOCK_GAP - 2 * BLOCK_PADDING_Y;
+  const details = Math.floor((room - TITLE_LINE) / DETAIL_LINE);
+  if (details >= 3) return ["code", "time", "section", "room"];
+  if (details === 2) return ["code", "time", "sectionAndRoom"];
+  if (details === 1) return ["code", "time"];
+  return ["code"];
 }
 
-/** Where a block sits in the grid, in pixels, given the window the grid is showing. */
-export function blockGeometry(event: TimetableEvent, bounds: DayBounds): { top: number; height: number } {
-  const top = ((event.start - bounds.from) / 60) * HOUR_HEIGHT;
-  const height = (Math.max(1, event.end - event.start) / 60) * HOUR_HEIGHT;
-  return { top, height };
+/** Pixels the given lines need, for checking they fit. */
+export function linesHeight(lines: readonly BlockLine[]): number {
+  return 2 * BLOCK_PADDING_Y + BLOCK_GAP + lines.reduce((h, l) => h + (l === "code" ? TITLE_LINE : DETAIL_LINE), 0);
 }
 
-/** The hour marks to draw down the side of the grid. */
-export function hourMarks(bounds: DayBounds): number[] {
-  const marks: number[] = [];
-  for (let m = Math.ceil(bounds.from / 60) * 60; m <= bounds.to; m += 60) marks.push(m);
-  return marks;
+/** "12:30", the compact clock used inside a block where the grid already says morning or afternoon. */
+export function formatShortTime(minutes: number): string {
+  const h24 = Math.floor(minutes / 60) % 24;
+  const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+  return `${h12}:${String(minutes % 60).padStart(2, "0")}`;
+}
+
+/** "12:30–1:20" */
+export function formatTimeRange(start: number, end: number): string {
+  return `${formatShortTime(start)}–${formatShortTime(end)}`;
+}
+
+/** Gutter label for an hour line: "9 AM", "12 PM". */
+export function formatHourLabel(hour: number): string {
+  const h = hour % 24;
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12} ${h < 12 ? "AM" : "PM"}`;
 }

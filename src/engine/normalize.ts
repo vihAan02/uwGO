@@ -1,5 +1,6 @@
 import type { CampusLocation, CourseMeeting, DayOfWeek, ScheduledClass } from "@/domain/types";
 import { DAYS_IN_ORDER } from "@/domain/types";
+import { withinMeetingDates } from "@/domain/meetingDates";
 import { buildingLocation, findBuilding } from "@/data/buildings";
 import { parseRawLocation } from "@/rooms/roomParser";
 import { dateForDay, torontoDate } from "@/time/toronto";
@@ -38,8 +39,7 @@ export function normalizeWeek(meetings: CourseMeeting[], mondayISO: string): Nor
 
     for (const day of m.days) {
       const date = dateForDay(mondayISO, day);
-      if (m.startDate && date < m.startDate) continue;
-      if (m.endDate && date > m.endDate) continue;
+      if (!withinMeetingDates(m, date)) continue;
       byDay[day].push({
         id: `${m.id}:${day}`,
         day,

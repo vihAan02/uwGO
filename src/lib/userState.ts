@@ -2,6 +2,7 @@ import { ARRIVAL_BUFFER_CHOICES, DEFAULT_PLANNER_CONFIG } from "@/domain/config"
 import type { Component, CourseMeeting, DayOfWeek, EndOfDayDestination, GymPreferences, RawLocation, RoutePreference, TermInfo, University, UserHome } from "@/domain/types";
 import { DAYS_IN_ORDER } from "@/domain/types";
 import { forgetMissingClasses } from "./gapChoices";
+import { sanitizeCourseColors, type CourseColorId } from "./courseColors";
 import { migrateEndOfDay, migrateGym, type AppState } from "./storage";
 
 /**
@@ -27,6 +28,8 @@ export interface SavedPreferences {
   gym?: GymPreferences;
   routePreference?: RoutePreference;
   endOfDay?: EndOfDayDestination;
+  /** Timetable colours the student chose, by canonical course code. */
+  courseColors?: Record<string, CourseColorId>;
 }
 
 /** What the app writes. `created_at` and `updated_at` are set by the database. */
@@ -197,6 +200,11 @@ export function sanitizePreferences(raw: unknown): { preferences: SavedPreferenc
     if (e) preferences.endOfDay = e;
     else dropped++;
   }
+  if (!absent(raw.courseColors)) {
+    const c = sanitizeCourseColors(raw.courseColors);
+    if (c.colors) preferences.courseColors = c.colors;
+    dropped += c.dropped;
+  }
   return { preferences, dropped };
 }
 
@@ -230,6 +238,7 @@ export function persistedFrom(state: AppState): { schedule?: SavedSchedule; pref
       gym: state.gym,
       routePreference: state.routePreference,
       endOfDay: state.endOfDay,
+      courseColors: state.courseColors,
     },
   };
 }
@@ -267,7 +276,7 @@ export function persistedKey(state: AppState): string {
 const hasSchedule = (state: AppState) => (state.schedule?.meetings.length ?? 0) > 0;
 const hasUserData = (state: AppState) => hasSchedule(state) || Boolean(state.home);
 const hasPreferences = (a: SavedAccountState) =>
-  Boolean(a.preferences.home || a.preferences.gym || a.preferences.routePreference) || a.preferences.arrivalBufferMinutes !== DEFAULT_BUFFER;
+  Boolean(a.preferences.home || a.preferences.gym || a.preferences.routePreference || a.preferences.courseColors) || a.preferences.arrivalBufferMinutes !== DEFAULT_BUFFER;
 
 export type LoadDecision =
   /** Take the account's copy. */
@@ -302,6 +311,7 @@ export function applyAccount(local: AppState, account: SavedAccountState, userId
     gym: account.preferences.gym,
     routePreference: account.preferences.routePreference,
     endOfDay: account.preferences.endOfDay,
+    courseColors: account.preferences.courseColors,
     gapChoices: local.gapChoices && forgetMissingClasses(local.gapChoices, account.schedule?.meetings.map((m) => m.id) ?? []),
     sync: { ownerId: userId },
   };

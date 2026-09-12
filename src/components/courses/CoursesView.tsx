@@ -8,15 +8,17 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 import { useUserState } from "@/lib/UserStateProvider";
 import { AccountLoadError, AccountLoading, AccountSyncNotice } from "@/components/account/AccountGate";
 import { groupCourses, displayName, termLabel } from "@/lib/courses";
-import { normalizeCourseCode } from "@/domain/laurier";
+import { assignCourseColors } from "@/lib/courseColors";
 import { parseRawLocation } from "@/rooms/roomParser";
 import { formatMinutesOfDay } from "@/time/toronto";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Reveal } from "@/components/ui/reveal";
 import { Wordmark } from "@/components/ui/wordmark";
 import { cn } from "@/lib/utils";
 import { AppTabs } from "@/components/nav/AppTabs";
+import { CourseColorPicker } from "./CourseColorPicker";
 import { Timetable } from "./Timetable";
 
 /**
@@ -26,7 +28,7 @@ import { Timetable } from "./Timetable";
  */
 export function CoursesView() {
   const router = useRouter();
-  const { state, hydrated } = useStore();
+  const { state, hydrated, setCourseColor } = useStore();
   const account = useUserState();
   const auth = useAuth();
   const settled = account.status === "ready" || account.status === "local" || account.status === "offline";
@@ -37,17 +39,24 @@ export function CoursesView() {
   }, [hydrated, settled, meetings, router]);
 
   const courses = useMemo(() => groupCourses(meetings ?? []), [meetings]);
+  const colors = useMemo(() => assignCourseColors(courses.map((c) => c.key), state.courseColors), [courses, state.courseColors]);
   const [selected, setSelected] = useState<string | undefined>();
   const term = termLabel(state.schedule?.term);
   const name = displayName(auth.user?.email);
   const laurierCount = courses.filter((c) => c.university === "WLU").length;
   const needsInfo = courses.filter((c) => c.needsLaurierInfo).length;
 
+  const showCourse = (key: string) => {
+    setSelected(key);
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    requestAnimationFrame(() => document.getElementById(`course-${key}`)?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" }));
+  };
+
   if (account.status === "loading" || !hydrated) return <AccountLoading />;
   if (account.status === "error" && !meetings?.length) return <AccountLoadError />;
 
   return (
-    <main className="app mx-auto w-full max-w-3xl px-4 pb-16 sm:px-6">
+    <main className="app mx-auto w-full max-w-5xl px-4 pb-16 sm:px-6">
       <header className="sticky top-0 z-10 -mx-4 border-b border-line bg-canvas/90 px-4 backdrop-blur sm:-mx-6 sm:px-6">
         <div className="flex h-14 items-center justify-between gap-2">
           <Wordmark />
@@ -79,8 +88,10 @@ export function CoursesView() {
         </div>
 
         <section data-reveal className="mt-6">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Your week</h2>
-          <div className="mt-3"><Timetable meetings={meetings ?? []} onSelect={(m) => setSelected(normalizeCourseCode(m.courseCode))} /></div>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Your timetable</h2>
+          <div className="mt-3">
+            <Timetable meetings={meetings ?? []} colors={colors} onColorChange={setCourseColor} onShowCourse={showCourse} />
+          </div>
         </section>
 
         <ul className="mt-8 divide-y divide-line border-t border-line">
@@ -89,54 +100,74 @@ export function CoursesView() {
               key={c.key}
               data-reveal
               id={`course-${c.key}`}
-              className={cn("py-4", selected === c.key && "bg-brand/[0.045] shadow-[inset_3px_0_0_0_var(--color-brand)]")}
+              className={cn("scroll-mt-20 py-4", selected === c.key && "bg-brand/[0.045] shadow-[inset_3px_0_0_0_var(--color-brand)]")}
             >
-              <button
-                type="button"
-                onClick={() => setSelected((k) => (k === c.key ? undefined : c.key))}
-                aria-expanded={selected === c.key}
-                className="flex w-full items-baseline justify-between gap-3 text-left outline-none focus-visible:ring-[3px] focus-visible:ring-brand/35"
-              >
-                <h2 className="text-lg font-bold leading-tight tracking-[-0.01em]">{c.code}</h2>
-                {c.university === "WLU" && <Badge variant="wlu">Laurier{c.laurierCode ? ` · ${c.laurierCode}` : ""}</Badge>}
-              </button>
-              {c.title && <p className="text-sm text-ink-muted">{c.title}</p>}
-              {c.instructors.length > 0 && <p className="mt-1 text-sm text-ink-muted">{c.instructors.join(", ")}</p>}
+              <div className="flex items-center gap-2.5">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label={`Colour for ${c.code}`}
+                      className="grid size-7 shrink-0 place-items-center rounded-full outline-none transition-colors duration-150 hover:bg-line/60 focus-visible:ring-[3px] focus-visible:ring-brand/35"
+                    >
+                      <span aria-hidden="true" className="size-3.5 rounded-full" style={{ backgroundColor: colors.get(c.key)?.rail }} />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="w-auto">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">Colour for {c.code}</p>
+                    <CourseColorPicker value={colors.get(c.key)?.id} courseLabel={c.code} onChange={(color) => setCourseColor(c.key, color)} />
+                  </PopoverContent>
+                </Popover>
+                <button
+                  type="button"
+                  onClick={() => setSelected((k) => (k === c.key ? undefined : c.key))}
+                  aria-expanded={selected === c.key}
+                  className="flex min-w-0 flex-1 items-baseline justify-between gap-3 text-left outline-none focus-visible:ring-[3px] focus-visible:ring-brand/35"
+                >
+                  <h2 className="text-lg font-bold leading-tight tracking-[-0.01em]">{c.code}</h2>
+                  {c.university === "WLU" && <Badge variant="wlu">Laurier{c.laurierCode ? ` · ${c.laurierCode}` : ""}</Badge>}
+                </button>
+              </div>
 
-              <ul className="mt-2 space-y-1 text-sm">
-                {c.meetings.map((m) => {
-                  const room = parseRawLocation(m.location, m.university);
-                  const where = m.location.kind === "ROOM" ? `${m.location.buildingCode} ${m.location.roomNumber}` : m.location.kind === "ONLINE" ? "Online" : "Room to be announced";
-                  return (
-                    <li key={m.id} className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                      <span className="font-medium">{m.component}{m.section ? ` ${m.section}` : ""}</span>
-                      <span className="text-ink-muted">
-                        {m.unscheduled ? "No scheduled time" : `${m.days.join("")} ${formatMinutesOfDay(m.start)}–${formatMinutesOfDay(m.end)}`}
-                      </span>
-                      <span className="text-ink-muted">· {where}{room?.buildingName ? ` · ${room.buildingName}` : ""}</span>
-                    </li>
-                  );
-                })}
-              </ul>
+              <div className="pl-9.5">
+                {c.title && <p className="text-sm text-ink-muted">{c.title}</p>}
+                {c.instructors.length > 0 && <p className="mt-1 text-sm text-ink-muted">{c.instructors.join(", ")}</p>}
 
-              {selected === c.key && (
-                <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-sm">
-                  <dt className="text-ink-muted">Campus</dt>
-                  <dd>{c.university === "WLU" ? "Wilfrid Laurier" : "University of Waterloo"}</dd>
-                  {c.laurierCode && <><dt className="text-ink-muted">Laurier code</dt><dd>{c.laurierCode}</dd></>}
-                  {c.title && <><dt className="text-ink-muted">Title</dt><dd>{c.title}</dd></>}
-                  <dt className="text-ink-muted">Sections</dt>
-                  <dd>{c.meetings.map((m) => `${m.component}${m.section ? ` ${m.section}` : ""}`).join(", ")}</dd>
-                  <dt className="text-ink-muted">Instructor</dt>
-                  <dd>{c.instructors.length ? c.instructors.join(", ") : "Not known"}</dd>
-                </dl>
-              )}
+                <ul className="mt-2 space-y-1 text-sm">
+                  {c.meetings.map((m) => {
+                    const room = parseRawLocation(m.location, m.university);
+                    const where = m.location.kind === "ROOM" ? `${m.location.buildingCode} ${m.location.roomNumber}` : m.location.kind === "ONLINE" ? "Online" : "Room to be announced";
+                    return (
+                      <li key={m.id} className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                        <span className="font-medium">{m.component}{m.section ? ` ${m.section}` : ""}</span>
+                        <span className="text-ink-muted">
+                          {m.unscheduled ? "No scheduled time" : `${m.days.join("")} ${formatMinutesOfDay(m.start)}–${formatMinutesOfDay(m.end)}`}
+                        </span>
+                        <span className="text-ink-muted">· {where}{room?.buildingName ? ` · ${room.buildingName}` : ""}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
 
-              {c.needsLaurierInfo && (
-                <p className="mt-2 text-xs text-warn">
-                  Quest does not carry Laurier rooms or professors. Add them with an optional LORIS import from Update schedule.
-                </p>
-              )}
+                {selected === c.key && (
+                  <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-sm">
+                    <dt className="text-ink-muted">Campus</dt>
+                    <dd>{c.university === "WLU" ? "Wilfrid Laurier" : "University of Waterloo"}</dd>
+                    {c.laurierCode && <><dt className="text-ink-muted">Laurier code</dt><dd>{c.laurierCode}</dd></>}
+                    {c.title && <><dt className="text-ink-muted">Title</dt><dd>{c.title}</dd></>}
+                    <dt className="text-ink-muted">Sections</dt>
+                    <dd>{c.meetings.map((m) => `${m.component}${m.section ? ` ${m.section}` : ""}`).join(", ")}</dd>
+                    <dt className="text-ink-muted">Instructor</dt>
+                    <dd>{c.instructors.length ? c.instructors.join(", ") : "Not known"}</dd>
+                  </dl>
+                )}
+
+                {c.needsLaurierInfo && (
+                  <p className="mt-2 text-xs text-warn">
+                    Quest does not carry Laurier rooms or professors. Add them with an optional LORIS import from Update schedule.
+                  </p>
+                )}
+              </div>
             </li>
           ))}
         </ul>

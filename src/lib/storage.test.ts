@@ -20,4 +20,11 @@ describe("loadState", () => {
     expect(none.gym).toBeUndefined();
     expect(none.routePreference).toBeUndefined();
   });
+
+  it("keeps course colours, dropping anything that is not a palette colour", () => {
+    const saved = { schemaVersion: 1, config: DEFAULT_PLANNER_CONFIG, courseColors: { cs135: "blue", math135: "<script>" } };
+    const state = loadState({ getItem: () => JSON.stringify(saved) });
+    expect(state.courseColors).toEqual({ cs135: "blue" });
+    expect(loadState({ getItem: () => JSON.stringify({ schemaVersion: 1, config: DEFAULT_PLANNER_CONFIG, courseColors: "red" }) }).courseColors).toBeUndefined();
+  });
 });

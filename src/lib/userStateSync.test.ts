@@ -151,6 +151,28 @@ describe("a returning student", () => {
     expect(device.state.config.arrivalBufferMinutes).toBe(15);
   });
 
+  it("a course colour chosen on one device follows the student to another, and survives updating the schedule", async () => {
+    const user = await createUser(db);
+    await saveDirectly(user, onboarded());
+    const laptop = openDevice(user);
+    await laptop.sync.load();
+    laptop.edit((s) => ({ ...s, courseColors: { math135: "purple", cs135: "sky" } }));
+    await laptop.settle();
+    expect(parseUserStateRow(await rawRow(db, user.id)).preferences.courseColors).toEqual({ math135: "purple", cs135: "sky" });
+
+    const phone = openDevice(user);
+    await phone.sync.load();
+    expect(phone.state.courseColors).toEqual({ math135: "purple", cs135: "sky" });
+
+    // Re-importing the schedule on the phone replaces the meetings, never the student's colours.
+    phone.edit((s) => ({ ...s, schedule: { ...s.schedule!, meetings: [...s.schedule!.meetings], importedAt: "2026-09-20T09:00:00.000Z" } }));
+    await phone.settle();
+    const nextSignIn = openDevice(user);
+    await nextSignIn.sync.load();
+    expect(nextSignIn.state.schedule?.importedAt).toBe("2026-09-20T09:00:00.000Z");
+    expect(nextSignIn.state.courseColors).toEqual({ math135: "purple", cs135: "sky" });
+  });
+
   it("replacing the schedule is saved at once, and toggling a class is saved after a pause", async () => {
     const user = await createUser(db);
     await saveDirectly(user, onboarded());

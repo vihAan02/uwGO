@@ -4,6 +4,7 @@ import type { CourseMeeting, EndOfDayDestination, GapChoice, GymPreferences, Rou
 import type { PlannerConfig } from "@/domain/config";
 import { type AppState, emptyState, loadState, saveState, clearState } from "./storage";
 import { forgetMissingClasses, setGapChoice } from "./gapChoices";
+import { withCourseColor, type CourseColorId } from "./courseColors";
 
 interface StoreApi {
   state: AppState;
@@ -18,6 +19,8 @@ interface StoreApi {
   setRoutePreference(pref: RoutePreference): void;
   /** Where the day ends after the last class (HOME clears it back to the default). */
   setEndOfDay(dest: EndOfDayDestination): void;
+  /** Colour one course on the timetable; undefined puts it back on the palette order. */
+  setCourseColor(courseKey: string, color: CourseColorId | undefined): void;
   /** Answer one gap. `everyWeek` makes it the standing answer for that class; undefined clears both. */
   setGapChoice(dateISO: string, classId: string, choice: GapChoice | undefined, everyWeek: boolean): void;
   /** Replace the whole state at once, e.g. with the copy saved to the student's account. */
@@ -72,6 +75,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setGym: (gym) => update((s) => ({ ...s, gym })),
     setRoutePreference: (routePreference) => update((s) => ({ ...s, routePreference })),
     setEndOfDay: (endOfDay) => update((s) => ({ ...s, endOfDay: endOfDay === "HOME" ? undefined : endOfDay })),
+    setCourseColor: (courseKey, color) =>
+      update((s) => ({ ...s, courseColors: withCourseColor(s.courseColors, courseKey, color, s.schedule?.meetings.map((m) => m.courseCode) ?? []) })),
     setGapChoice: (dateISO, classId, choice, everyWeek) =>
       update((s) => ({ ...s, gapChoices: setGapChoice(s.gapChoices, dateISO, classId, choice, everyWeek) })),
     replaceState: (next) => update(() => next),
