@@ -39,6 +39,8 @@ export interface CourseMeeting {
   university: University;
   courseCode: string;
   courseTitle?: string;
+  /** For a Laurier-hosted course seen in Quest as "BUS 352W", its Laurier code "BU352". */
+  laurierCode?: string;
   classNumber?: number;
   section?: string;
   component: Component;
@@ -72,6 +74,7 @@ export interface ParseWarning {
     | "NO_TIME"
     | "UNKNOWN_DAY_TOKEN"
     | "DUPLICATE_DROPPED"
+    | "UNKNOWN_CROSS_REGISTERED_SUBJECT"
     | "PARSER_NOT_IMPLEMENTED";
   message: string;
   courseCode?: string;

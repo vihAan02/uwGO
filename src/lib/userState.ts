@@ -51,6 +51,8 @@ export interface SavedAccountState {
 
 const DEFAULT_BUFFER = DEFAULT_PLANNER_CONFIG.arrivalBufferMinutes;
 const MAX_MEETINGS = 300;
+/** Enough for a co-taught section; a cap so the row cannot be used as free storage. */
+const MAX_INSTRUCTORS = 12;
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const UNIVERSITIES = new Set<University>(["UW", "WLU"]);
 const COMPONENTS = new Set<Component>(["LEC", "TUT", "LAB", "SEM", "PRJ", "PRA", "DIS", "TST", "STU", "FLD", "CLN", "OTHER"]);
@@ -109,6 +111,13 @@ export function sanitizeMeeting(raw: unknown): CourseMeeting | undefined {
     meeting[key] = raw[key] as string;
   }
   if (!absent(raw.unscheduled)) { if (typeof raw.unscheduled !== "boolean") return undefined; if (raw.unscheduled) meeting.unscheduled = true; }
+  if (!absent(raw.laurierCode)) { const v = text(raw.laurierCode, 20); if (!v) return undefined; meeting.laurierCode = v; }
+  if (!absent(raw.instructors)) {
+    if (!Array.isArray(raw.instructors)) return undefined;
+    const list = raw.instructors.slice(0, MAX_INSTRUCTORS).map((x) => text(x, 120));
+    if (list.some((x) => x === undefined)) return undefined;
+    if (list.length) meeting.instructors = list as string[];
+  }
   return meeting;
 }
 
@@ -206,17 +215,13 @@ export function parseUserStateRow(raw: unknown): SavedAccountState {
   };
 }
 
-const withoutInstructors = (m: CourseMeeting): CourseMeeting => {
-  const copy = { ...m };
-  delete copy.instructors; // shown nowhere in the app, so never sent to the account
-  return copy;
-};
-
-/** The part of the app state that belongs to the account. */
+/**
+ * The part of the app state that belongs to the account. Instructors travel with it: the
+ * Courses tab shows them, and for a Laurier-hosted course the professor is exactly the
+ * information Quest does not carry and a LORIS import was used to fill in.
+ */
 export function persistedFrom(state: AppState): { schedule?: SavedSchedule; preferences: SavedPreferences } {
-  const schedule = state.schedule && state.schedule.meetings.length > 0
-    ? { ...state.schedule, meetings: state.schedule.meetings.map(withoutInstructors) }
-    : undefined;
+  const schedule = state.schedule && state.schedule.meetings.length > 0 ? state.schedule : undefined;
   return {
     schedule,
     preferences: {

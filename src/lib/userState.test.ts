@@ -38,12 +38,14 @@ const account = (over: Partial<SavedAccountState> = {}): SavedAccountState => ({
 });
 
 describe("mapping app state to the account row", () => {
-  it("a saved state reads back as the same schedule and preferences, minus instructor names", () => {
+  it("a saved state reads back as the same schedule and preferences, professor included", () => {
     const original = signedUpState();
     const write = toUserStateWrite(UID, original);
     expect(write.user_id).toBe(UID);
     expect(write.onboarding_complete).toBe(true);
-    expect(JSON.stringify(write)).not.toContain("Someone, A");
+    // The professor travels with the account now: the Courses tab shows it, and for a
+    // Laurier-hosted course it is exactly what Quest could not supply.
+    expect(JSON.stringify(write)).toContain("Someone, A");
 
     const read = parseUserStateRow(JSON.parse(JSON.stringify({ ...write, updated_at: "2026-09-11T10:00:00Z" })));
     expect(read.malformed).toBe(false);
@@ -56,6 +58,7 @@ describe("mapping app state to the account row", () => {
     expect(restored.endOfDay).toBe("LIBRARY");
     expect(restored.config.arrivalBufferMinutes).toBe(15);
     expect(restored.sync).toEqual({ ownerId: UID });
+    expect(restored.schedule?.meetings[0].instructors).toEqual(["Someone, A"]);
   });
 
   it("the end-of-day destination persists and a bad one is dropped", () => {
@@ -139,7 +142,15 @@ describe("malformed rows fail safely", () => {
     expect(sanitizeMeeting({ ...meeting(), includeInPlan: "true" })).toBeUndefined();
     expect(sanitizeMeeting({ ...meeting(), source: "SCRAPED" })).toBeUndefined();
     expect(sanitizeMeeting({ ...meeting(), classNumber: 1.5 })).toBeUndefined();
-    expect(sanitizeMeeting(meeting())?.instructors).toBeUndefined();
+  });
+
+  it("keeps the professor and the Laurier code, and refuses a malformed list", () => {
+    const m = sanitizeMeeting(meeting({ university: "WLU", courseCode: "BUS 352W", laurierCode: "BU352", instructors: ["Tatarko, K"] }));
+    expect(m?.instructors).toEqual(["Tatarko, K"]);
+    expect(m?.laurierCode).toBe("BU352");
+    expect(sanitizeMeeting(meeting({ instructors: [42] as unknown as string[] }))).toBeUndefined();
+    expect(sanitizeMeeting(meeting({ instructors: "Solo" as unknown as string[] }))).toBeUndefined();
+    expect(sanitizeMeeting(meeting({ laurierCode: "" }))).toBeUndefined();
   });
 });
 

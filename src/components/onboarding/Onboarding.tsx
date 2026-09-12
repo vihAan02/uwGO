@@ -1,9 +1,12 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
 import type { CourseMeeting, GymPreferences, ParsedSchedule, UserHome } from "@/domain/types";
+import { laurierEnrichmentNeeded } from "@/domain/laurier";
 import { questParser } from "@/parsers/quest/QuestParser";
+import type { LaurierRecord } from "@/parsers/loris/LorisParser";
+import { mergeLaurier } from "@/parsers/loris/merge";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
 import { useUserState } from "@/lib/UserStateProvider";
@@ -12,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
 import { Wordmark } from "@/components/ui/wordmark";
 import { PasteStep } from "./PasteStep";
+import { LorisStep } from "./LorisStep";
 import { ParsePreview } from "./ParsePreview";
 import { ManualClassForm } from "./ManualClassForm";
 import { HomePicker } from "./HomePicker";
@@ -59,16 +63,22 @@ function OnboardingForm({ replace, initialHome, initialBuffer, initialGym }: { r
   const { setSchedule, addMeeting, setHome, setConfig, setGym } = useStore();
   const [gym, setLocalGym] = useState<GymPreferences | undefined>(initialGym);
   const [parsed, setParsed] = useState<ParsedSchedule | undefined>();
+  const [laurier, setLaurier] = useState<LaurierRecord[]>([]);
   const [manual, setManual] = useState<CourseMeeting[]>([]);
   const [home, setLocalHome] = useState<UserHome | undefined>(initialHome);
   const [buffer, setBuffer] = useState(initialBuffer);
 
-  const meetings = [...(parsed?.meetings ?? []), ...manual];
+  // Quest creates every course, Laurier ones included. A LORIS paste only fills in the professor
+  // and the Laurier room on courses that already exist, so it is folded in here rather than
+  // adding anything of its own.
+  const questMeetings = useMemo(() => mergeLaurier(parsed?.meetings ?? [], laurier).meetings, [parsed, laurier]);
+  const meetings = [...questMeetings, ...manual];
+  const laurierNeeding = questMeetings.filter((m) => laurierEnrichmentNeeded(m).any).length;
   const canBuild = meetings.some((m) => m.includeInPlan) && Boolean(home);
 
   const build = () => {
     if (!canBuild) return;
-    setSchedule(parsed?.meetings ?? [], parsed?.term, parsed ? "QUEST" : "MANUAL");
+    setSchedule(questMeetings, parsed?.term, parsed ? "QUEST" : "MANUAL");
     for (const m of manual) addMeeting(m);
     setHome(home);
     setConfig({ arrivalBufferMinutes: buffer });
@@ -119,24 +129,28 @@ function OnboardingForm({ replace, initialHome, initialBuffer, initialGym }: { r
             <details className="group mt-4">
               <summary className="flex min-h-9 cursor-pointer list-none items-center gap-1.5 text-sm font-medium text-brand [&::-webkit-details-marker]:hidden">
                 <Plus className="size-4 transition-transform group-open:rotate-45" />
-                Add a Laurier class by hand
+                Add a class by hand
               </summary>
-              <p className="mt-1 text-sm text-ink-muted">Laurier uses LORIS, which has no paste import yet. Laurier (or any extra) classes go in here.</p>
+              <p className="mt-1 text-sm text-ink-muted">For anything Quest could not give us. Your Laurier courses are already in your Quest paste.</p>
               <div className="mt-3">
                 <ManualClassForm defaultUniversity="WLU" onAdd={(m) => { setManual((list) => (list.some((x) => x.id === m.id) ? list : [...list, m])); }} />
               </div>
             </details>
           </Step>
 
-          <Step n="02" title="Where you live" data-reveal>
+          <Step n="02" title="Laurier details" hint="Optional. Only if you take Laurier courses and want their room and professor." data-reveal>
+            <LorisStep onRecords={setLaurier} needing={laurierNeeding} />
+          </Step>
+
+          <Step n="03" title="Where you live" data-reveal>
             <HomePicker value={home} onChange={setLocalHome} />
           </Step>
 
-          <Step n="03" title="Arrival buffer" hint="How early you want to be at the door." data-reveal>
+          <Step n="04" title="Arrival buffer" hint="How early you want to be at the door." data-reveal>
             <BufferPicker value={buffer} onChange={setBuffer} />
           </Step>
 
-          <Step n="04" title="Gym" data-reveal>
+          <Step n="05" title="Gym" data-reveal>
             <GymPrefsPicker value={gym} onChange={setLocalGym} />
           </Step>
         </div>
