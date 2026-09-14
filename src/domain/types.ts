@@ -129,6 +129,12 @@ export interface CampusLocation {
   longitude: number;
   kind: "BUILDING" | "HOME";
   buildingCode?: string;
+  /**
+   * The floor inside the building, in the campus network's own labels ("1", "B"), when the room
+   * is known and the network has that floor. Routing over the campus network starts or ends there
+   * instead of on whichever floor happens to be most convenient.
+   */
+  floor?: string;
 }
 
 export interface UserHome {
@@ -188,6 +194,11 @@ export interface RouteStep {
 export interface RouteOption {
   mode: TravelMode;
   durationMinutes: number;
+  /**
+   * The same duration to the second, when the source has it. Google's walking time is kept here
+   * because `durationMinutes` rounds it up, which is too coarse to compare two walks by.
+   */
+  durationSeconds?: number;
   distanceMeters?: number;
   departureTime?: Date;
   arrivalTime?: Date;
@@ -216,10 +227,70 @@ export interface RouteOption {
    * route uses something reported shut rather than pretend it does not.
    */
   blockedBy?: string[];
+  /** Set on a walk UW Go built from its campus knowledge: which doors and links it relies on, and why it was chosen. */
+  campus?: CampusRouteInfo;
   provider: string;
   computedAt: string;
   /** True only for the straight-line fallback used when no routing API is configured. */
   isEstimate: boolean;
+}
+
+/** How well-evidenced a door, link or route is. See src/data/campus/types.ts. */
+export type CampusEvidence = "OFFICIAL" | "CORROBORATED" | "SURVEYED" | "ANECDOTAL" | "INFERRED" | "UNRESOLVED";
+
+/**
+ * What a campus-aware walk decided about one trip.
+ *
+ * - CORRECTED: Google's walk arrives by a way in that may not be used (PAC's exit-only corner
+ *   doors), so a route through an allowed entrance was taken, whatever it costs.
+ * - SHORTCUT: walking through a building beats Google's walk by at least the configured margin.
+ * - BETTER_ENTRANCE: a different door of the destination beats Google's walk by that margin.
+ * - KEPT_GOOGLE: Google's walk stands; the best campus way was not enough better.
+ * - NO_USABLE_ROUTE: Google's walk relies on a way in that may not be used, and no allowed one
+ *   could be routed. The walk is kept, with a warning, rather than inventing a way in.
+ */
+export type CampusOutcome = "CORRECTED" | "SHORTCUT" | "BETTER_ENTRANCE" | "KEPT_GOOGLE" | "NO_USABLE_ROUTE";
+
+export interface CampusChoice {
+  /** The doors and links used, in order, named for a person. */
+  via: string[];
+  seconds: number;
+  /** Seconds plus the penalties for uncertain crossings; what the choice minimised. */
+  cost: number;
+  evidence: CampusEvidence;
+  edgeIds: string[];
+  /** Where each part of the time comes from. */
+  timing: ("GOOGLE" | "SURVEY_GEOMETRY" | "ESTIMATED")[];
+}
+
+export interface CampusRejection {
+  label: string;
+  because: string;
+  seconds?: number;
+  sourceIds?: string[];
+}
+
+export interface CampusDecision {
+  outcome: CampusOutcome;
+  /** One sentence a student can read. */
+  summary: string;
+  thresholdSeconds: number;
+  googleSeconds?: number;
+  /** Whether Google's own walk could be used as it is. */
+  googleUsable: boolean;
+  chosen?: CampusChoice;
+  /** Other routable ways, cheapest first. */
+  alternatives: CampusChoice[];
+  rejected: CampusRejection[];
+  /** Said to the student whatever the outcome, e.g. how to get into PAC when nothing else could be routed. */
+  warnings: string[];
+}
+
+export interface CampusRouteInfo {
+  summary: string;
+  via: string[];
+  evidence: CampusEvidence;
+  decision: CampusDecision;
 }
 
 export type Feasibility = "COMFORTABLE" | "TIGHT" | "LIKELY_LATE" | "UNKNOWN";
@@ -341,6 +412,10 @@ export interface ClassTransition {
   transitRoute?: RouteOption;
   /** A route over UW's verified tunnels/bridges, when both ends are on that graph. */
   indoorRoute?: RouteOption;
+  /** What the campus-aware walk decided for this leg, including when it kept Google's walk. */
+  campus?: CampusDecision;
+  /** The campus-aware walk, when it corrected or beat Google's: the walk to take even when a bus was recommended. */
+  campusWalk?: RouteOption;
   recommendedRoute?: RouteOption;
   recommendedDeparture?: Date;
   expectedArrival?: Date;

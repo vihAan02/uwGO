@@ -20,6 +20,10 @@ import { resolveStudySpots } from "@/data/study";
 import { chosenFor, type ChosenGap, type GapChoices } from "@/domain/gapChoices";
 import { estimateCrowd, type PacReading, type PacSample } from "@/data/pac/crowd";
 import { buildingLocation, findBuilding } from "@/data/buildings";
+import type { AccessNeeds } from "./indoorGraph";
+
+/** What every trip in a plan shares: the closures, the student's access needs, and whether experimental campus data is on. */
+type TripContext = Pick<RouteRequest, "closedEdgeIds" | "access" | "experimentalCampus" | "campus">;
 
 export interface PlanInput {
   meetings: CourseMeeting[];
@@ -38,6 +42,15 @@ export interface PlanInput {
   endOfDay?: EndOfDayDestination;
   /** Segments students have reported shut, by canonical id. Routing avoids them. */
   closedEdgeIds?: ReadonlySet<string>;
+  /** What the student needs from doors, links and changes of floor. */
+  access?: AccessNeeds;
+  /** Also use campus data that is only experimental. Off in normal routing. */
+  experimentalCampus?: boolean;
+  /**
+   * False plans every walk exactly as Google gives it, without campus knowledge: a switch for
+   * comparing the two, and for turning campus routing off if it ever misleads.
+   */
+  campus?: boolean;
   /** Latest live PAC reading and the samples kept so far, for crowd estimates. */
   pacLive?: PacReading;
   pacSamples?: readonly PacSample[];
@@ -87,13 +100,14 @@ class RouteMemo implements RouteFetcher {
  */
 class LegResolver {
   private readonly cache = new Map<string, Promise<BestRoute>>();
-  constructor(private readonly memo: RouteMemo, private readonly cfg: PlannerConfig) {}
+  /** The context is the plan's, so it is the same for every request and needs no place in the key. */
+  constructor(private readonly memo: RouteMemo, private readonly cfg: PlannerConfig, private readonly context: TripContext = {}) {}
 
   resolve(req: RouteRequest): Promise<BestRoute> {
     const key = `${pairKey(req.from, req.to)}|${req.departAfter.getTime()}|${req.arriveBy?.getTime() ?? "open"}`;
     let p = this.cache.get(key);
     if (!p) {
-      p = resolveBestRoute(req, this.memo, this.cfg);
+      p = resolveBestRoute({ ...req, ...this.context }, this.memo, this.cfg);
       this.cache.set(key, p);
     }
     return p;
@@ -104,7 +118,7 @@ function requestFor(t: ClassTransition): RouteRequest {
   return { from: t.from, to: t.to, departAfter: t.departAfter, arriveBy: t.hasDeadline ? t.arriveBy : undefined, crossCampus: t.crossCampus };
 }
 
-async function resolveTransition(t: ClassTransition, resolver: LegResolver, memo: RouteMemo, cfg: PlannerConfig, routePreference: RoutePreference, closedEdgeIds?: ReadonlySet<string>): Promise<ClassTransition> {
+async function resolveTransition(t: ClassTransition, resolver: LegResolver, memo: RouteMemo, cfg: PlannerConfig, routePreference: RoutePreference, context: TripContext = {}): Promise<ClassTransition> {
   // Walking, transit and the winter route are all priced and chosen between by `selectRoute`,
   // the same function Trip Mode reroutes through. The leg resolver keeps its per-request cache
   // of the walk-vs-transit answer; the indoor joins are priced through the same memo as every
@@ -112,7 +126,7 @@ async function resolveTransition(t: ClassTransition, resolver: LegResolver, memo
   // asked for and not unreasonably slower than the fastest walk. A chosen bus is never
   // overridden: that decision was about time.
   const best = await selectRoute(
-    { ...requestFor(t), preference: routePreference, closedEdgeIds },
+    { ...requestFor(t), preference: routePreference, ...context },
     { best: (req) => resolver.resolve(req), connector: memo },
     cfg,
   );
@@ -129,6 +143,8 @@ async function resolveTransition(t: ClassTransition, resolver: LegResolver, memo
     walkingRoute: best.walking,
     transitRoute: best.transit,
     indoorRoute,
+    campus: best.campus,
+    campusWalk: best.campusWalk,
     recommendedRoute: recommended,
     recommendedDeparture: departure,
     expectedArrival: arrival,
@@ -146,6 +162,9 @@ interface DayExtras {
   gapChoices?: GapChoices;
   routePreference: RoutePreference;
   closedEdgeIds?: ReadonlySet<string>;
+  access?: AccessNeeds;
+  experimentalCampus?: boolean;
+  campus?: boolean;
   endOfDay?: EndOfDayDestination;
   crowdAt: (at: Date) => CrowdEstimate;
 }
@@ -159,7 +178,8 @@ const STUDY_SPOTS = resolveStudySpots("UW");
 
 async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledClass[], home: CampusLocation | undefined, memo: RouteMemo, cfg: PlannerConfig, extras: DayExtras): Promise<DayPlan> {
   const warnings: string[] = [];
-  const resolver = new LegResolver(memo, cfg);
+  const context: TripContext = { closedEdgeIds: extras.closedEdgeIds, access: extras.access, experimentalCampus: extras.experimentalCampus, campus: extras.campus };
+  const resolver = new LegResolver(memo, cfg, context);
   const cross = (a: CampusLocation, b: CampusLocation) => Boolean(a.university && b.university && a.university !== b.university);
 
   // One adapter for every engine that needs a route: the gym windows, the gap options and the
@@ -225,7 +245,7 @@ async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledC
     const spec: LegSpec = earliest && earliest.getTime() > leg.departAfter.getTime()
       ? { ...leg, departAfter: earliest, availableMinutes: leg.hasDeadline ? minutesBetween(earliest, leg.arriveBy) : 0 }
       : leg;
-    const resolved = await resolveTransition(spec, resolver, memo, cfg, extras.routePreference, extras.closedEdgeIds);
+    const resolved = await resolveTransition(spec, resolver, memo, cfg, extras.routePreference, context);
     transitions.push(resolved);
     readyAt = resolved.expectedArrival ?? spec.arriveBy;
   }
@@ -328,6 +348,9 @@ export async function buildWeekPlan(input: PlanInput, provider: RoutingProvider)
     gym: input.gym,
     routePreference: input.routePreference ?? "FASTEST",
     closedEdgeIds: input.closedEdgeIds,
+    access: input.access,
+    experimentalCampus: input.experimentalCampus,
+    campus: input.campus,
     gapChoices: input.gapChoices,
     endOfDay: input.endOfDay,
     crowdAt: (at) => estimateCrowd(at, input.pacLive, input.pacSamples ?? []),

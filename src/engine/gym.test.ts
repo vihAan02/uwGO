@@ -36,7 +36,9 @@ const gymPrefs = (over: Partial<GymPreferences> = {}): GymPreferences => ({ enab
 describe("Scenario C — a 60-minute workout has to fit after travel, not just inside the gap", () => {
   it("class ends 10:00 at MC, next at 11:30 in DC: 6 min to PAC, 8 min back, 10 min buffer -> 66 usable, 60 fits", async () => {
     const provider = new WalkOnly({ [pairKey(MC, PAC)]: 6, [pairKey(PAC, DC)]: 8, [pairKey(MC, DC)]: 5 });
-    const plan = await buildWeekPlan({ meetings: [meeting(h(9), h(10), "MC"), meeting(h(11, 30), h(12, 20), "DC")], mondayISO: MONDAY, config: DEFAULT_PLANNER_CONFIG, days: ["W"], gym: gymPrefs() }, provider);
+    // The walking times are this scenario's inputs, so campus routing, which sends the walk into PAC
+    // through SLC and so changes them, is off here. campusPlanner.test.ts prices the same window with it on.
+    const plan = await buildWeekPlan({ meetings: [meeting(h(9), h(10), "MC"), meeting(h(11, 30), h(12, 20), "DC")], mondayISO: MONDAY, config: DEFAULT_PLANNER_CONFIG, days: ["W"], gym: gymPrefs(), campus: false }, provider);
     const day = plan.days.W!;
     const between = day.gym.find((w) => w.slot === "BETWEEN")!;
     expect(between).toBeDefined();
@@ -68,7 +70,8 @@ describe("after the last class and before the first", () => {
   it("an after-class window ends before PAC closes and prices the trip home", async () => {
     const provider = new WalkOnly({ [pairKey(MC, PAC)]: 6, [pairKey(PAC, UWP)]: 14, [pairKey(UWP, MC)]: 20, [pairKey(MC, UWP)]: 20 });
     const home = { name: "UWP", latitude: UWP.latitude, longitude: UWP.longitude, preset: { university: "UW" as const, buildingCode: "UWP" } };
-    const plan = await buildWeekPlan({ meetings: [meeting(h(14, 30), h(15, 20), "MC")], home, mondayISO: MONDAY, config: DEFAULT_PLANNER_CONFIG, days: ["W"], gym: gymPrefs() }, provider);
+    // As above: the walking times are the inputs, so campus routing is off for this scenario.
+    const plan = await buildWeekPlan({ meetings: [meeting(h(14, 30), h(15, 20), "MC")], home, mondayISO: MONDAY, config: DEFAULT_PLANNER_CONFIG, days: ["W"], gym: gymPrefs(), campus: false }, provider);
     const day = plan.days.W!;
     const after = day.gym.find((w) => w.slot === "AFTER_LAST")!;
     expect(formatClock(after.start)).toBe("3:26 PM");

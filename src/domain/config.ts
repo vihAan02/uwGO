@@ -35,6 +35,14 @@ export interface PlannerConfig {
   indoorMaxExtraMinutes: number;
   /** ...and it may not be more than this fraction longer either (a 4 min walk should not become 12). */
   indoorMaxExtraRatio: number;
+  /**
+   * Seconds a walk through a building, or to a different door, must save over Google's walk before
+   * it is taken. Google's walking time is only as precise as its path, the indoor part is timed from
+   * the survey's geometry, and the timeline shows whole minutes: a shortcut that does not change the
+   * minute a student reads is not worth an extra door. Never applies when Google's walk relies on a
+   * way in that may not be used; then the allowed way is taken whatever it costs.
+   */
+  campusShortcutMinBenefitSeconds: number;
 }
 
 export const DEFAULT_PLANNER_CONFIG: PlannerConfig = {
@@ -50,6 +58,7 @@ export const DEFAULT_PLANNER_CONFIG: PlannerConfig = {
   minUsefulStudyMinutes: 20,
   indoorMaxExtraMinutes: 8,
   indoorMaxExtraRatio: 0.75,
+  campusShortcutMinBenefitSeconds: 60,
 };
 
 /** The only setting the student chooses; everything else is engine tuning that follows the code. */
