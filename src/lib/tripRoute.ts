@@ -1,7 +1,8 @@
 import type { CampusLocation, LatLng, RouteOption, RoutePreference } from "@/domain/types";
 import { DEFAULT_PLANNER_CONFIG } from "@/domain/config";
 import { chooseRoute } from "@/engine/transitCompare";
-import type { RouteFetcher } from "@/engine/bestRoute";
+import { floorToFloorTransit, type RouteFetcher } from "@/engine/bestRoute";
+import { addMin } from "@/time/toronto";
 import { fetcherDeps, livePosition, selectRoute } from "@/engine/selectRoute";
 import { HttpRoutingProvider } from "@/routing/HttpRoutingProvider";
 import { clientRoutingProvider } from "./routingClient";
@@ -56,9 +57,12 @@ export async function resolveTripRoute(
   if (!isStale(planned, now)) return { route: planned, status: "PLANNED" };
 
   const missed = Boolean(planned.departureTime && planned.departureTime.getTime() <= now.getTime());
+  // Timed floor to floor, as the plan was: out of the building before the bus, in to the floor after it.
+  const building = planned.buildingSeconds ?? fallbackWalk?.buildingSeconds;
   let fresh: RouteOption | undefined;
   try {
-    fresh = await live.getTransitRoute(from, to, { departureTime: now });
+    const itinerary = await live.getTransitRoute(from, to, { departureTime: addMin(now, Math.ceil((building?.origin ?? 0) / 60)) });
+    fresh = itinerary && floorToFloorTransit(itinerary, building);
   } catch {
     // Fall through to walking rather than showing a departure that has passed.
   }

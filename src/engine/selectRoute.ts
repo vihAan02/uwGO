@@ -65,12 +65,15 @@ function outdoorClosuresOn(route: RouteOption | undefined, closedEdgeIds: Readon
 
 export async function selectRoute(req: RouteSelectionRequest, deps: SelectionDeps, cfg: PlannerConfig, now?: Date): Promise<RouteSelection> {
   const raw = await deps.best(req);
-  // A closed path outside is a fact about the fastest walk too, not only about the winter route.
+  // A closed path outside is a fact about the fastest walk too, not only about the winter route: about
+  // Google's walk as Google gave it, and about the same walk timed floor to floor.
   const blockedBy = outdoorClosuresOn(raw.walking, req.closedEdgeIds);
   const best: BestRoute = blockedBy.length && raw.walking
     ? (() => {
         const walking = { ...raw.walking, blockedBy };
-        return { ...raw, walking, recommended: raw.recommended === raw.walking ? walking : raw.recommended };
+        const campusWalk = raw.campusWalk && !raw.campusWalk.campus ? { ...raw.campusWalk, blockedBy } : raw.campusWalk;
+        const recommended = raw.recommended === raw.walking ? walking : raw.recommended === raw.campusWalk ? campusWalk : raw.recommended;
+        return { ...raw, walking, campusWalk, recommended };
       })()
     : raw;
   const wantIndoor = req.indoorAlternative ?? true;

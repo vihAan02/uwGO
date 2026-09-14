@@ -67,8 +67,15 @@ describe("campus knowledge in the weekly plan", () => {
       mondayISO: MONDAY, config: CFG, days: ["T"],
     }, google);
     const leg = plan.days.T!.transitions.find((t) => t.from.buildingCode === "MC" && t.to.buildingCode === "DC")!;
-    expect(leg.recommendedRoute).toBe(leg.walkingRoute);
     expect(leg.campus?.outcome).toBe("KEPT_GOOGLE");
+    // Google's walk, timed and planned floor to floor: out from room 2065 to the door, and in from the door to room 1350.
+    const route = leg.recommendedRoute!;
+    expect(route).toBe(leg.campusWalk);
+    expect(route.provider).toBe("google-routes");
+    expect(route.campus).toBeUndefined();
+    expect(route.durationSeconds).toBe(leg.campus!.googleTotalSeconds);
+    expect(route.durationSeconds!).toBeGreaterThan(leg.walkingRoute!.durationSeconds!);
+    expect(minutesBetween(leg.recommendedDeparture!, leg.expectedArrival!)).toBe(route.durationMinutes);
   });
 
   it("prices a workout between classes on the walk into PAC through SLC, and the window's arithmetic holds on that walk", async () => {
@@ -119,4 +126,5 @@ describe("campus knowledge in the weekly plan", () => {
     const repeats = provider.asked.filter((k, i) => provider.asked.indexOf(k) !== i);
     expect(repeats).toEqual([]);
   });
+
 });

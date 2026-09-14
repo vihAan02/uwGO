@@ -52,7 +52,10 @@ describe("choosing between the outdoor walk and the winter route", () => {
   it("FASTEST walks outside, and still offers the winter route as the alternative", async () => {
     const s = await select(MC, DC, "FASTEST", makeFetcher({ [key(MC, DC)]: 1 }));
     expect(s.recommended!.indoorPath).toBeUndefined();
-    expect(s.recommended).toBe(s.walking);
+    // Google's walk, timed floor to floor: out from the class's floor to the door, and in from the door to the next.
+    expect(s.recommended).toBe(s.campusWalk);
+    expect(s.recommended!.provider).toBe(s.walking!.provider);
+    expect(s.recommended!.durationSeconds).toBe(s.campus!.googleTotalSeconds);
     expect(s.indoor!.indoorPath).toEqual(["MC", "C2", "DC"]);
   });
 
@@ -76,7 +79,9 @@ describe("choosing between the outdoor walk and the winter route", () => {
     const s = await select(MC, HH, "INDOORS", f);
     expect(s.indoor).toBeDefined();
     expect(s.recommended!.indoorPath).toBeUndefined();
-    expect(s.recommended!.durationMinutes).toBe(2);
+    // The two-minute walk, timed floor to floor, and still far quicker than staying inside.
+    expect(s.recommended!.durationSeconds).toBe(s.campus!.googleTotalSeconds);
+    expect(s.recommended!.durationMinutes).toBeLessThan(s.indoor!.durationMinutes);
   });
 });
 

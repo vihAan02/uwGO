@@ -232,6 +232,11 @@ export interface RouteOption {
   blockedBy?: string[];
   /** Set on a walk UW Go built from its campus knowledge: which doors and links it relies on, and why it was chosen. */
   campus?: CampusRouteInfo;
+  /**
+   * Seconds between the trip's floors and the map points of its buildings, at the start and at the end. A route
+   * priced between those map points, as a bus is, adds them to be timed floor to floor like the walk.
+   */
+  buildingSeconds?: { origin: number; destination: number };
   provider: string;
   computedAt: string;
   /** True only for the straight-line fallback used when no routing API is configured. */
@@ -279,11 +284,9 @@ export interface CampusProvenance {
 export interface CampusChoice {
   /** The doors and links used, in order, named for a person. */
   via: string[];
-  /** From where the route itself starts (the building's map point when Google prices the way to a door, otherwise the floor's own point on the network). */
+  /** Floor to floor: what the leg shows and plans with, compared with Google's walk timed the same way. */
   seconds: number;
-  /** From floor to floor: `seconds` plus what a start or end at the map point is charged for the inside of the building. Compared with Google's walk timed the same way. */
-  totalSeconds: number;
-  /** `totalSeconds` plus the penalties for uncertain crossings; what the choice minimised. */
+  /** `seconds` plus the penalties for uncertain crossings: what the choice minimised, never what is shown. */
   cost: number;
   evidence: CampusEvidence;
   edgeIds: string[];
@@ -303,10 +306,11 @@ export interface CampusRejection {
 }
 
 /**
- * What Google's walk is charged for the inside of the buildings at its ends, so it is compared with
- * campus routes from the same place: the way from the trip's floor to the surveyed door nearest where
- * Google's line starts (and from the door nearest where it ends), timed over the network. Nothing when
- * the end is off the network, or the building has no surveyed door near Google's line.
+ * How Google's walk meets the buildings at its ends, floor to floor. Where a usable door lies on its line,
+ * from the trip's floor over the network to that door and across to the line (`originJoined`), the line
+ * before that point not walked; otherwise from the floor to the surveyed door nearest where the line starts,
+ * the walk taken from its own start. The same at the destination. Nothing when the end is off the network,
+ * or the building has no surveyed door near Google's line.
  */
 export interface CampusInside {
   originSeconds: number;
@@ -314,6 +318,9 @@ export interface CampusInside {
   /** The doors Google's walk is taken to use, by reviewed label or description. */
   originDoor?: string;
   destinationDoor?: string;
+  /** The walk is joined to its line at that door. */
+  originJoined?: boolean;
+  destinationJoined?: boolean;
 }
 
 export interface CampusDecision {
@@ -322,8 +329,10 @@ export interface CampusDecision {
   summary: string;
   /** The saving the chosen (or best) campus route had to show over Google's walk, by what it asks of the student. */
   marginSeconds: number;
-  /** Google's own walk, as Google timed it. */
+  /** Google's own walk, as Google timed it between the map points. */
   googleSeconds?: number;
+  /** Google's walk floor to floor, joined to its buildings: what it is shown as, and what campus routes are compared with. */
+  googleTotalSeconds?: number;
   inside: CampusInside;
   /** Whether Google's own walk could be used as it is. */
   googleUsable: boolean;

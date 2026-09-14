@@ -70,6 +70,7 @@ export async function resolveBestRoute(req: RouteRequest, fetcher: RouteFetcher,
   const campus = req.campus === false
     ? undefined
     : await campusWalk({ from: req.from, to: req.to, at: walkingAt(req, walking, cfg), closedEdgeIds: req.closedEdgeIds, access: req.access, experimental: req.experimentalCampus }, walking, fetcher, cfg);
+  // Floor to floor: the campus route, or Google's walk joined to its buildings.
   const walk = campus?.route ?? walking;
   const consideredModes: TravelMode[] = ["WALK"];
   let transit: RouteOption | undefined;
@@ -77,7 +78,7 @@ export async function resolveBestRoute(req: RouteRequest, fetcher: RouteFetcher,
   // changes which itineraries are requested.
   if (shouldConsiderTransit(Boolean(req.crossCampus), walking?.durationMinutes, cfg)) {
     consideredModes.push("TRANSIT");
-    transit = await fetchTransit(req, fetcher, cfg);
+    transit = await fetchTransit(req, fetcher, cfg, walk?.buildingSeconds);
   }
   const choice = chooseRoute({ departAfter: req.departAfter, arriveBy, hasDeadline, walking: walk, transit }, cfg);
   // Say when transit was actually asked for and nothing came back: "only option" would read as "not looked".
@@ -111,13 +112,39 @@ export function walkingAt(req: Pick<RouteRequest, "departAfter" | "arriveBy">, w
  * deadline: the itinerary that lands just before it, which is the latest useful departure.
  * If that bus would have to leave before the traveller is free, ask instead for the first
  * itinerary after they are. Without a deadline: the first itinerary after they are free.
+ *
+ * An itinerary runs between the buildings' map points, so it is asked for once the traveller can be out of
+ * the building, landing in time to get in to the floor, in whole minutes so that trips sharing a bus still
+ * ask for it once; it is then timed floor to floor, as the walk is.
  */
-async function fetchTransit(req: RouteRequest, fetcher: RouteFetcher, cfg: PlannerConfig): Promise<RouteOption | undefined> {
-  const earliest = addMin(req.departAfter, cfg.buildingExitMinutes);
-  if (req.arriveBy === undefined) return fetcher.transit(req.from, req.to, { departureTime: earliest });
+async function fetchTransit(req: RouteRequest, fetcher: RouteFetcher, cfg: PlannerConfig, building?: BuildingSeconds): Promise<RouteOption | undefined> {
+  const out = Math.ceil((building?.origin ?? 0) / 60);
+  const into = Math.ceil((building?.destination ?? 0) / 60);
+  const earliest = addMin(req.departAfter, cfg.buildingExitMinutes + out);
+  const timed = (r: RouteOption | undefined) => r && floorToFloorTransit(r, building);
+  if (req.arriveBy === undefined) return timed(await fetcher.transit(req.from, req.to, { departureTime: earliest }));
 
-  const byArrival = await fetcher.transit(req.from, req.to, { arrivalTime: addMin(req.arriveBy, -cfg.arrivalBufferMinutes) });
+  const byArrival = await fetcher.transit(req.from, req.to, { arrivalTime: addMin(req.arriveBy, -(cfg.arrivalBufferMinutes + into)) });
   if (!byArrival) return undefined;
-  if (byArrival.departureTime && byArrival.departureTime.getTime() >= earliest.getTime() - 60_000) return byArrival;
-  return fetcher.transit(req.from, req.to, { departureTime: earliest });
+  if (byArrival.departureTime && byArrival.departureTime.getTime() >= earliest.getTime() - 60_000) return timed(byArrival);
+  return timed(await fetcher.transit(req.from, req.to, { departureTime: earliest }));
+}
+
+type BuildingSeconds = NonNullable<RouteOption["buildingSeconds"]>;
+
+/**
+ * An itinerary between the buildings' map points, timed floor to floor: it leaves the floor the seconds it takes
+ * to get out before it sets off, and reaches the floor the seconds it takes to get in after it arrives.
+ */
+export function floorToFloorTransit(r: RouteOption, building: BuildingSeconds | undefined): RouteOption {
+  if (!building || (!building.origin && !building.destination)) return r;
+  const seconds = (r.durationSeconds ?? r.durationMinutes * 60) + building.origin + building.destination;
+  return {
+    ...r,
+    durationSeconds: Math.round(seconds),
+    durationMinutes: Math.max(1, Math.ceil(seconds / 60)),
+    departureTime: r.departureTime && new Date(r.departureTime.getTime() - building.origin * 1000),
+    arrivalTime: r.arrivalTime && new Date(r.arrivalTime.getTime() + building.destination * 1000),
+    buildingSeconds: building,
+  };
 }

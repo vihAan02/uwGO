@@ -5,7 +5,7 @@
  * knowledge (which would replace a fixture walk between two network buildings) is switched off.
  */
 import { describe, expect, it } from "vitest";
-import { resolveBestRoute, type RouteFetcher } from "./bestRoute";
+import { floorToFloorTransit, resolveBestRoute, type RouteFetcher } from "./bestRoute";
 import { chooseRoute } from "./transitCompare";
 import { buildWeekPlan } from "./planner";
 import { DEFAULT_PLANNER_CONFIG as CFG } from "@/domain/config";
@@ -181,13 +181,44 @@ const h = (hh: number, mm = 0) => hh * 60 + mm;
 // A 25 min walk each way between UW Place and MC, for the sake of the scenario.
 const farWalks = { [pairKey(UWP, MC)]: 25, [pairKey(MC, UWP)]: 25 };
 
+describe("a bus is timed floor to floor, as the walk is", () => {
+  it("adds the way out of the building before the itinerary and the way in after it", () => {
+    const itinerary = bus({ arrivalTime: t(12) }, { access: 3, ride: 6, egress: 3 });
+    const timed = floorToFloorTransit(itinerary, { origin: 90, destination: 45 });
+    expect(timed.durationSeconds).toBe(12 * 60 + 135);
+    expect(timed.durationMinutes).toBe(15);
+    expect(timed.departureTime!.getTime()).toBe(itinerary.departureTime!.getTime() - 90_000);
+    expect(timed.arrivalTime!.getTime()).toBe(itinerary.arrivalTime!.getTime() + 45_000);
+    expect(floorToFloorTransit(itinerary, undefined)).toBe(itinerary);
+  });
+
+  it("asks for the bus once the student can be out of the building, landing in time to get in to the floor", async () => {
+    // A walk timed floor to floor, as the campus-aware walk gives it: 90 s out of the first building, 45 s into the second.
+    const asked: TransitOptions[] = [];
+    const f: RouteFetcher = {
+      async walk() { return { ...walk(20), buildingSeconds: { origin: 90, destination: 45 } }; },
+      async transit(_f, _t, o) { asked.push(o); return bus(o, { access: 3, ride: 6, egress: 3 }); },
+    };
+    const byDeadline = await resolveBestRoute({ from: MC, to: QNC, departAfter: t(10), arriveBy: t(12), crossCampus: true, campus: false }, f, CFG);
+    // At the stop's end by 11:50, less the minute it takes to get in to the floor.
+    expect(formatClock(asked[0].arrivalTime!)).toBe("11:49 AM");
+    expect(byDeadline.transit!.arrivalTime!.getTime()).toBe(t(11, 49).getTime() + 45_000);
+    expect(byDeadline.transit!.durationSeconds).toBe(12 * 60 + 135);
+    const open = await resolveBestRoute({ from: MC, to: QNC, departAfter: t(10), crossCampus: true, campus: false }, f, CFG);
+    // Out of the building first: two whole minutes for 90 s.
+    expect(formatClock(asked[1].departureTime!)).toBe("10:02 AM");
+    expect(open.transit!.departureTime!.getTime()).toBe(t(10, 2).getTime() - 90_000);
+  });
+});
+
 describe("go-home feasibility uses the best route, and the itinerary shows that same route", () => {
   /** `goHome` answers the gap the way a student tapping Rez would; otherwise it is left unanswered. */
   const dayOf = async (provider: RoutingProvider, goHome = false) => {
     const first = meeting(h(10), h(10, 50));
     const second = meeting(h(12, 10), h(13));
     const gapChoices = goHome ? { byDate: {}, byClass: { [`${first.id}:M`]: { kind: "REZ" as const } } } : undefined;
-    const plan = await buildWeekPlan({ meetings: [first, second], home, mondayISO: D, config: CFG, days: ["M"], gapChoices }, provider);
+    // Scripted minutes are the inputs: campus knowledge, which times the floors the script knows nothing of, stays out.
+    const plan = await buildWeekPlan({ meetings: [first, second], home, mondayISO: D, config: CFG, days: ["M"], gapChoices, campus: false }, provider);
     return plan.days.M!;
   };
   const chain = (d: Awaited<ReturnType<typeof dayOf>>) => [...d.transitions.map((x) => x.from.buildingCode), d.transitions[d.transitions.length - 1].to.buildingCode];

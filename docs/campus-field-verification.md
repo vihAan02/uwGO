@@ -8,16 +8,16 @@ Record what you find as a field observation file (`src/data/campus/field/README.
 
 | Tier | Targets | What it means |
 |---|---|---|
-| P0 | 37 | Nobody has checked it on the ground, and a decision UW Go makes today stands or falls with it: a rule it corrects walks with, the only allowed way in for a corrected walk, a door it sends students to that a reviewer has flagged or sources dispute, or the highest scores. |
-| P1 | 37 | Nobody has checked it on the ground, and UW Go sends students through it instead of Google's walk, much routing relies on it, or confirming it would open a step-free way or a shortcut; or it scores high on all of that together. |
+| P0 | 35 | Nobody has checked it on the ground, and a decision UW Go makes today stands or falls with it: a rule it corrects walks with, the only allowed way in for a corrected walk, a door it sends students to that a reviewer has flagged or sources dispute, or the highest scores. |
+| P1 | 39 | Nobody has checked it on the ground, and UW Go sends students through it instead of Google's walk, much routing relies on it, or confirming it would open a step-free way or a shortcut; or it scores high on all of that together. |
 | P2 | 55 | Some routing relies on it, sources disagree about it, or a reviewer asked for it. |
 | P3 | 130 | Little or nothing relies on it yet. Worth doing when passing. |
 
 | Kind | P0 | P1 | P2 | P3 |
 |---|---|---|---|---|
-| Doors to outside | 24 | 11 | 3 | 5 |
+| Doors to outside | 23 | 12 | 3 | 5 |
 | Links between buildings | 4 | 17 | 9 | 2 |
-| Changes of floor | 8 | 8 | 7 | 30 |
+| Changes of floor | 7 | 9 | 7 | 30 |
 | Research doors not yet placed | 0 | 0 | 12 | 60 |
 | Rules about a way in | 1 | 0 | 0 | 0 |
 | Opening hours | 0 | 1 | 20 | 19 |
@@ -30,13 +30,13 @@ Nobody has checked it on the ground, and a decision UW Go makes today stands or 
 
 ### 1. MKV east doors
 
-`door:6e8b95bc0582fea8` · door · MKV · score 42.6 · evidence inferred
+`door:6e8b95bc0582fea8` · door · MKV · score 43.8 · evidence inferred
 
 **Where**: 43.471197, -80.551750 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.471197,-80.551750)). Where the WATIsGrass survey puts this door (MKV floor 1). Not checked on the ground.
 
 **Why it ranks here**
 
-- UW Go sends 79 trips through it instead of Google's walk (4.9% of weighted demand). Without it, those trips take 176 s longer on average.
+- UW Go sends 65 trips through it instead of Google's walk (4.0% of weighted demand). Without it, those trips take 181 s longer on average.
 - Winter routes use it for 78 trips between buildings (4.5% of weighted demand). Without it, those trips are 967 s worse on average, counting each second outside 4 times.
 - Step-free routes use it for 20 trips (1.3% of weighted demand), and nothing routing relies on says whether it is step-free.
 - Trips to and from MKV: 5.7% of weighted demand.
@@ -63,78 +63,9 @@ Nobody has checked it on the ground, and a decision UW Go makes today stands or 
 
 **Sources**: B_MKV
 
-### 2. REV Central Complex doors (toward the south-east quad)
+### 2. SLC–PAC link at the PAC front desk
 
-`door:eca8f9fb93c96ea7` · door · REV · score 25.8 · critical · evidence inferred
-
-**Where**: 43.470150, -80.553819 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.470150,-80.553819)). Where the WATIsGrass survey puts this door (REV floor 1). Not checked on the ground.
-
-**Why it ranks here**
-
-- UW Go sends 81 trips through it instead of Google's walk (2.3% of weighted demand). Without it, 81 of those trips would have no allowed way in, and would fall back to Google's walk with a warning.
-- Winter routes use it for 78 trips between buildings (2.1% of weighted demand). Without it, 78 of those trips would have no winter route.
-- Step-free routes use it for 20 trips (0.62% of weighted demand), and nothing routing relies on says whether it is step-free.
-- Trips to and from REV: 2.7% of weighted demand.
-- What UW Go believes rests on inferred evidence.
-- UW Go's match to the research is a guess: The catalogue lists the Central Complex entrance toward the south-east quad; the survey's only REV door faces east-south-east. Residence permissions are unverified.
-
-**What UW Go believes now**
-
-- Inwards: usable. Outwards: usable.
-- Evidence: inferred. Routing does not rely on what is recorded about it until it is confirmed.
-- Access: nothing recorded.
-
-**Check**
-
-- [ ] Find the door UW Go shows: REV floor 1, east side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
-- [ ] Is this what the research calls "Central Complex toward southeast quad"?
-- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
-- [ ] From inside, try to leave the same way.
-- [ ] Is there a working automatic opener?
-- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
-- [ ] If hours are posted on the door, write them in the note.
-
-**Research**: REV-P01 (official): "Central Complex toward southeast quad" (entry: documented_entrance_conditions_incomplete; exit: unknown; medium confidence)
-
-**Sources**: B_REV
-
-### 3. SLC east doors (toward MC)
-
-`door:5ba0e3d2964bf706` · door · SLC · score 22.3 · evidence corroborated
-
-**Where**: 43.472116, -80.545000 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.472116,-80.545000)). Where the WATIsGrass survey puts this door (SLC floor 1). Not checked on the ground.
-
-**Why it ranks here**
-
-- UW Go sends 73 trips through it instead of Google's walk (5.1% of weighted demand). Without it, those trips take 11 s longer on average.
-- Winter routes use it for 4 trips between buildings (0.10% of weighted demand). Without it, those trips are 50 s worse on average, counting each second outside 4 times.
-- Step-free routes use it for 28 trips (1.4% of weighted demand), and nothing routing relies on says whether it is step-free.
-- Trips to and from SLC: 9.6% of weighted demand.
-- What UW Go believes rests on corroborated evidence; a reviewer marked it urgent (FC_SLC_EAST_DOORS).
-- Matched to the research by UW Go and never seen on the ground: Athletics directs fitness users to the east-facing SLC doors near MC. Of the four doors the survey has on SLC, this is the only one on the east face and the nearest to MC.
-
-**What UW Go believes now**
-
-- Inwards: usable. Outwards: usable.
-- Evidence: corroborated.
-- Access: nothing recorded.
-
-**Check**
-
-- [ ] Find the door UW Go shows: SLC floor 1, north-east side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
-- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
-- [ ] From inside, try to leave the same way.
-- [ ] Is there a working automatic opener?
-- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
-- [ ] If hours are posted on the door, write them in the note.
-- [ ] Are these the east-facing SLC doors Athletics means, and which catalogue door group (SLC-P01 to P04) are they?
-- [ ] Time the walk from each SLC door to the PAC front desk, in both directions, and through SLC from west to east.
-
-**Sources**: PACFIT
-
-### 4. SLC–PAC link at the PAC front desk
-
-`link:c34ea719b8b9dee5` · link · PAC · score 21 · critical · evidence corroborated
+`link:c34ea719b8b9dee5` · link · PAC · score 25.4 · critical · evidence corroborated
 
 **Where**: 43.472441, -80.545640 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.472441,-80.545640)). Where the survey draws this open join: PAC floor 1 to SLC floor 1. Not checked on the ground.
 
@@ -169,6 +100,75 @@ Nobody has checked it on the ground, and a decision UW Go makes today stands or 
 
 **Sources**: PACFIT, PACUSE, B_PAC
 
+### 3. SLC east doors (toward MC)
+
+`door:5ba0e3d2964bf706` · door · SLC · score 24.1 · evidence corroborated
+
+**Where**: 43.472116, -80.545000 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.472116,-80.545000)). Where the WATIsGrass survey puts this door (SLC floor 1). Not checked on the ground.
+
+**Why it ranks here**
+
+- UW Go sends 68 trips through it instead of Google's walk (4.7% of weighted demand). Without it, those trips take 28 s longer on average.
+- Winter routes use it for 4 trips between buildings (0.10% of weighted demand). Without it, those trips are 50 s worse on average, counting each second outside 4 times.
+- Step-free routes use it for 28 trips (1.4% of weighted demand), and nothing routing relies on says whether it is step-free.
+- Trips to and from SLC: 9.6% of weighted demand.
+- What UW Go believes rests on corroborated evidence; a reviewer marked it urgent (FC_SLC_EAST_DOORS).
+- Matched to the research by UW Go and never seen on the ground: Athletics directs fitness users to the east-facing SLC doors near MC. Of the four doors the survey has on SLC, this is the only one on the east face and the nearest to MC.
+
+**What UW Go believes now**
+
+- Inwards: usable. Outwards: usable.
+- Evidence: corroborated.
+- Access: nothing recorded.
+
+**Check**
+
+- [ ] Find the door UW Go shows: SLC floor 1, north-east side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
+- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
+- [ ] From inside, try to leave the same way.
+- [ ] Is there a working automatic opener?
+- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
+- [ ] If hours are posted on the door, write them in the note.
+- [ ] Are these the east-facing SLC doors Athletics means, and which catalogue door group (SLC-P01 to P04) are they?
+- [ ] Time the walk from each SLC door to the PAC front desk, in both directions, and through SLC from west to east.
+
+**Sources**: PACFIT
+
+### 4. REV Central Complex doors (toward the south-east quad)
+
+`door:eca8f9fb93c96ea7` · door · REV · score 22.8 · critical · evidence inferred
+
+**Where**: 43.470150, -80.553819 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.470150,-80.553819)). Where the WATIsGrass survey puts this door (REV floor 1). Not checked on the ground.
+
+**Why it ranks here**
+
+- UW Go sends 51 trips through it instead of Google's walk (1.6% of weighted demand). Without it, 51 of those trips would have no allowed way in, and would fall back to Google's walk with a warning.
+- Winter routes use it for 78 trips between buildings (2.1% of weighted demand). Without it, 78 of those trips would have no winter route.
+- Step-free routes use it for 20 trips (0.62% of weighted demand), and nothing routing relies on says whether it is step-free.
+- Trips to and from REV: 2.7% of weighted demand.
+- What UW Go believes rests on inferred evidence.
+- UW Go's match to the research is a guess: The catalogue lists the Central Complex entrance toward the south-east quad; the survey's only REV door faces east-south-east. Residence permissions are unverified.
+
+**What UW Go believes now**
+
+- Inwards: usable. Outwards: usable.
+- Evidence: inferred. Routing does not rely on what is recorded about it until it is confirmed.
+- Access: nothing recorded.
+
+**Check**
+
+- [ ] Find the door UW Go shows: REV floor 1, east side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
+- [ ] Is this what the research calls "Central Complex toward southeast quad"?
+- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
+- [ ] From inside, try to leave the same way.
+- [ ] Is there a working automatic opener?
+- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
+- [ ] If hours are posted on the door, write them in the note.
+
+**Research**: REV-P01 (official): "Central Complex toward southeast quad" (entry: documented_entrance_conditions_incomplete; exit: unknown; medium confidence)
+
+**Sources**: B_REV
+
 ### 5. PAC: other corner doors, grouped (exit-only)
 
 `rule:PAC:exterior` · rule · PAC · score 20.9 · critical · evidence official
@@ -200,42 +200,7 @@ Nobody has checked it on the ground, and a decision UW Go makes today stands or 
 
 **Sources**: B_PAC, PACFIT
 
-### 6. PAS doors toward Environment (level 2)
-
-`door:e2f88c17f6a27d03` · door · PAS · score 20.6 · critical · evidence corroborated
-
-**Where**: 43.467775, -80.542693 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.467775,-80.542693)). Where the WATIsGrass survey puts this door (PAS floor 2). Not checked on the ground.
-
-**Why it ranks here**
-
-- UW Go sends 75 trips through it instead of Google's walk (3.5% of weighted demand). Without it, 75 of those trips would have no allowed way in, and would fall back to Google's walk with a warning.
-- Winter routes use it for 78 trips between buildings (3.6% of weighted demand). Without it, 78 of those trips would have no winter route.
-- Step-free routes use it for 2 trips (0.08% of weighted demand), and nothing routing relies on says whether it is step-free.
-- Trips to and from PAS: 4.6% of weighted demand.
-- What UW Go believes rests on corroborated evidence.
-- Matched to the research by UW Go and never seen on the ground: The catalogue lists a level-2 entrance toward the Environment buildings; the survey's only PAS door is on floor 2, facing north toward them.
-
-**What UW Go believes now**
-
-- Inwards: usable. Outwards: usable.
-- Evidence: corroborated.
-- Access: automatic door, ramp.
-
-**Check**
-
-- [ ] Find the door UW Go shows: PAS floor 2, north side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
-- [ ] Is this what the research calls "Toward Environment, level 2"?
-- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
-- [ ] From inside, try to leave the same way.
-- [ ] Is there a working automatic opener?
-- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
-- [ ] If hours are posted on the door, write them in the note.
-
-**Research**: PAS-P03 (official): "Toward Environment, level 2" (entry: documented_entrance_conditions_incomplete; exit: unknown; medium confidence)
-
-**Sources**: B_PAS
-
-### 7. V1 east doors
+### 6. V1 east doors
 
 `door:7afa03ebca430f67` · door · V1 · score 17.8 · evidence inferred
 
@@ -243,7 +208,7 @@ Nobody has checked it on the ground, and a decision UW Go makes today stands or 
 
 **Why it ranks here**
 
-- UW Go sends 23 trips through it instead of Google's walk (1.3% of weighted demand). Without it, those trips take 5 s longer on average.
+- UW Go sends 14 trips through it instead of Google's walk (0.87% of weighted demand). Without it, those trips take 25 s longer on average.
 - Winter routes use it for 148 trips between buildings (8.1% of weighted demand). Without it, those trips are 411 s worse on average, counting each second outside 4 times.
 - Step-free routes use it for 32 trips (2.0% of weighted demand), and nothing routing relies on says whether it is step-free.
 - Trips to and from V1: 5.2% of weighted demand.
@@ -270,81 +235,50 @@ Nobody has checked it on the ground, and a decision UW Go makes today stands or 
 
 **Sources**: B_V1
 
-### 8. MC lower doors (toward B1)
+### 7. PAS doors toward Environment (level 2)
 
-`door:20827964a85e8890` · door · MC · score 15.8 · evidence inferred
+`door:e2f88c17f6a27d03` · door · PAS · score 16.1 · critical · evidence corroborated
 
-**Where**: 43.471974, -80.543474 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.471974,-80.543474)). Where the WATIsGrass survey puts this door (MC floor 1). Not checked on the ground.
+**Where**: 43.467775, -80.542693 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.467775,-80.542693)). Where the WATIsGrass survey puts this door (PAS floor 2). Not checked on the ground.
 
 **Why it ranks here**
 
-- UW Go sends 40 trips through it instead of Google's walk (2.7% of weighted demand). Without it, those trips take 4 s longer on average.
-- Step-free routes use it for 2 trips (0.39% of weighted demand), and nothing routing relies on says whether it is step-free.
-- Trips to and from MC: 7.3% of weighted demand.
-- What UW Go believes rests on inferred evidence.
-- UW Go's match to the research is a guess: The catalogue's entrance toward B1 is at the lower ramp. This floor-1 door is the survey's lowest MC door and the one nearest the B1 side, but it faces east rather than south.
+- UW Go sends 44 trips through it instead of Google's walk (2.1% of weighted demand). Without it, 44 of those trips would have no allowed way in, and would fall back to Google's walk with a warning.
+- Winter routes use it for 78 trips between buildings (3.6% of weighted demand). Without it, 78 of those trips would have no winter route.
+- Step-free routes use it for 2 trips (0.08% of weighted demand), and nothing routing relies on says whether it is step-free.
+- Trips to and from PAS: 4.6% of weighted demand.
+- What UW Go believes rests on corroborated evidence.
+- Matched to the research by UW Go and never seen on the ground: The catalogue lists a level-2 entrance toward the Environment buildings; the survey's only PAS door is on floor 2, facing north toward them.
 
 **What UW Go believes now**
 
 - Inwards: usable. Outwards: usable.
-- Evidence: inferred. Routing does not rely on what is recorded about it until it is confirmed.
-- Access: automatic door (inferred: routing does not rely on this).
+- Evidence: corroborated.
+- Access: automatic door, ramp.
 
 **Check**
 
-- [ ] Find the door UW Go shows: MC floor 1, east side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
-- [ ] Is this what the research calls "Toward B1, at lower ramp"?
+- [ ] Find the door UW Go shows: PAS floor 2, north side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
+- [ ] Is this what the research calls "Toward Environment, level 2"?
 - [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
 - [ ] From inside, try to leave the same way.
 - [ ] Is there a working automatic opener?
 - [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
 - [ ] If hours are posted on the door, write them in the note.
 
-**Research**: MC-P01 (official): "Toward B1, at lower ramp" (entry: documented_entrance_conditions_incomplete; exit: unknown; medium confidence)
+**Research**: PAS-P03 (official): "Toward Environment, level 2" (entry: documented_entrance_conditions_incomplete; exit: unknown; medium confidence)
 
-**Sources**: B_MC
+**Sources**: B_PAS
 
-### 9. EXP south-east doors
+### 8. DC west doors (toward MC)
 
-`door:6930fd0b99d02bef` · door · EXP · score 15.3 · evidence surveyed
-
-**Where**: 43.473310, -80.545880 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.473310,-80.545880)). Where the WATIsGrass survey puts this door (EXP floor 1). Not checked on the ground.
-
-**Why it ranks here**
-
-- UW Go sends 66 trips through it instead of Google's walk (2.5% of weighted demand). Without it, those trips take 15 s longer on average.
-- Winter routes use it for 210 trips between buildings (6.5% of weighted demand). Without it, those trips are 119 s worse on average, counting each second outside 4 times.
-- Step-free routes use it for 30 trips (1.2% of weighted demand), and nothing routing relies on says whether it is step-free.
-- Trips to and from EXP: 3.6% of weighted demand.
-- What UW Go believes rests on surveyed evidence, and sources disagree about it (EXP_SOUTHWEST_DOOR).
-- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
-- Sources disagree: EXP south-west entrance.
-
-**What UW Go believes now**
-
-- Inwards: usable. Outwards: usable.
-- Evidence: surveyed (the survey alone).
-- Access: nothing recorded.
-
-**Check**
-
-- [ ] Find the door UW Go shows: EXP floor 1, south-east side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
-- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
-- [ ] From inside, try to leave the same way.
-- [ ] Is there a working automatic opener?
-- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
-- [ ] If hours are posted on the door, write them in the note.
-- [ ] Where is the south-west entrance toward Lot M, and is the surveyed south-east door a different one?
-
-### 10. DC west doors (toward MC)
-
-`door:df658713a18c09af` · door · DC · score 14 · evidence unresolved
+`door:df658713a18c09af` · door · DC · score 13.2 · evidence unresolved
 
 **Where**: 43.472672, -80.542442 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.472672,-80.542442)). Where the WATIsGrass survey puts this door (DC floor 1). Not checked on the ground.
 
 **Why it ranks here**
 
-- UW Go sends 9 trips through it instead of Google's walk (0.93% of weighted demand). Without it, those trips take 94 s longer on average.
+- UW Go sends 8 trips through it instead of Google's walk (0.74% of weighted demand). Without it, those trips take 76 s longer on average.
 - Step-free routes use it for 2 trips (0.39% of weighted demand), and nothing routing relies on says whether it is step-free.
 - Trips to and from DC: 10.0% of weighted demand.
 - What UW Go believes rests on unresolved evidence; a reviewer marked it urgent (FC_MATH_QUAD).
@@ -371,15 +305,230 @@ Nobody has checked it on the ground, and a decision UW Go makes today stands or 
 
 **Sources**: B_DC, M4
 
-### 11. PHY south doors (toward the library)
+### 9. MC lower doors (toward B1)
 
-`door:faae1c8de856dd19` · door · PHY · score 13.7 · evidence inferred
+`door:20827964a85e8890` · door · MC · score 12.4 · evidence inferred
+
+**Where**: 43.471974, -80.543474 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.471974,-80.543474)). Where the WATIsGrass survey puts this door (MC floor 1). Not checked on the ground.
+
+**Why it ranks here**
+
+- UW Go sends 26 trips through it instead of Google's walk (1.5% of weighted demand). Without it, those trips take 30 s longer on average.
+- Step-free routes use it for 2 trips (0.39% of weighted demand), and nothing routing relies on says whether it is step-free.
+- Trips to and from MC: 7.3% of weighted demand.
+- What UW Go believes rests on inferred evidence.
+- UW Go's match to the research is a guess: The catalogue's entrance toward B1 is at the lower ramp. This floor-1 door is the survey's lowest MC door and the one nearest the B1 side, but it faces east rather than south.
+
+**What UW Go believes now**
+
+- Inwards: usable. Outwards: usable.
+- Evidence: inferred. Routing does not rely on what is recorded about it until it is confirmed.
+- Access: automatic door (inferred: routing does not rely on this).
+
+**Check**
+
+- [ ] Find the door UW Go shows: MC floor 1, east side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
+- [ ] Is this what the research calls "Toward B1, at lower ramp"?
+- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
+- [ ] From inside, try to leave the same way.
+- [ ] Is there a working automatic opener?
+- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
+- [ ] If hours are posted on the door, write them in the note.
+
+**Research**: MC-P01 (official): "Toward B1, at lower ramp" (entry: documented_entrance_conditions_incomplete; exit: unknown; medium confidence)
+
+**Sources**: B_MC
+
+### 10. SLC north doors
+
+`door:b97df0c640324bea` · door · SLC · score 12.1 · evidence surveyed
+
+**Where**: 43.472620, -80.545366 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.472620,-80.545366)). Where the WATIsGrass survey puts this door (SLC floor 1). Not checked on the ground.
+
+**Why it ranks here**
+
+- UW Go sends 13 trips through it instead of Google's walk (0.55% of weighted demand). Without it, those trips take 39 s longer on average.
+- Winter routes use it for 210 trips between buildings (6.5% of weighted demand). Without it, those trips are 119 s worse on average, counting each second outside 4 times.
+- Step-free routes use it for 30 trips (1.2% of weighted demand), and nothing routing relies on says whether it is step-free.
+- Trips to and from SLC: 9.6% of weighted demand.
+- What UW Go believes rests on surveyed evidence; a reviewer marked it urgent (FC_SLC_NORTH_DOOR).
+- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
+
+**What UW Go believes now**
+
+- Inwards: usable. Outwards: usable.
+- Evidence: surveyed (the survey alone).
+- Access: nothing recorded.
+
+**Check**
+
+- [ ] Find the door UW Go shows: SLC floor 1, north side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
+- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
+- [ ] From inside, try to leave the same way.
+- [ ] Is there a working automatic opener?
+- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
+- [ ] If hours are posted on the door, write them in the note.
+- [ ] Is this surveyed door an SLC door, or PAC's East outdoor box office? When may it be used inwards?
+- [ ] Time the walk from each SLC door to the PAC front desk, in both directions, and through SLC from west to east.
+
+### 11. EXP south-east doors
+
+`door:6930fd0b99d02bef` · door · EXP · score 11.7 · evidence surveyed
+
+**Where**: 43.473310, -80.545880 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.473310,-80.545880)). Where the WATIsGrass survey puts this door (EXP floor 1). Not checked on the ground.
+
+**Why it ranks here**
+
+- UW Go sends 29 trips through it instead of Google's walk (1.3% of weighted demand). Without it, those trips take 32 s longer on average.
+- Winter routes use it for 210 trips between buildings (6.5% of weighted demand). Without it, those trips are 119 s worse on average, counting each second outside 4 times.
+- Step-free routes use it for 30 trips (1.2% of weighted demand), and nothing routing relies on says whether it is step-free.
+- Trips to and from EXP: 3.6% of weighted demand.
+- What UW Go believes rests on surveyed evidence, and sources disagree about it (EXP_SOUTHWEST_DOOR).
+- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
+- Sources disagree: EXP south-west entrance.
+
+**What UW Go believes now**
+
+- Inwards: usable. Outwards: usable.
+- Evidence: surveyed (the survey alone).
+- Access: nothing recorded.
+
+**Check**
+
+- [ ] Find the door UW Go shows: EXP floor 1, south-east side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
+- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
+- [ ] From inside, try to leave the same way.
+- [ ] Is there a working automatic opener?
+- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
+- [ ] If hours are posted on the door, write them in the note.
+- [ ] Where is the south-west entrance toward Lot M, and is the surveyed south-east door a different one?
+
+### 12. MC north doors
+
+`door:79502c535b0ea7cf` · door · MC · score 11 · evidence surveyed
+
+**Where**: 43.472531, -80.543739 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.472531,-80.543739)). Where the WATIsGrass survey puts this door (MC floor 2). Not checked on the ground.
+
+**Why it ranks here**
+
+- UW Go sends 16 trips through it instead of Google's walk (1.1% of weighted demand). Without it, those trips take 47 s longer on average.
+- Winter routes use it for 120 trips between buildings (3.3% of weighted demand). Without it, those trips are 37 s worse on average, counting each second outside 4 times.
+- Step-free routes use it for 18 trips (1.2% of weighted demand), and nothing routing relies on says whether it is step-free.
+- Trips to and from MC: 7.3% of weighted demand.
+- What UW Go believes rests on surveyed evidence.
+- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
+
+**What UW Go believes now**
+
+- Inwards: usable. Outwards: usable.
+- Evidence: surveyed (the survey alone).
+- Access: nothing recorded.
+
+**Check**
+
+- [ ] Find the door UW Go shows: MC floor 2, north side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
+- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
+- [ ] From inside, try to leave the same way.
+- [ ] Is there a working automatic opener?
+- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
+- [ ] If hours are posted on the door, write them in the note.
+
+### 13. OPT south-west doors
+
+`door:e8f86a96c1f2db22` · door · OPT · score 11 · critical · evidence surveyed
+
+**Where**: 43.475414, -80.546020 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.475414,-80.546020)). Where the WATIsGrass survey puts this door (OPT floor 2). Not checked on the ground.
+
+**Why it ranks here**
+
+- UW Go sends 55 trips through it instead of Google's walk (0.96% of weighted demand). Without it, 55 of those trips would have no allowed way in, and would fall back to Google's walk with a warning.
+- Winter routes use it for 78 trips between buildings (1.4% of weighted demand). Without it, 78 of those trips would have no winter route.
+- Step-free routes use it for 20 trips (0.42% of weighted demand), and nothing routing relies on says whether it is step-free.
+- Trips to and from OPT: 1.8% of weighted demand.
+- What UW Go believes rests on surveyed evidence.
+- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
+
+**What UW Go believes now**
+
+- Inwards: usable. Outwards: usable.
+- Evidence: surveyed (the survey alone).
+- Access: nothing recorded.
+
+**Check**
+
+- [ ] Find the door UW Go shows: OPT floor 2, south-west side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
+- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
+- [ ] From inside, try to leave the same way.
+- [ ] Is there a working automatic opener?
+- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
+- [ ] If hours are posted on the door, write them in the note.
+
+### 14. Stairwell in NH (floors 1, 2, 3)
+
+`vertical:7569bd3c83d5a920` · change of floor · NH · score 9.5 · evidence surveyed
+
+**Where**: 43.469689, -80.543119 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.469689,-80.543119)). Where the survey puts this stairwell. Not checked on the ground.
+
+**Why it ranks here**
+
+- UW Go sends 28 trips through it instead of Google's walk (1.1% of weighted demand). Without it, those trips take 92 s longer on average.
+- Winter routes use it for 304 trips between buildings (10.3% of weighted demand). Without it, those trips are 264 s worse on average, counting each second outside 4 times.
+- If a step-free way between these floors is confirmed here, 44 step-free trips with no route today would have one, and step-free routes would improve by 4 s on average over all weighted demand, counting each second outside 4 times.
+- Trips to and from NH: 3.9% of weighted demand.
+- What UW Go believes rests on surveyed evidence.
+- The survey records a stairwell and nothing about an elevator or ramp, so a step-free route cannot change floor here until one is confirmed.
+
+**What UW Go believes now**
+
+- Surveyed as: stairs.
+- Step-free trips: cannot change floor here: nobody has confirmed a step-free way between these floors.
+
+**Check**
+
+- [ ] Find the stairwell UW Go shows, joining floors 1, 2, 3 of NH.
+- [ ] Is there an elevator at it or within sight, serving these floors? Mark "Elevator" and write in the note the floors it stops at.
+- [ ] Can that elevator be used without a key, a card or calling for help? Mark "Accessible" if so, "Locked / restricted" if it needs a key.
+- [ ] Is there a ramp between any of these levels? Mark "Ramp".
+- [ ] If stairs are the only way, mark "Stairs".
+
+### 15. Tunnel between AL and EV1
+
+`link:e896cef8a08ec31c` · link · AL · score 9.1 · evidence surveyed
+
+**Where**: 43.468666, -80.542391 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.468666,-80.542391)). Where the survey draws this tunnel: AL floor B to EV1 floor 1. Not checked on the ground.
+
+**Why it ranks here**
+
+- UW Go sends 30 trips through it instead of Google's walk (1.2% of weighted demand). Without it, those trips take 39 s longer on average.
+- Winter routes use it for 150 trips between buildings (5.1% of weighted demand). Without it, those trips are 26 s worse on average, counting each second outside 4 times.
+- Step-free routes use it for 24 trips (0.60% of weighted demand), and nothing routing relies on says whether it is step-free.
+- Trips to and from AL and EV1: 6.7% of weighted demand.
+- What UW Go believes rests on surveyed evidence.
+- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
+
+**What UW Go believes now**
+
+- AL → EV1: usable. EV1 → AL: usable.
+- Evidence: surveyed (the survey alone).
+- Access: nothing recorded.
+
+**Check**
+
+- [ ] Walk it from AL (floor B) to EV1 (floor 1). Is it where UW Go shows it? If it lands on a different floor at either end, say which in the note.
+- [ ] Can you go AL → EV1 without a card or key, and without passing through a room? And EV1 → AL?
+- [ ] Any steps along it, a ramp, or an elevator you would need instead?
+- [ ] Doors on the way: automatic, or heavy manual ones?
+- [ ] Any posted hours or signs (locked after hours, staff only)? Write them in the note.
+
+### 16. PHY south doors (toward the library)
+
+`door:faae1c8de856dd19` · door · PHY · score 9 · evidence inferred
 
 **Where**: 43.470476, -80.541654 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.470476,-80.541654)). Where the WATIsGrass survey puts this door (PHY floor 1). Not checked on the ground.
 
 **Why it ranks here**
 
-- UW Go sends 30 trips through it instead of Google's walk (1.4% of weighted demand). Without it, those trips take 127 s longer on average.
+- UW Go sends 10 trips through it instead of Google's walk (0.55% of weighted demand). Without it, those trips take 118 s longer on average.
 - Winter routes use it for 38 trips between buildings (1.3% of weighted demand). Without it, those trips are 57 s worse on average, counting each second outside 4 times.
 - Step-free routes use it for 20 trips (0.77% of weighted demand), and nothing routing relies on says whether it is step-free.
 - Trips to and from PHY: 4.9% of weighted demand.
@@ -406,396 +555,15 @@ Nobody has checked it on the ground, and a decision UW Go makes today stands or 
 
 **Sources**: B_PHY
 
-### 12. Stairwell in MC (floors 1, 2, 3)
+### 17. ML west doors
 
-`vertical:6f794428566a403c` · change of floor · MC · score 13 · evidence surveyed
-
-**Where**: 43.472294, -80.544291 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.472294,-80.544291)). Where the survey puts this stairwell. Not checked on the ground.
-
-**Why it ranks here**
-
-- UW Go sends 4 trips through it instead of Google's walk (0.33% of weighted demand). Without it, those trips take 9 s longer on average.
-- Winter routes use it for 16 trips between buildings (0.66% of weighted demand). Without it, those trips are 7 s worse on average, counting each second outside 4 times.
-- If a step-free way between these floors is confirmed here, 90 step-free trips with no route today would have one, and step-free routes would improve by 9 s on average over all weighted demand, counting each second outside 4 times.
-- Trips to and from MC: 7.3% of weighted demand.
-- What UW Go believes rests on surveyed evidence.
-- The survey records a stairwell and nothing about an elevator or ramp, so a step-free route cannot change floor here until one is confirmed.
-
-**What UW Go believes now**
-
-- Surveyed as: stairs.
-- Step-free trips: cannot change floor here: nobody has confirmed a step-free way between these floors.
-
-**Check**
-
-- [ ] Find the stairwell UW Go shows, joining floors 1, 2, 3 of MC.
-- [ ] Is there an elevator at it or within sight, serving these floors? Mark "Elevator" and write in the note the floors it stops at.
-- [ ] Can that elevator be used without a key, a card or calling for help? Mark "Accessible" if so, "Locked / restricted" if it needs a key.
-- [ ] Is there a ramp between any of these levels? Mark "Ramp".
-- [ ] If stairs are the only way, mark "Stairs".
-
-### 13. SLC north doors
-
-`door:b97df0c640324bea` · door · SLC · score 12.1 · evidence surveyed
-
-**Where**: 43.472620, -80.545366 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.472620,-80.545366)). Where the WATIsGrass survey puts this door (SLC floor 1). Not checked on the ground.
-
-**Why it ranks here**
-
-- UW Go sends 12 trips through it instead of Google's walk (0.53% of weighted demand). Without it, those trips take 38 s longer on average.
-- Winter routes use it for 210 trips between buildings (6.5% of weighted demand). Without it, those trips are 119 s worse on average, counting each second outside 4 times.
-- Step-free routes use it for 30 trips (1.2% of weighted demand), and nothing routing relies on says whether it is step-free.
-- Trips to and from SLC: 9.6% of weighted demand.
-- What UW Go believes rests on surveyed evidence; a reviewer marked it urgent (FC_SLC_NORTH_DOOR).
-- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
-
-**What UW Go believes now**
-
-- Inwards: usable. Outwards: usable.
-- Evidence: surveyed (the survey alone).
-- Access: nothing recorded.
-
-**Check**
-
-- [ ] Find the door UW Go shows: SLC floor 1, north side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
-- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
-- [ ] From inside, try to leave the same way.
-- [ ] Is there a working automatic opener?
-- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
-- [ ] If hours are posted on the door, write them in the note.
-- [ ] Is this surveyed door an SLC door, or PAC's East outdoor box office? When may it be used inwards?
-- [ ] Time the walk from each SLC door to the PAC front desk, in both directions, and through SLC from west to east.
-
-### 14. CMH west doors
-
-`door:4caac7c88a4a743c` · door · CMH · score 12 · critical · evidence surveyed
-
-**Where**: 43.470354, -80.536299 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.470354,-80.536299)). Where the WATIsGrass survey puts this door (CMH floor 1). Not checked on the ground.
-
-**Why it ranks here**
-
-- UW Go sends 41 trips through it instead of Google's walk (1.5% of weighted demand). Without it, 41 of those trips would have no allowed way in, and would fall back to Google's walk with a warning.
-- Winter routes use it for 78 trips between buildings (2.9% of weighted demand). Without it, 78 of those trips would have no winter route.
-- Trips to and from CMH: 3.7% of weighted demand.
-- What UW Go believes rests on surveyed evidence.
-- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
-
-**What UW Go believes now**
-
-- Inwards: usable. Outwards: usable.
-- Evidence: surveyed (the survey alone).
-- Access: nothing recorded.
-
-**Check**
-
-- [ ] Find the door UW Go shows: CMH floor 1, west side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
-- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
-- [ ] From inside, try to leave the same way.
-- [ ] Is there a working automatic opener?
-- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
-- [ ] If hours are posted on the door, write them in the note.
-
-### 15. MC north doors
-
-`door:79502c535b0ea7cf` · door · MC · score 11.8 · evidence surveyed
-
-**Where**: 43.472531, -80.543739 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.472531,-80.543739)). Where the WATIsGrass survey puts this door (MC floor 2). Not checked on the ground.
-
-**Why it ranks here**
-
-- UW Go sends 22 trips through it instead of Google's walk (1.6% of weighted demand). Without it, those trips take 24 s longer on average.
-- Winter routes use it for 120 trips between buildings (3.3% of weighted demand). Without it, those trips are 37 s worse on average, counting each second outside 4 times.
-- Step-free routes use it for 18 trips (1.2% of weighted demand), and nothing routing relies on says whether it is step-free.
-- Trips to and from MC: 7.3% of weighted demand.
-- What UW Go believes rests on surveyed evidence.
-- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
-
-**What UW Go believes now**
-
-- Inwards: usable. Outwards: usable.
-- Evidence: surveyed (the survey alone).
-- Access: nothing recorded.
-
-**Check**
-
-- [ ] Find the door UW Go shows: MC floor 2, north side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
-- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
-- [ ] From inside, try to leave the same way.
-- [ ] Is there a working automatic opener?
-- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
-- [ ] If hours are posted on the door, write them in the note.
-
-### 16. Stairwell in NH (floors 1, 2, 3)
-
-`vertical:7569bd3c83d5a920` · change of floor · NH · score 9.8 · evidence surveyed
-
-**Where**: 43.469689, -80.543119 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.469689,-80.543119)). Where the survey puts this stairwell. Not checked on the ground.
-
-**Why it ranks here**
-
-- UW Go sends 38 trips through it instead of Google's walk (1.5% of weighted demand). Without it, those trips take 126 s longer on average.
-- Winter routes use it for 304 trips between buildings (10.3% of weighted demand). Without it, those trips are 264 s worse on average, counting each second outside 4 times.
-- If a step-free way between these floors is confirmed here, 44 step-free trips with no route today would have one, and step-free routes would improve by 4 s on average over all weighted demand, counting each second outside 4 times.
-- Trips to and from NH: 3.9% of weighted demand.
-- What UW Go believes rests on surveyed evidence.
-- The survey records a stairwell and nothing about an elevator or ramp, so a step-free route cannot change floor here until one is confirmed.
-
-**What UW Go believes now**
-
-- Surveyed as: stairs.
-- Step-free trips: cannot change floor here: nobody has confirmed a step-free way between these floors.
-
-**Check**
-
-- [ ] Find the stairwell UW Go shows, joining floors 1, 2, 3 of NH.
-- [ ] Is there an elevator at it or within sight, serving these floors? Mark "Elevator" and write in the note the floors it stops at.
-- [ ] Can that elevator be used without a key, a card or calling for help? Mark "Accessible" if so, "Locked / restricted" if it needs a key.
-- [ ] Is there a ramp between any of these levels? Mark "Ramp".
-- [ ] If stairs are the only way, mark "Stairs".
-
-### 17. OPT south-west doors
-
-`door:e8f86a96c1f2db22` · door · OPT · score 9.2 · critical · evidence surveyed
-
-**Where**: 43.475414, -80.546020 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.475414,-80.546020)). Where the WATIsGrass survey puts this door (OPT floor 2). Not checked on the ground.
-
-**Why it ranks here**
-
-- UW Go sends 57 trips through it instead of Google's walk (0.99% of weighted demand). Without it, 57 of those trips would have no allowed way in, and would fall back to Google's walk with a warning.
-- Winter routes use it for 78 trips between buildings (1.4% of weighted demand). Without it, 78 of those trips would have no winter route.
-- Step-free routes use it for 20 trips (0.42% of weighted demand), and nothing routing relies on says whether it is step-free.
-- Trips to and from OPT: 1.8% of weighted demand.
-- What UW Go believes rests on surveyed evidence.
-- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
-
-**What UW Go believes now**
-
-- Inwards: usable. Outwards: usable.
-- Evidence: surveyed (the survey alone).
-- Access: nothing recorded.
-
-**Check**
-
-- [ ] Find the door UW Go shows: OPT floor 2, south-west side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
-- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
-- [ ] From inside, try to leave the same way.
-- [ ] Is there a working automatic opener?
-- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
-- [ ] If hours are posted on the door, write them in the note.
-
-### 18. Bridge between DWE and E2
-
-`link:5ab3bb9f27bdb333` · link · DWE · score 8.7 · evidence surveyed
-
-**Where**: 43.470083, -80.539685 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.470083,-80.539685)). Where the survey draws this bridge: DWE floor 3 to E2 floor 3. Not checked on the ground.
-
-**Why it ranks here**
-
-- UW Go sends 8 trips through it instead of Google's walk (0.59% of weighted demand). Without it, those trips take 7 s longer on average.
-- Winter routes use it for 250 trips between buildings (9.1% of weighted demand). Without it, those trips are 116 s worse on average, counting each second outside 4 times.
-- Step-free routes use it for 2 trips (0.15% of weighted demand), and nothing routing relies on says whether it is step-free.
-- Trips to and from DWE and E2: 10.6% of weighted demand.
-- What UW Go believes rests on surveyed evidence.
-- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
-
-**What UW Go believes now**
-
-- DWE → E2: usable. E2 → DWE: usable.
-- Evidence: surveyed (the survey alone).
-- Access: nothing recorded.
-
-**Check**
-
-- [ ] Walk it from DWE (floor 3) to E2 (floor 3). Is it where UW Go shows it? If it lands on a different floor at either end, say which in the note.
-- [ ] Can you go DWE → E2 without a card or key, and without passing through a room? And E2 → DWE?
-- [ ] Any steps along it, a ramp, or an elevator you would need instead?
-- [ ] Doors on the way: automatic, or heavy manual ones?
-- [ ] Any posted hours or signs (locked after hours, staff only)? Write them in the note.
-
-### 19. NH east doors
-
-`door:e8bdd5f6faeaaa42` · door · NH · score 8.6 · evidence surveyed
-
-**Where**: 43.469689, -80.543119 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.469689,-80.543119)). Where the WATIsGrass survey puts this door (NH floor 1). Not checked on the ground.
-
-**Why it ranks here**
-
-- UW Go sends 38 trips through it instead of Google's walk (1.5% of weighted demand). Without it, those trips take 127 s longer on average.
-- Winter routes use it for 304 trips between buildings (10.3% of weighted demand). Without it, those trips are 264 s worse on average, counting each second outside 4 times.
-- Trips to and from NH: 3.9% of weighted demand.
-- What UW Go believes rests on surveyed evidence.
-- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
-
-**What UW Go believes now**
-
-- Inwards: usable. Outwards: usable.
-- Evidence: surveyed (the survey alone).
-- Access: nothing recorded.
-
-**Check**
-
-- [ ] Find the door UW Go shows: NH floor 1, east side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
-- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
-- [ ] From inside, try to leave the same way.
-- [ ] Is there a working automatic opener?
-- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
-- [ ] If hours are posted on the door, write them in the note.
-
-### 20. Stairwell joining DWE and CPH (DWE 1, DWE 2, CPH 3, CPH 4)
-
-`vertical:010d6849b15adf4d` · change of floor · DWE · score 8.4 · evidence surveyed
-
-**Where**: 43.470523, -80.538753 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.470523,-80.538753)). Where the survey puts this stairwell. Not checked on the ground.
-
-**Why it ranks here**
-
-- UW Go sends 6 trips through it instead of Google's walk (0.33% of weighted demand). Without it, they have an equally quick way.
-- Winter routes use it for 98 trips between buildings (3.6% of weighted demand). Without it, 78 of those trips would have no winter route.
-- If a step-free way between these floors is confirmed here, 46 step-free trips with no route today would have one, and step-free routes would improve by 5 s on average over all weighted demand, counting each second outside 4 times.
-- Trips to and from CPH and DWE: 9.1% of weighted demand.
-- What UW Go believes rests on surveyed evidence.
-- The survey records a stairwell and nothing about an elevator or ramp, so a step-free route cannot change floor here until one is confirmed.
-
-**What UW Go believes now**
-
-- Surveyed as: stairs.
-- Step-free trips: cannot change floor here: nobody has confirmed a step-free way between these floors.
-
-**Check**
-
-- [ ] Find the stairwell UW Go shows, joining DWE 1, DWE 2, CPH 3, CPH 4.
-- [ ] Is there an elevator at it or within sight, serving these floors? Mark "Elevator" and write in the note the floors it stops at.
-- [ ] Can that elevator be used without a key, a card or calling for help? Mark "Accessible" if so, "Locked / restricted" if it needs a key.
-- [ ] Is there a ramp between any of these levels? Mark "Ramp".
-- [ ] If stairs are the only way, mark "Stairs".
-
-### 21. SCH north-west doors
-
-`door:3ca1486cf9026f78` · door · SCH · score 8.3 · evidence surveyed
-
-**Where**: 43.469383, -80.540328 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.469383,-80.540328)). Where the WATIsGrass survey puts this door (SCH floor 1). Not checked on the ground.
-
-**Why it ranks here**
-
-- UW Go sends 30 trips through it instead of Google's walk (1.0% of weighted demand). Without it, those trips take 3 s longer on average.
-- Winter routes use it for 250 trips between buildings (8.0% of weighted demand). Without it, those trips are 208 s worse on average, counting each second outside 4 times.
-- Step-free routes use it for 26 trips (0.78% of weighted demand), and nothing routing relies on says whether it is step-free.
-- Trips to and from SCH: 3.2% of weighted demand.
-- What UW Go believes rests on surveyed evidence.
-- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
-
-**What UW Go believes now**
-
-- Inwards: usable. Outwards: usable.
-- Evidence: surveyed (the survey alone).
-- Access: nothing recorded.
-
-**Check**
-
-- [ ] Find the door UW Go shows: SCH floor 1, north-west side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
-- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
-- [ ] From inside, try to leave the same way.
-- [ ] Is there a working automatic opener?
-- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
-- [ ] If hours are posted on the door, write them in the note.
-
-### 22. Tunnel between AL and SCH
-
-`link:9aec29403c343d3c` · link · AL · score 8 · evidence surveyed
-
-**Where**: 43.468816, -80.541140 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.468816,-80.541140)). Where the survey draws this tunnel: AL floor B to SCH floor 1. Not checked on the ground.
-
-**Why it ranks here**
-
-- UW Go sends 8 trips through it instead of Google's walk (0.30% of weighted demand). Without it, those trips take 5 s longer on average.
-- Winter routes use it for 174 trips between buildings (5.7% of weighted demand). Without it, those trips are 220 s worse on average, counting each second outside 4 times.
-- Step-free routes use it for 30 trips (0.79% of weighted demand), and nothing routing relies on says whether it is step-free.
-- Trips to and from AL and SCH: 5.7% of weighted demand.
-- What UW Go believes rests on surveyed evidence.
-- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
-
-**What UW Go believes now**
-
-- AL → SCH: usable. SCH → AL: usable.
-- Evidence: surveyed (the survey alone).
-- Access: nothing recorded.
-
-**Check**
-
-- [ ] Walk it from AL (floor B) to SCH (floor 1). Is it where UW Go shows it? If it lands on a different floor at either end, say which in the note.
-- [ ] Can you go AL → SCH without a card or key, and without passing through a room? And SCH → AL?
-- [ ] Any steps along it, a ramp, or an elevator you would need instead?
-- [ ] Doors on the way: automatic, or heavy manual ones?
-- [ ] Any posted hours or signs (locked after hours, staff only)? Write them in the note.
-
-### 23. ERC south doors
-
-`door:f7f5758ccfad5600` · door · ERC · score 7.7 · evidence surveyed
-
-**Where**: 43.473436, -80.544461 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.473436,-80.544461)). Where the WATIsGrass survey puts this door (ERC floor 1). Not checked on the ground.
-
-**Why it ranks here**
-
-- UW Go sends 75 trips through it instead of Google's walk (1.7% of weighted demand). Without it, those trips take 10 s longer on average.
-- Winter routes use it for 78 trips between buildings (1.8% of weighted demand). Without it, 78 of those trips would have no winter route.
-- Step-free routes use it for 20 trips (0.52% of weighted demand), and nothing routing relies on says whether it is step-free.
-- Trips to and from ERC: 2.2% of weighted demand.
-- What UW Go believes rests on surveyed evidence.
-- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
-
-**What UW Go believes now**
-
-- Inwards: usable. Outwards: usable.
-- Evidence: surveyed (the survey alone).
-- Access: nothing recorded.
-
-**Check**
-
-- [ ] Find the door UW Go shows: ERC floor 1, south side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
-- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
-- [ ] From inside, try to leave the same way.
-- [ ] Is there a working automatic opener?
-- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
-- [ ] If hours are posted on the door, write them in the note.
-
-### 24. Tunnel between AL and EV1
-
-`link:e896cef8a08ec31c` · link · AL · score 7.6 · evidence surveyed
-
-**Where**: 43.468666, -80.542391 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.468666,-80.542391)). Where the survey draws this tunnel: AL floor B to EV1 floor 1. Not checked on the ground.
-
-**Why it ranks here**
-
-- UW Go sends 28 trips through it instead of Google's walk (1.1% of weighted demand). Without it, those trips take 3 s longer on average.
-- Winter routes use it for 150 trips between buildings (5.1% of weighted demand). Without it, those trips are 26 s worse on average, counting each second outside 4 times.
-- Step-free routes use it for 24 trips (0.60% of weighted demand), and nothing routing relies on says whether it is step-free.
-- Trips to and from AL and EV1: 6.7% of weighted demand.
-- What UW Go believes rests on surveyed evidence.
-- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
-
-**What UW Go believes now**
-
-- AL → EV1: usable. EV1 → AL: usable.
-- Evidence: surveyed (the survey alone).
-- Access: nothing recorded.
-
-**Check**
-
-- [ ] Walk it from AL (floor B) to EV1 (floor 1). Is it where UW Go shows it? If it lands on a different floor at either end, say which in the note.
-- [ ] Can you go AL → EV1 without a card or key, and without passing through a room? And EV1 → AL?
-- [ ] Any steps along it, a ramp, or an elevator you would need instead?
-- [ ] Doors on the way: automatic, or heavy manual ones?
-- [ ] Any posted hours or signs (locked after hours, staff only)? Write them in the note.
-
-### 25. ML west doors
-
-`door:6058fcb7db8bc4eb` · door · ML · score 7.2 · evidence surveyed
+`door:6058fcb7db8bc4eb` · door · ML · score 8.8 · evidence surveyed
 
 **Where**: 43.469093, -80.542917 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.469093,-80.542917)). Where the WATIsGrass survey puts this door (ML floor 1). Not checked on the ground.
 
 **Why it ranks here**
 
-- UW Go sends 29 trips through it instead of Google's walk (1.5% of weighted demand). Without it, they have an equally quick way.
+- UW Go sends 31 trips through it instead of Google's walk (1.5% of weighted demand). Without it, those trips take 37 s longer on average.
 - Winter routes use it for 272 trips between buildings (9.4% of weighted demand). Without it, those trips are 59 s worse on average, counting each second outside 4 times.
 - Step-free routes use it for 18 trips (0.50% of weighted demand), and nothing routing relies on says whether it is step-free.
 - Trips to and from ML: 3.6% of weighted demand.
@@ -817,15 +585,160 @@ Nobody has checked it on the ground, and a decision UW Go makes today stands or 
 - [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
 - [ ] If hours are posted on the door, write them in the note.
 
-### 26. BMH east doors
+### 18. Bridge between DWE and E2
 
-`door:2d57c32399d0d027` · door · BMH · score 6.5 · evidence surveyed
+`link:5ab3bb9f27bdb333` · link · DWE · score 8.7 · evidence surveyed
+
+**Where**: 43.470083, -80.539685 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.470083,-80.539685)). Where the survey draws this bridge: DWE floor 3 to E2 floor 3. Not checked on the ground.
+
+**Why it ranks here**
+
+- UW Go sends 8 trips through it instead of Google's walk (0.59% of weighted demand). Without it, those trips take 70 s longer on average.
+- Winter routes use it for 250 trips between buildings (9.1% of weighted demand). Without it, those trips are 116 s worse on average, counting each second outside 4 times.
+- Step-free routes use it for 2 trips (0.15% of weighted demand), and nothing routing relies on says whether it is step-free.
+- Trips to and from DWE and E2: 10.6% of weighted demand.
+- What UW Go believes rests on surveyed evidence.
+- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
+
+**What UW Go believes now**
+
+- DWE → E2: usable. E2 → DWE: usable.
+- Evidence: surveyed (the survey alone).
+- Access: nothing recorded.
+
+**Check**
+
+- [ ] Walk it from DWE (floor 3) to E2 (floor 3). Is it where UW Go shows it? If it lands on a different floor at either end, say which in the note.
+- [ ] Can you go DWE → E2 without a card or key, and without passing through a room? And E2 → DWE?
+- [ ] Any steps along it, a ramp, or an elevator you would need instead?
+- [ ] Doors on the way: automatic, or heavy manual ones?
+- [ ] Any posted hours or signs (locked after hours, staff only)? Write them in the note.
+
+### 19. Stairwell joining DWE and CPH (DWE 1, DWE 2, CPH 3, CPH 4)
+
+`vertical:010d6849b15adf4d` · change of floor · DWE · score 8.4 · evidence surveyed
+
+**Where**: 43.470523, -80.538753 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.470523,-80.538753)). Where the survey puts this stairwell. Not checked on the ground.
+
+**Why it ranks here**
+
+- UW Go sends 6 trips through it instead of Google's walk (0.33% of weighted demand). Without it, those trips take 24 s longer on average.
+- Winter routes use it for 98 trips between buildings (3.6% of weighted demand). Without it, 78 of those trips would have no winter route.
+- If a step-free way between these floors is confirmed here, 46 step-free trips with no route today would have one, and step-free routes would improve by 5 s on average over all weighted demand, counting each second outside 4 times.
+- Trips to and from CPH and DWE: 9.1% of weighted demand.
+- What UW Go believes rests on surveyed evidence.
+- The survey records a stairwell and nothing about an elevator or ramp, so a step-free route cannot change floor here until one is confirmed.
+
+**What UW Go believes now**
+
+- Surveyed as: stairs.
+- Step-free trips: cannot change floor here: nobody has confirmed a step-free way between these floors.
+
+**Check**
+
+- [ ] Find the stairwell UW Go shows, joining DWE 1, DWE 2, CPH 3, CPH 4.
+- [ ] Is there an elevator at it or within sight, serving these floors? Mark "Elevator" and write in the note the floors it stops at.
+- [ ] Can that elevator be used without a key, a card or calling for help? Mark "Accessible" if so, "Locked / restricted" if it needs a key.
+- [ ] Is there a ramp between any of these levels? Mark "Ramp".
+- [ ] If stairs are the only way, mark "Stairs".
+
+### 20. SCH north-west doors
+
+`door:3ca1486cf9026f78` · door · SCH · score 8.3 · evidence surveyed
+
+**Where**: 43.469383, -80.540328 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.469383,-80.540328)). Where the WATIsGrass survey puts this door (SCH floor 1). Not checked on the ground.
+
+**Why it ranks here**
+
+- UW Go sends 16 trips through it instead of Google's walk (0.50% of weighted demand). Without it, those trips take 25 s longer on average.
+- Winter routes use it for 250 trips between buildings (8.0% of weighted demand). Without it, those trips are 208 s worse on average, counting each second outside 4 times.
+- Step-free routes use it for 26 trips (0.78% of weighted demand), and nothing routing relies on says whether it is step-free.
+- Trips to and from SCH: 3.2% of weighted demand.
+- What UW Go believes rests on surveyed evidence.
+- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
+
+**What UW Go believes now**
+
+- Inwards: usable. Outwards: usable.
+- Evidence: surveyed (the survey alone).
+- Access: nothing recorded.
+
+**Check**
+
+- [ ] Find the door UW Go shows: SCH floor 1, north-west side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
+- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
+- [ ] From inside, try to leave the same way.
+- [ ] Is there a working automatic opener?
+- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
+- [ ] If hours are posted on the door, write them in the note.
+
+### 21. NH east doors
+
+`door:e8bdd5f6faeaaa42` · door · NH · score 8 · evidence surveyed
+
+**Where**: 43.469689, -80.543119 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.469689,-80.543119)). Where the WATIsGrass survey puts this door (NH floor 1). Not checked on the ground.
+
+**Why it ranks here**
+
+- UW Go sends 28 trips through it instead of Google's walk (1.1% of weighted demand). Without it, those trips take 92 s longer on average.
+- Winter routes use it for 304 trips between buildings (10.3% of weighted demand). Without it, those trips are 264 s worse on average, counting each second outside 4 times.
+- Trips to and from NH: 3.9% of weighted demand.
+- What UW Go believes rests on surveyed evidence.
+- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
+
+**What UW Go believes now**
+
+- Inwards: usable. Outwards: usable.
+- Evidence: surveyed (the survey alone).
+- Access: nothing recorded.
+
+**Check**
+
+- [ ] Find the door UW Go shows: NH floor 1, east side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
+- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
+- [ ] From inside, try to leave the same way.
+- [ ] Is there a working automatic opener?
+- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
+- [ ] If hours are posted on the door, write them in the note.
+
+### 22. Tunnel between AL and SCH
+
+`link:9aec29403c343d3c` · link · AL · score 8 · evidence surveyed
+
+**Where**: 43.468816, -80.541140 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.468816,-80.541140)). Where the survey draws this tunnel: AL floor B to SCH floor 1. Not checked on the ground.
+
+**Why it ranks here**
+
+- UW Go sends 8 trips through it instead of Google's walk (0.30% of weighted demand). Without it, those trips take 44 s longer on average.
+- Winter routes use it for 174 trips between buildings (5.7% of weighted demand). Without it, those trips are 220 s worse on average, counting each second outside 4 times.
+- Step-free routes use it for 30 trips (0.79% of weighted demand), and nothing routing relies on says whether it is step-free.
+- Trips to and from AL and SCH: 5.7% of weighted demand.
+- What UW Go believes rests on surveyed evidence.
+- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
+
+**What UW Go believes now**
+
+- AL → SCH: usable. SCH → AL: usable.
+- Evidence: surveyed (the survey alone).
+- Access: nothing recorded.
+
+**Check**
+
+- [ ] Walk it from AL (floor B) to SCH (floor 1). Is it where UW Go shows it? If it lands on a different floor at either end, say which in the note.
+- [ ] Can you go AL → SCH without a card or key, and without passing through a room? And SCH → AL?
+- [ ] Any steps along it, a ramp, or an elevator you would need instead?
+- [ ] Doors on the way: automatic, or heavy manual ones?
+- [ ] Any posted hours or signs (locked after hours, staff only)? Write them in the note.
+
+### 23. BMH east doors
+
+`door:2d57c32399d0d027` · door · BMH · score 6.8 · evidence surveyed
 
 **Where**: 43.473566, -80.545256 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.473566,-80.545256)). Where the WATIsGrass survey puts this door (BMH floor 1). Not checked on the ground.
 
 **Why it ranks here**
 
-- UW Go sends 28 trips through it instead of Google's walk (1.1% of weighted demand). Without it, those trips take 11 s longer on average.
+- UW Go sends 28 trips through it instead of Google's walk (1.1% of weighted demand). Without it, those trips take 12 s longer on average.
 - Winter routes use it for 12 trips between buildings (0.25% of weighted demand). Without it, those trips are 85 s worse on average, counting each second outside 4 times.
 - Step-free routes use it for 18 trips (0.58% of weighted demand), and nothing routing relies on says whether it is step-free.
 - Trips to and from BMH: 3.5% of weighted demand.
@@ -847,15 +760,15 @@ Nobody has checked it on the ground, and a decision UW Go makes today stands or 
 - [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
 - [ ] If hours are posted on the door, write them in the note.
 
-### 27. STC west doors
+### 24. STC west doors
 
-`door:aee8a566fb5f264a` · door · STC · score 6.5 · evidence surveyed
+`door:aee8a566fb5f264a` · door · STC · score 5.6 · evidence surveyed
 
 **Where**: 43.470503, -80.544045 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.470503,-80.544045)). Where the WATIsGrass survey puts this door (STC floor 1). Not checked on the ground.
 
 **Why it ranks here**
 
-- UW Go sends 19 trips through it instead of Google's walk (1.1% of weighted demand). Without it, those trips take 108 s longer on average.
+- UW Go sends 13 trips through it instead of Google's walk (0.82% of weighted demand). Without it, those trips take 87 s longer on average.
 - Trips to and from STC: 4.2% of weighted demand.
 - What UW Go believes rests on surveyed evidence.
 - Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
@@ -875,7 +788,7 @@ Nobody has checked it on the ground, and a decision UW Go makes today stands or 
 - [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
 - [ ] If hours are posted on the door, write them in the note.
 
-### 28. Stairwell in EV1 (floors 1, 2)
+### 25. Stairwell in EV1 (floors 1, 2)
 
 `vertical:2b726040e0297594` · change of floor · EV1 · score 5.3 · evidence surveyed
 
@@ -883,7 +796,7 @@ Nobody has checked it on the ground, and a decision UW Go makes today stands or 
 
 **Why it ranks here**
 
-- UW Go sends 12 trips through it instead of Google's walk (0.50% of weighted demand). Without it, they have an equally quick way.
+- UW Go sends 14 trips through it instead of Google's walk (0.59% of weighted demand). Without it, those trips take 1 s longer on average.
 - Winter routes use it for 150 trips between buildings (6.1% of weighted demand). Without it, 76 of those trips would have no winter route.
 - If a step-free way between these floors is confirmed here, 20 step-free trips with no route today would have one, and step-free routes would improve by 2 s on average over all weighted demand, counting each second outside 4 times.
 - Trips to and from EV1: 4.2% of weighted demand.
@@ -903,6 +816,95 @@ Nobody has checked it on the ground, and a decision UW Go makes today stands or 
 - [ ] Is there a ramp between any of these levels? Mark "Ramp".
 - [ ] If stairs are the only way, mark "Stairs".
 
+### 26. ERC south doors
+
+`door:f7f5758ccfad5600` · door · ERC · score 4.6 · evidence surveyed
+
+**Where**: 43.473436, -80.544461 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.473436,-80.544461)). Where the WATIsGrass survey puts this door (ERC floor 1). Not checked on the ground.
+
+**Why it ranks here**
+
+- UW Go sends 22 trips through it instead of Google's walk (0.54% of weighted demand). Without it, those trips take 31 s longer on average.
+- Winter routes use it for 78 trips between buildings (1.8% of weighted demand). Without it, 78 of those trips would have no winter route.
+- Step-free routes use it for 20 trips (0.52% of weighted demand), and nothing routing relies on says whether it is step-free.
+- Trips to and from ERC: 2.2% of weighted demand.
+- What UW Go believes rests on surveyed evidence.
+- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
+
+**What UW Go believes now**
+
+- Inwards: usable. Outwards: usable.
+- Evidence: surveyed (the survey alone).
+- Access: nothing recorded.
+
+**Check**
+
+- [ ] Find the door UW Go shows: ERC floor 1, south side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
+- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
+- [ ] From inside, try to leave the same way.
+- [ ] Is there a working automatic opener?
+- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
+- [ ] If hours are posted on the door, write them in the note.
+
+### 27. ML east doors
+
+`door:8ff2fa0c57074eb0` · door · ML · score 4.5 · evidence surveyed
+
+**Where**: 43.469037, -80.542561 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.469037,-80.542561)). Where the WATIsGrass survey puts this door (ML floor 2). Not checked on the ground.
+
+**Why it ranks here**
+
+- UW Go sends 18 trips through it instead of Google's walk (0.69% of weighted demand). Without it, those trips take 26 s longer on average.
+- Winter routes use it for 6 trips between buildings (0.19% of weighted demand). Without it, those trips are 17 s worse on average, counting each second outside 4 times.
+- Step-free routes use it for 6 trips (0.19% of weighted demand), and nothing routing relies on says whether it is step-free.
+- Trips to and from ML: 3.6% of weighted demand.
+- What UW Go believes rests on surveyed evidence.
+- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
+
+**What UW Go believes now**
+
+- Inwards: usable. Outwards: usable.
+- Evidence: surveyed (the survey alone).
+- Access: nothing recorded.
+
+**Check**
+
+- [ ] Find the door UW Go shows: ML floor 2, east side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
+- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
+- [ ] From inside, try to leave the same way.
+- [ ] Is there a working automatic opener?
+- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
+- [ ] If hours are posted on the door, write them in the note.
+
+### 28. CMH west doors
+
+`door:4caac7c88a4a743c` · door · CMH · score 4.3 · critical · evidence surveyed
+
+**Where**: 43.470354, -80.536299 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.470354,-80.536299)). Where the WATIsGrass survey puts this door (CMH floor 1). Not checked on the ground.
+
+**Why it ranks here**
+
+- UW Go sends 14 trips through it instead of Google's walk (0.32% of weighted demand). Without it, 14 of those trips would have no allowed way in, and would fall back to Google's walk with a warning.
+- Winter routes use it for 78 trips between buildings (2.9% of weighted demand). Without it, 78 of those trips would have no winter route.
+- Trips to and from CMH: 3.7% of weighted demand.
+- What UW Go believes rests on surveyed evidence.
+- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
+
+**What UW Go believes now**
+
+- Inwards: usable. Outwards: usable.
+- Evidence: surveyed (the survey alone).
+- Access: nothing recorded.
+
+**Check**
+
+- [ ] Find the door UW Go shows: CMH floor 1, west side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
+- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
+- [ ] From inside, try to leave the same way.
+- [ ] Is there a working automatic opener?
+- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
+- [ ] If hours are posted on the door, write them in the note.
+
 ### 29. Stairwell joining E2 and E3 (E2 1, E3 2, E2 2)
 
 `vertical:61b8f29cb99a70a0` · change of floor · E2 · score 4.3 · evidence surveyed
@@ -911,7 +913,7 @@ Nobody has checked it on the ground, and a decision UW Go makes today stands or 
 
 **Why it ranks here**
 
-- UW Go sends 6 trips through it instead of Google's walk (0.44% of weighted demand). Without it, they have an equally quick way.
+- UW Go sends 6 trips through it instead of Google's walk (0.44% of weighted demand). Without it, those trips take 63 s longer on average.
 - Winter routes use it for 186 trips between buildings (7.5% of weighted demand). Without it, those trips are 96 s worse on average, counting each second outside 4 times.
 - If a step-free way between these floors is confirmed here, 2 step-free trips with no route today would have one, and step-free routes would improve by 0.5 s on average over all weighted demand, counting each second outside 4 times.
 - Trips to and from E2 and E3: 10.9% of weighted demand.
@@ -939,7 +941,7 @@ Nobody has checked it on the ground, and a decision UW Go makes today stands or 
 
 **Why it ranks here**
 
-- UW Go sends 8 trips through it instead of Google's walk (0.38% of weighted demand). Without it, those trips take 28 s longer on average.
+- UW Go sends 10 trips through it instead of Google's walk (0.48% of weighted demand). Without it, those trips take 43 s longer on average.
 - Winter routes use it for 78 trips between buildings (3.6% of weighted demand). Without it, 78 of those trips would have no winter route.
 - Step-free routes use it for 2 trips (0.08% of weighted demand), and nothing routing relies on says whether it is step-free.
 - Trips to and from EV1: 4.2% of weighted demand.
@@ -961,15 +963,43 @@ Nobody has checked it on the ground, and a decision UW Go makes today stands or 
 - [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
 - [ ] If hours are posted on the door, write them in the note.
 
-### 31. Dana Porter main doors (toward AL)
+### 31. Stairwell in AL (floors B, 1, 2)
 
-`door:c70692c82956207c` · door · LIB · score 4.1 · critical · evidence corroborated
+`vertical:12c14d2258420396` · change of floor · AL · score 4.1 · evidence surveyed
+
+**Where**: 43.468825, -80.541934 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.468825,-80.541934)). Where the survey puts this stairwell. Not checked on the ground.
+
+**Why it ranks here**
+
+- UW Go sends 20 trips through it instead of Google's walk (0.81% of weighted demand). Without it, those trips take 39 s longer on average.
+- Winter routes use it for 24 trips between buildings (0.71% of weighted demand). Without it, those trips are 66 s worse on average, counting each second outside 4 times.
+- If a step-free way between these floors is confirmed here, step-free routes would improve by 2 s on average over all weighted demand, counting each second outside 4 times.
+- Trips to and from AL: 2.6% of weighted demand.
+- What UW Go believes rests on surveyed evidence.
+- The survey records a stairwell and nothing about an elevator or ramp, so a step-free route cannot change floor here until one is confirmed.
+
+**What UW Go believes now**
+
+- Surveyed as: stairs.
+- Step-free trips: cannot change floor here: nobody has confirmed a step-free way between these floors.
+
+**Check**
+
+- [ ] Find the stairwell UW Go shows, joining floors B, 1, 2 of AL.
+- [ ] Is there an elevator at it or within sight, serving these floors? Mark "Elevator" and write in the note the floors it stops at.
+- [ ] Can that elevator be used without a key, a card or calling for help? Mark "Accessible" if so, "Locked / restricted" if it needs a key.
+- [ ] Is there a ramp between any of these levels? Mark "Ramp".
+- [ ] If stairs are the only way, mark "Stairs".
+
+### 32. Dana Porter main doors (toward AL)
+
+`door:c70692c82956207c` · door · LIB · score 3.9 · critical · evidence corroborated
 
 **Where**: 43.469521, -80.542127 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.469521,-80.542127)). Where the WATIsGrass survey puts this door (LIB floor 2). Not checked on the ground.
 
 **Why it ranks here**
 
-- UW Go sends 16 trips through it instead of Google's walk (0.35% of weighted demand). Without it, 16 of those trips would have no allowed way in, and would fall back to Google's walk with a warning.
+- UW Go sends 10 trips through it instead of Google's walk (0.25% of weighted demand). Without it, 10 of those trips would have no allowed way in, and would fall back to Google's walk with a warning.
 - Winter routes use it for 78 trips between buildings (2.1% of weighted demand). Without it, 78 of those trips would have no winter route.
 - Step-free routes use it for 20 trips (0.45% of weighted demand), and nothing routing relies on says whether it is step-free.
 - Trips to and from LIB: 2.7% of weighted demand.
@@ -996,15 +1026,42 @@ Nobody has checked it on the ground, and a decision UW Go makes today stands or 
 
 **Sources**: B_LIB
 
-### 32. QNC south-west doors
+### 33. Stairwell in E2 (floors 1, 2, 3)
 
-`door:1f1ff0ecb703a9c0` · door · QNC · score 3.8 · evidence surveyed
+`vertical:1a0f48eee4b475a2` · change of floor · E2 · score 3 · evidence surveyed
+
+**Where**: 43.470901, -80.540234 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.470901,-80.540234)). Where the survey puts this stairwell. Not checked on the ground.
+
+**Why it ranks here**
+
+- UW Go sends 6 trips through it instead of Google's walk (0.44% of weighted demand). Without it, those trips take 63 s longer on average.
+- Winter routes use it for 230 trips between buildings (8.1% of weighted demand). Without it, those trips are 111 s worse on average, counting each second outside 4 times.
+- Trips to and from E2: 5.8% of weighted demand.
+- What UW Go believes rests on surveyed evidence.
+- The survey records a stairwell and nothing about an elevator or ramp, so a step-free route cannot change floor here until one is confirmed.
+
+**What UW Go believes now**
+
+- Surveyed as: stairs.
+- Step-free trips: cannot change floor here: nobody has confirmed a step-free way between these floors.
+
+**Check**
+
+- [ ] Find the stairwell UW Go shows, joining floors 1, 2, 3 of E2.
+- [ ] Is there an elevator at it or within sight, serving these floors? Mark "Elevator" and write in the note the floors it stops at.
+- [ ] Can that elevator be used without a key, a card or calling for help? Mark "Accessible" if so, "Locked / restricted" if it needs a key.
+- [ ] Is there a ramp between any of these levels? Mark "Ramp".
+- [ ] If stairs are the only way, mark "Stairs".
+
+### 34. QNC south-west doors
+
+`door:1f1ff0ecb703a9c0` · door · QNC · score 2.9 · evidence surveyed
 
 **Where**: 43.471137, -80.544488 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.471137,-80.544488)). Where the WATIsGrass survey puts this door (QNC floor 1). Not checked on the ground.
 
 **Why it ranks here**
 
-- UW Go sends 8 trips through it instead of Google's walk (0.55% of weighted demand). Without it, those trips take 85 s longer on average.
+- UW Go sends 4 trips through it instead of Google's walk (0.32% of weighted demand). Without it, those trips take 52 s longer on average.
 - Trips to and from QNC: 4.2% of weighted demand.
 - What UW Go believes rests on surveyed evidence.
 - Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
@@ -1024,123 +1081,9 @@ Nobody has checked it on the ground, and a decision UW Go makes today stands or 
 - [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
 - [ ] If hours are posted on the door, write them in the note.
 
-### 33. ML east doors
+### 35. Stairwell in BMH (floors 1, 2, 3)
 
-`door:8ff2fa0c57074eb0` · door · ML · score 3.7 · evidence surveyed
-
-**Where**: 43.469037, -80.542561 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.469037,-80.542561)). Where the WATIsGrass survey puts this door (ML floor 2). Not checked on the ground.
-
-**Why it ranks here**
-
-- UW Go sends 18 trips through it instead of Google's walk (0.60% of weighted demand). Without it, they have an equally quick way.
-- Winter routes use it for 6 trips between buildings (0.19% of weighted demand). Without it, those trips are 17 s worse on average, counting each second outside 4 times.
-- Step-free routes use it for 6 trips (0.19% of weighted demand), and nothing routing relies on says whether it is step-free.
-- Trips to and from ML: 3.6% of weighted demand.
-- What UW Go believes rests on surveyed evidence.
-- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
-
-**What UW Go believes now**
-
-- Inwards: usable. Outwards: usable.
-- Evidence: surveyed (the survey alone).
-- Access: nothing recorded.
-
-**Check**
-
-- [ ] Find the door UW Go shows: ML floor 2, east side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
-- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
-- [ ] From inside, try to leave the same way.
-- [ ] Is there a working automatic opener?
-- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
-- [ ] If hours are posted on the door, write them in the note.
-
-### 34. MC north-west doors
-
-`door:b85d2d2762ad5853` · door · MC · score 3.7 · evidence surveyed
-
-**Where**: 43.472262, -80.544372 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.472262,-80.544372)). Where the WATIsGrass survey puts this door (MC floor 2). Not checked on the ground.
-
-**Why it ranks here**
-
-- UW Go sends 4 trips through it instead of Google's walk (0.33% of weighted demand). Without it, those trips take 9 s longer on average.
-- Winter routes use it for 16 trips between buildings (0.66% of weighted demand). Without it, those trips are 7 s worse on average, counting each second outside 4 times.
-- Trips to and from MC: 7.3% of weighted demand.
-- What UW Go believes rests on surveyed evidence.
-- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
-
-**What UW Go believes now**
-
-- Inwards: usable. Outwards: usable.
-- Evidence: surveyed (the survey alone).
-- Access: nothing recorded.
-
-**Check**
-
-- [ ] Find the door UW Go shows: MC floor 2, north-west side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
-- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
-- [ ] From inside, try to leave the same way.
-- [ ] Is there a working automatic opener?
-- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
-- [ ] If hours are posted on the door, write them in the note.
-
-### 35. Stairwell in AL (floors B, 1, 2)
-
-`vertical:12c14d2258420396` · change of floor · AL · score 3.5 · evidence surveyed
-
-**Where**: 43.468825, -80.541934 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.468825,-80.541934)). Where the survey puts this stairwell. Not checked on the ground.
-
-**Why it ranks here**
-
-- UW Go sends 18 trips through it instead of Google's walk (0.70% of weighted demand). Without it, they have an equally quick way.
-- Winter routes use it for 24 trips between buildings (0.71% of weighted demand). Without it, those trips are 66 s worse on average, counting each second outside 4 times.
-- If a step-free way between these floors is confirmed here, step-free routes would improve by 2 s on average over all weighted demand, counting each second outside 4 times.
-- Trips to and from AL: 2.6% of weighted demand.
-- What UW Go believes rests on surveyed evidence.
-- The survey records a stairwell and nothing about an elevator or ramp, so a step-free route cannot change floor here until one is confirmed.
-
-**What UW Go believes now**
-
-- Surveyed as: stairs.
-- Step-free trips: cannot change floor here: nobody has confirmed a step-free way between these floors.
-
-**Check**
-
-- [ ] Find the stairwell UW Go shows, joining floors B, 1, 2 of AL.
-- [ ] Is there an elevator at it or within sight, serving these floors? Mark "Elevator" and write in the note the floors it stops at.
-- [ ] Can that elevator be used without a key, a card or calling for help? Mark "Accessible" if so, "Locked / restricted" if it needs a key.
-- [ ] Is there a ramp between any of these levels? Mark "Ramp".
-- [ ] If stairs are the only way, mark "Stairs".
-
-### 36. Stairwell in E2 (floors 1, 2, 3)
-
-`vertical:1a0f48eee4b475a2` · change of floor · E2 · score 3 · evidence surveyed
-
-**Where**: 43.470901, -80.540234 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.470901,-80.540234)). Where the survey puts this stairwell. Not checked on the ground.
-
-**Why it ranks here**
-
-- UW Go sends 6 trips through it instead of Google's walk (0.44% of weighted demand). Without it, they have an equally quick way.
-- Winter routes use it for 230 trips between buildings (8.1% of weighted demand). Without it, those trips are 111 s worse on average, counting each second outside 4 times.
-- Trips to and from E2: 5.8% of weighted demand.
-- What UW Go believes rests on surveyed evidence.
-- The survey records a stairwell and nothing about an elevator or ramp, so a step-free route cannot change floor here until one is confirmed.
-
-**What UW Go believes now**
-
-- Surveyed as: stairs.
-- Step-free trips: cannot change floor here: nobody has confirmed a step-free way between these floors.
-
-**Check**
-
-- [ ] Find the stairwell UW Go shows, joining floors 1, 2, 3 of E2.
-- [ ] Is there an elevator at it or within sight, serving these floors? Mark "Elevator" and write in the note the floors it stops at.
-- [ ] Can that elevator be used without a key, a card or calling for help? Mark "Accessible" if so, "Locked / restricted" if it needs a key.
-- [ ] Is there a ramp between any of these levels? Mark "Ramp".
-- [ ] If stairs are the only way, mark "Stairs".
-
-### 37. Stairwell in BMH (floors 1, 2, 3)
-
-`vertical:9407e940c7083614` · change of floor · BMH · score 2.1 · evidence surveyed
+`vertical:9407e940c7083614` · change of floor · BMH · score 2.2 · evidence surveyed
 
 **Where**: 43.473669, -80.545267 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.473669,-80.545267)). Where the survey puts this stairwell. Not checked on the ground.
 
@@ -1169,7 +1112,7 @@ Nobody has checked it on the ground, and a decision UW Go makes today stands or 
 
 Nobody has checked it on the ground, and UW Go sends students through it instead of Google's walk, much routing relies on it, or confirming it would open a step-free way or a shortcut; or it scores high on all of that together.
 
-### 38. DWE–RCH passage (through room 1501)
+### 36. DWE–RCH passage (through room 1501)
 
 `link:da37b9775d7d3903` · link · RCH · score 24.7 · evidence inferred
 
@@ -1202,7 +1145,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Sources**: B_DWE, B_RCH
 
-### 39. Stairwell in MC (floors 1, 2, 3, 4, 5, 6)
+### 37. Stairwell in MC (floors 1, 2, 3, 4, 5, 6)
 
 `vertical:0ad97840bf1e9f74` · change of floor · MC · score 22.4 · evidence surveyed
 
@@ -1229,7 +1172,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 - [ ] Is there a ramp between any of these levels? Mark "Ramp".
 - [ ] If stairs are the only way, mark "Stairs".
 
-### 40. MC–QNC bridge
+### 38. MC–QNC bridge
 
 `link:ff30b07ec3446542` · link · MC · score 18.9 · evidence corroborated
 
@@ -1237,7 +1180,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Why it ranks here**
 
-- UW Go sends 2 trips through it instead of Google's walk (0.16% of weighted demand). Without it, they have an equally quick way.
+- UW Go sends 2 trips through it instead of Google's walk (0.16% of weighted demand). Without it, those trips take 32 s longer on average.
 - Winter routes use it for 514 trips between buildings (20.6% of weighted demand). Without it, those trips are 124 s worse on average, counting each second outside 4 times.
 - Step-free routes use it for 20 trips (1.5% of weighted demand), and nothing routing relies on says whether it is step-free.
 - Trips to and from MC and QNC: 11.3% of weighted demand.
@@ -1263,7 +1206,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Sources**: B_MC, B_QNC
 
-### 41. SLC west doors
+### 39. SLC west doors
 
 `door:07284470cb96f524` · door · SLC · score 18.7 · evidence surveyed
 
@@ -1293,7 +1236,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 - [ ] If hours are posted on the door, write them in the note.
 - [ ] Time the walk from each SLC door to the PAC front desk, in both directions, and through SLC from west to east.
 
-### 42. Stairwell in SLC (floors B, 1, 2)
+### 40. Stairwell in SLC (floors B, 1, 2)
 
 `vertical:15ba72422bab90f6` · change of floor · SLC · score 17.4 · evidence surveyed
 
@@ -1320,7 +1263,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 - [ ] Is there a ramp between any of these levels? Mark "Ramp".
 - [ ] If stairs are the only way, mark "Stairs".
 
-### 43. SLC–MC bridge
+### 41. SLC–MC bridge
 
 `link:72119d6a85c7d4de` · link · SLC · score 16 · evidence corroborated
 
@@ -1328,7 +1271,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Why it ranks here**
 
-- UW Go sends 2 trips through it instead of Google's walk (0.37% of weighted demand). Without it, they have an equally quick way.
+- UW Go sends 2 trips through it instead of Google's walk (0.37% of weighted demand). Without it, those trips take 45 s longer on average.
 - Winter routes use it for 496 trips between buildings (22.0% of weighted demand). Without it, those trips are 102 s worse on average, counting each second outside 4 times.
 - Step-free routes use it for 12 trips (1.2% of weighted demand), and nothing routing relies on says whether it is step-free.
 - Trips to and from MC and SLC: 16.5% of weighted demand.
@@ -1354,15 +1297,15 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Sources**: B_MC
 
-### 44. DWE doors opposite Graduate House (level 2)
+### 42. DWE doors opposite Graduate House (level 2)
 
-`door:c1b543edb4c6c151` · door · DWE · score 15.6 · evidence corroborated
+`door:c1b543edb4c6c151` · door · DWE · score 15.8 · evidence corroborated
 
 **Where**: 43.469798, -80.540495 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.469798,-80.540495)). Where the WATIsGrass survey puts this door (DWE floor 2). Not checked on the ground.
 
 **Why it ranks here**
 
-- UW Go sends 63 trips through it instead of Google's walk (3.3% of weighted demand). Without it, those trips take 123 s longer on average.
+- UW Go sends 53 trips through it instead of Google's walk (2.9% of weighted demand). Without it, those trips take 115 s longer on average.
 - Winter routes use it for 254 trips between buildings (8.1% of weighted demand). Without it, those trips are 227 s worse on average, counting each second outside 4 times.
 - Step-free routes use it for 20 trips (0.78% of weighted demand), and nothing routing relies on says whether it is step-free.
 - Trips to and from DWE: 5.0% of weighted demand.
@@ -1389,7 +1332,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Sources**: B_DWE
 
-### 45. QNC–B2 bridge
+### 43. QNC–B2 bridge
 
 `link:13fd3acf39764473` · link · QNC · score 14.1 · evidence corroborated
 
@@ -1397,7 +1340,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Why it ranks here**
 
-- UW Go sends 8 trips through it instead of Google's walk (0.28% of weighted demand). Without it, those trips take 14 s longer on average.
+- UW Go sends 8 trips through it instead of Google's walk (0.28% of weighted demand). Without it, those trips take 62 s longer on average.
 - Winter routes use it for 540 trips between buildings (21.2% of weighted demand). Without it, those trips are 129 s worse on average, counting each second outside 4 times.
 - Step-free routes use it for 24 trips (1.4% of weighted demand), and nothing routing relies on says whether it is step-free.
 - Trips to and from B2 and QNC: 6.4% of weighted demand.
@@ -1422,7 +1365,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Sources**: B_QNC, B_B2
 
-### 46. MC opening hours
+### 44. MC opening hours
 
 `hours:MC` · hours · MC · score 13 · evidence inferred
 
@@ -1446,7 +1389,35 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 - [ ] Note any exam-period, summer or holiday exceptions that are posted.
 - [ ] What are the opening hours of the buildings shortcuts and winter routes pass through (C2, B1, B2, ESC, EIT, PHY, E2, E3, QNC, MC, STC, AL, ML, EV1, EV2)?
 
-### 47. Stairwell joining STC and B2 (STC B1, STC B2, STC 1, B2 2, STC 2, STC 3, STC 4, STC 5)
+### 45. Stairwell in MC (floors 1, 2, 3)
+
+`vertical:6f794428566a403c` · change of floor · MC · score 12.9 · evidence surveyed
+
+**Where**: 43.472294, -80.544291 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.472294,-80.544291)). Where the survey puts this stairwell. Not checked on the ground.
+
+**Why it ranks here**
+
+- UW Go sends 3 trips through it instead of Google's walk (0.26% of weighted demand). Without it, those trips take 7 s longer on average.
+- Winter routes use it for 16 trips between buildings (0.66% of weighted demand). Without it, those trips are 7 s worse on average, counting each second outside 4 times.
+- If a step-free way between these floors is confirmed here, 90 step-free trips with no route today would have one, and step-free routes would improve by 9 s on average over all weighted demand, counting each second outside 4 times.
+- Trips to and from MC: 7.3% of weighted demand.
+- What UW Go believes rests on surveyed evidence.
+- The survey records a stairwell and nothing about an elevator or ramp, so a step-free route cannot change floor here until one is confirmed.
+
+**What UW Go believes now**
+
+- Surveyed as: stairs.
+- Step-free trips: cannot change floor here: nobody has confirmed a step-free way between these floors.
+
+**Check**
+
+- [ ] Find the stairwell UW Go shows, joining floors 1, 2, 3 of MC.
+- [ ] Is there an elevator at it or within sight, serving these floors? Mark "Elevator" and write in the note the floors it stops at.
+- [ ] Can that elevator be used without a key, a card or calling for help? Mark "Accessible" if so, "Locked / restricted" if it needs a key.
+- [ ] Is there a ramp between any of these levels? Mark "Ramp".
+- [ ] If stairs are the only way, mark "Stairs".
+
+### 46. Stairwell joining STC and B2 (STC B1, STC B2, STC 1, B2 2, STC 2, STC 3, STC 4, STC 5)
 
 `vertical:023ac13275aaef96` · change of floor · STC · score 12.6 · evidence surveyed
 
@@ -1454,7 +1425,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Why it ranks here**
 
-- UW Go sends 8 trips through it instead of Google's walk (0.27% of weighted demand). Without it, those trips take 10 s longer on average.
+- UW Go sends 8 trips through it instead of Google's walk (0.27% of weighted demand). Without it, those trips take 58 s longer on average.
 - Winter routes use it for 380 trips between buildings (14.1% of weighted demand). Without it, those trips are 465 s worse on average, counting each second outside 4 times.
 - If a step-free way between these floors is confirmed here, 28 step-free trips with no route today would have one, and step-free routes would improve by 4 s on average over all weighted demand, counting each second outside 4 times.
 - Trips to and from B2 and STC: 6.5% of weighted demand.
@@ -1474,7 +1445,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 - [ ] Is there a ramp between any of these levels? Mark "Ramp".
 - [ ] If stairs are the only way, mark "Stairs".
 
-### 48. B1–B2 corridor (floor 2)
+### 47. B1–B2 corridor (floor 2)
 
 `link:fb3ea7dae21f102e` · link · B1 · score 11.4 · evidence corroborated
 
@@ -1482,7 +1453,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Why it ranks here**
 
-- UW Go sends 6 trips through it instead of Google's walk (0.14% of weighted demand). Without it, those trips take 34 s longer on average.
+- UW Go sends 6 trips through it instead of Google's walk (0.14% of weighted demand). Without it, those trips take 47 s longer on average.
 - Winter routes use it for 430 trips between buildings (16.9% of weighted demand). Without it, those trips are 113 s worse on average, counting each second outside 4 times.
 - Step-free routes use it for 24 trips (1.3% of weighted demand), and nothing routing relies on says whether it is step-free.
 - Trips to and from B1 and B2: 5.0% of weighted demand.
@@ -1508,7 +1479,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Sources**: B_B1, B_B2
 
-### 49. Stairwell joining ESC and EIT (ESC 1, ESC 2, EIT 3, ESC 3)
+### 48. Stairwell joining ESC and EIT (ESC 1, ESC 2, EIT 3, ESC 3)
 
 `vertical:05fce6c296d28d86` · change of floor · ESC · score 11.3 · evidence surveyed
 
@@ -1535,7 +1506,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 - [ ] Is there a ramp between any of these levels? Mark "Ramp".
 - [ ] If stairs are the only way, mark "Stairs".
 
-### 50. B1–ESC corridor (floor 2)
+### 49. B1–ESC corridor (floor 2)
 
 `link:9d96d5632d4c0b47` · link · B1 · score 11.1 · evidence corroborated
 
@@ -1569,7 +1540,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Sources**: B_B1, B_ESC
 
-### 51. STC–NH link
+### 50. STC–NH link
 
 `link:4522007ba4210597` · link · STC · score 9.2 · evidence corroborated
 
@@ -1577,7 +1548,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Why it ranks here**
 
-- UW Go sends 6 trips through it instead of Google's walk (0.21% of weighted demand). Without it, they have an equally quick way.
+- UW Go sends 6 trips through it instead of Google's walk (0.21% of weighted demand). Without it, those trips take 65 s longer on average.
 - Winter routes use it for 342 trips between buildings (12.2% of weighted demand). Without it, those trips are 349 s worse on average, counting each second outside 4 times.
 - Step-free routes use it for 2 trips (0.08% of weighted demand), and nothing routing relies on says whether it is step-free.
 - Trips to and from NH and STC: 8.1% of weighted demand.
@@ -1602,6 +1573,39 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 **Research**: C05 (official): STC–NH, interior: Official connection; anecdotal after-hours locking; NH landing unverified. (candidate, medium confidence)
 
 **Sources**: B_STC
+
+### 51. ML–EV1 tunnel
+
+`link:cb6a5cbb57270d97` · link · ML · score 9.1 · evidence corroborated
+
+**Where**: 43.468666, -80.542391 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.468666,-80.542391)). Where the survey draws this tunnel: ML floor 1 to EV1 floor 1. Not checked on the ground.
+
+**Why it ranks here**
+
+- UW Go sends 35 trips through it instead of Google's walk (1.6% of weighted demand). Without it, those trips take 38 s longer on average.
+- Winter routes use it for 200 trips between buildings (7.0% of weighted demand). Without it, those trips are 67 s worse on average, counting each second outside 4 times.
+- Step-free routes use it for 24 trips (0.67% of weighted demand), and nothing routing relies on says whether it is step-free.
+- Trips to and from EV1 and ML: 7.7% of weighted demand.
+- What UW Go believes rests on corroborated evidence.
+- Matched to the research by UW Go and never seen on the ground: Both pages describe the ML–EV1 tunnel; the survey draws it. Door automation and level changes along it are not described.
+
+**What UW Go believes now**
+
+- ML → EV1: usable. EV1 → ML: usable.
+- Evidence: corroborated.
+- Access: nothing recorded.
+
+**Check**
+
+- [ ] Walk it from ML (floor 1) to EV1 (floor 1). Is it where UW Go shows it? If it lands on a different floor at either end, say which in the note.
+- [ ] Can you go ML → EV1 without a card or key, and without passing through a room? And EV1 → ML?
+- [ ] Any steps along it, a ramp, or an elevator you would need instead?
+- [ ] Doors on the way: automatic, or heavy manual ones?
+- [ ] Any posted hours or signs (locked after hours, staff only)? Write them in the note.
+
+**Research**: C18 (official): ML–EV1, tunnel: Secondary to exterior-route project; door automation and level transitions need survey. (candidate, medium confidence)
+
+**Sources**: B_ML, B_EV1
 
 ### 52. Stairwell in C2 (floors B, 1, 2, 3)
 
@@ -1630,40 +1634,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 - [ ] Is there a ramp between any of these levels? Mark "Ramp".
 - [ ] If stairs are the only way, mark "Stairs".
 
-### 53. ML–EV1 tunnel
-
-`link:cb6a5cbb57270d97` · link · ML · score 7.8 · evidence corroborated
-
-**Where**: 43.468666, -80.542391 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.468666,-80.542391)). Where the survey draws this tunnel: ML floor 1 to EV1 floor 1. Not checked on the ground.
-
-**Why it ranks here**
-
-- UW Go sends 33 trips through it instead of Google's walk (1.6% of weighted demand). Without it, they have an equally quick way.
-- Winter routes use it for 200 trips between buildings (7.0% of weighted demand). Without it, those trips are 67 s worse on average, counting each second outside 4 times.
-- Step-free routes use it for 24 trips (0.67% of weighted demand), and nothing routing relies on says whether it is step-free.
-- Trips to and from EV1 and ML: 7.7% of weighted demand.
-- What UW Go believes rests on corroborated evidence.
-- Matched to the research by UW Go and never seen on the ground: Both pages describe the ML–EV1 tunnel; the survey draws it. Door automation and level changes along it are not described.
-
-**What UW Go believes now**
-
-- ML → EV1: usable. EV1 → ML: usable.
-- Evidence: corroborated.
-- Access: nothing recorded.
-
-**Check**
-
-- [ ] Walk it from ML (floor 1) to EV1 (floor 1). Is it where UW Go shows it? If it lands on a different floor at either end, say which in the note.
-- [ ] Can you go ML → EV1 without a card or key, and without passing through a room? And EV1 → ML?
-- [ ] Any steps along it, a ramp, or an elevator you would need instead?
-- [ ] Doors on the way: automatic, or heavy manual ones?
-- [ ] Any posted hours or signs (locked after hours, staff only)? Write them in the note.
-
-**Research**: C18 (official): ML–EV1, tunnel: Secondary to exterior-route project; door automation and level transitions need survey. (candidate, medium confidence)
-
-**Sources**: B_ML, B_EV1
-
-### 54. M3 main doors (toward MC)
+### 53. M3 main doors (toward MC)
 
 `door:e40e935800145264` · door · M3 · score 7.6 · evidence corroborated
 
@@ -1671,7 +1642,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Why it ranks here**
 
-- UW Go sends 28 trips through it instead of Google's walk (0.85% of weighted demand). Without it, those trips take 49 s longer on average.
+- UW Go sends 4 trips through it instead of Google's walk (0.18% of weighted demand). Without it, those trips take 55 s longer on average.
 - Winter routes use it for 152 trips between buildings (4.3% of weighted demand). Without it, 152 of those trips would have no winter route.
 - Step-free routes use it for 36 trips (1.2% of weighted demand), and nothing routing relies on says whether it is step-free.
 - Trips to and from M3: 3.4% of weighted demand.
@@ -1698,7 +1669,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Sources**: B_M3
 
-### 55. BMH–EXP corridor (floor 1)
+### 54. BMH–EXP corridor (floor 1)
 
 `link:610dbb31c72ddf95` · link · EXP · score 7.5 · evidence corroborated
 
@@ -1706,7 +1677,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Why it ranks here**
 
-- UW Go sends 10 trips through it instead of Google's walk (0.25% of weighted demand). Without it, those trips take 3 s longer on average.
+- UW Go sends 10 trips through it instead of Google's walk (0.25% of weighted demand). Without it, those trips take 5 s longer on average.
 - Winter routes use it for 148 trips between buildings (4.1% of weighted demand). Without it, those trips are 89 s worse on average, counting each second outside 4 times.
 - Step-free routes use it for 30 trips (1.1% of weighted demand), and nothing routing relies on says whether it is step-free.
 - Trips to and from BMH and EXP: 7.0% of weighted demand.
@@ -1731,7 +1702,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Sources**: B_BMH, B_EXP
 
-### 56. Tunnel between C2 and MC
+### 55. Tunnel between C2 and MC
 
 `link:8eb27356d9f8db92` · link · C2 · score 7.3 · evidence surveyed
 
@@ -1739,7 +1710,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Why it ranks here**
 
-- UW Go sends 2 trips through it instead of Google's walk (0.14% of weighted demand). Without it, those trips take 11 s longer on average.
+- UW Go sends 2 trips through it instead of Google's walk (0.14% of weighted demand). Without it, those trips take 19 s longer on average.
 - Winter routes use it for 132 trips between buildings (7.2% of weighted demand). Without it, those trips are 109 s worse on average, counting each second outside 4 times.
 - Trips to and from C2 and MC: 10.8% of weighted demand.
 - What UW Go believes rests on surveyed evidence.
@@ -1759,7 +1730,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 - [ ] Doors on the way: automatic, or heavy manual ones?
 - [ ] Any posted hours or signs (locked after hours, staff only)? Write them in the note.
 
-### 57. C2–DC ramped bridge
+### 56. C2–DC ramped bridge
 
 `link:a44a17d375f3a137` · link · DC · score 7.1 · evidence corroborated
 
@@ -1792,7 +1763,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Sources**: B_C2, B_DC
 
-### 58. Stairwell joining EIT and PHY (EIT 2, PHY 2, EIT 3, PHY 3)
+### 57. Stairwell joining EIT and PHY (EIT 2, PHY 2, EIT 3, PHY 3)
 
 `vertical:01fd0ebc02c01670` · change of floor · EIT · score 6.3 · evidence surveyed
 
@@ -1800,7 +1771,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Why it ranks here**
 
-- UW Go sends 2 trips through it instead of Google's walk (0.12% of weighted demand). Without it, they have an equally quick way.
+- UW Go sends 2 trips through it instead of Google's walk (0.12% of weighted demand). Without it, those trips take 19 s longer on average.
 - Winter routes use it for 278 trips between buildings (11.5% of weighted demand). Without it, those trips are 78 s worse on average, counting each second outside 4 times.
 - If a step-free way between these floors is confirmed here, 8 step-free trips with no route today would have one, and step-free routes would improve by 2 s on average over all weighted demand, counting each second outside 4 times.
 - Trips to and from EIT and PHY: 9.5% of weighted demand.
@@ -1820,7 +1791,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 - [ ] Is there a ramp between any of these levels? Mark "Ramp".
 - [ ] If stairs are the only way, mark "Stairs".
 
-### 59. EIT–ESC link
+### 58. EIT–ESC link
 
 `link:e525e7be720411da` · link · EIT · score 5.2 · evidence surveyed
 
@@ -1828,7 +1799,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Why it ranks here**
 
-- UW Go sends 2 trips through it instead of Google's walk (0.10% of weighted demand). Without it, those trips take 19 s longer on average.
+- UW Go sends 2 trips through it instead of Google's walk (0.10% of weighted demand). Without it, those trips take 33 s longer on average.
 - Winter routes use it for 28 trips between buildings (1.1% of weighted demand). Without it, those trips are 27 s worse on average, counting each second outside 4 times.
 - Step-free routes use it for 4 trips (0.32% of weighted demand), and nothing routing relies on says whether it is step-free.
 - Trips to and from EIT and ESC: 8.8% of weighted demand.
@@ -1849,40 +1820,37 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 - [ ] Doors on the way: automatic, or heavy manual ones?
 - [ ] Any posted hours or signs (locked after hours, staff only)? Write them in the note.
 
-### 60. HH main doors (toward AL)
+### 59. M3 west doors
 
-`door:ba963550df7cfd34` · door · HH · score 4.8 · evidence corroborated
+`door:07600104d7b28420` · door · M3 · score 4.5 · evidence surveyed
 
-**Where**: 43.468204, -80.541793 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.468204,-80.541793)). Where the WATIsGrass survey puts this door (HH floor 1). Not checked on the ground.
+**Where**: 43.473297, -80.544394 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.473297,-80.544394)). Where the WATIsGrass survey puts this door (M3 floor 1). Not checked on the ground.
 
 **Why it ranks here**
 
-- UW Go sends 55 trips through it instead of Google's walk (1.5% of weighted demand). Without it, those trips take 38 s longer on average.
-- Trips to and from HH: 2.8% of weighted demand.
-- What UW Go believes rests on corroborated evidence.
-- Matched to the research by UW Go and never seen on the ground: The catalogue lists the main and theatre vestibule toward AL; the survey's only HH door faces north toward AL.
+- UW Go sends 2 trips through it instead of Google's walk (0.04% of weighted demand). Without it, those trips take 23 s longer on average.
+- Winter routes use it for 78 trips between buildings (1.8% of weighted demand). Without it, 78 of those trips would have no winter route.
+- Step-free routes use it for 20 trips (0.52% of weighted demand), and nothing routing relies on says whether it is step-free.
+- Trips to and from M3: 3.4% of weighted demand.
+- What UW Go believes rests on surveyed evidence.
+- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
 
 **What UW Go believes now**
 
 - Inwards: usable. Outwards: usable.
-- Evidence: corroborated.
-- Access: automatic door.
+- Evidence: surveyed (the survey alone).
+- Access: nothing recorded.
 
 **Check**
 
-- [ ] Find the door UW Go shows: HH floor 1, north side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
-- [ ] Is this what the research calls "Toward AL, main/theatre vestibule"?
+- [ ] Find the door UW Go shows: M3 floor 1, west side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
 - [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
 - [ ] From inside, try to leave the same way.
 - [ ] Is there a working automatic opener?
 - [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
 - [ ] If hours are posted on the door, write them in the note.
 
-**Research**: HH-P01 (official): "Toward AL, main/theatre vestibule" (entry: documented_entrance_conditions_incomplete; exit: unknown; medium confidence)
-
-**Sources**: B_HH
-
-### 61. E5–PSE link
+### 60. E5–PSE link
 
 `link:7cee9b396acdf43d` · link · E5 · score 4.4 · evidence surveyed
 
@@ -1890,7 +1858,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Why it ranks here**
 
-- UW Go sends 4 trips through it instead of Google's walk (0.06% of weighted demand). Without it, those trips take 51 s longer on average.
+- UW Go sends 4 trips through it instead of Google's walk (0.06% of weighted demand). Without it, those trips take 59 s longer on average.
 - Winter routes use it for 152 trips between buildings (3.4% of weighted demand). Without it, 152 of those trips would have no winter route.
 - Step-free routes use it for 4 trips (0.06% of weighted demand), and nothing routing relies on says whether it is step-free.
 - Trips to and from E5 and PSE: 5.3% of weighted demand.
@@ -1911,15 +1879,15 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 - [ ] Doors on the way: automatic, or heavy manual ones?
 - [ ] Any posted hours or signs (locked after hours, staff only)? Write them in the note.
 
-### 62. E3 doors toward DC
+### 61. E3 doors toward DC
 
-`door:7c324963bd35bf8f` · door · E3 · score 4.3 · evidence corroborated
+`door:7c324963bd35bf8f` · door · E3 · score 4 · evidence corroborated
 
 **Where**: 43.472123, -80.541173 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.472123,-80.541173)). Where the WATIsGrass survey puts this door (E3 floor 2). Not checked on the ground.
 
 **Why it ranks here**
 
-- UW Go sends 19 trips through it instead of Google's walk (1.1% of weighted demand). Without it, those trips take 37 s longer on average.
+- UW Go sends 15 trips through it instead of Google's walk (0.78% of weighted demand). Without it, those trips take 60 s longer on average.
 - Trips to and from E3: 5.3% of weighted demand.
 - What UW Go believes rests on corroborated evidence.
 - Matched to the research by UW Go and never seen on the ground: The catalogue lists an entrance toward DC; the survey's only E3 door faces north-west toward DC.
@@ -1944,37 +1912,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Sources**: B_E3
 
-### 63. RCH west doors
-
-`door:8de488af0c73895b` · door · RCH · score 4 · evidence surveyed
-
-**Where**: 43.470248, -80.541076 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.470248,-80.541076)). Where the WATIsGrass survey puts this door (RCH floor 3). Not checked on the ground.
-
-**Why it ranks here**
-
-- UW Go sends 2 trips through it instead of Google's walk (0.04% of weighted demand). Without it, those trips take 147 s longer on average.
-- Winter routes use it for 4 trips between buildings (0.09% of weighted demand). Without it, those trips are 57 s worse on average, counting each second outside 4 times.
-- Step-free routes use it for 20 trips (0.47% of weighted demand), and nothing routing relies on says whether it is step-free.
-- Trips to and from RCH: 2.9% of weighted demand.
-- What UW Go believes rests on surveyed evidence.
-- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
-
-**What UW Go believes now**
-
-- Inwards: usable. Outwards: usable.
-- Evidence: surveyed (the survey alone).
-- Access: nothing recorded.
-
-**Check**
-
-- [ ] Find the door UW Go shows: RCH floor 3, west side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
-- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
-- [ ] From inside, try to leave the same way.
-- [ ] Is there a working automatic opener?
-- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
-- [ ] If hours are posted on the door, write them in the note.
-
-### 64. DWE north-east doors
+### 62. DWE north-east doors
 
 `door:de86feecce886d00` · door · DWE · score 3.8 · evidence surveyed
 
@@ -1982,7 +1920,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Why it ranks here**
 
-- UW Go sends 4 trips through it instead of Google's walk (0.23% of weighted demand). Without it, they have an equally quick way.
+- UW Go sends 4 trips through it instead of Google's walk (0.23% of weighted demand). Without it, those trips take 27 s longer on average.
 - Winter routes use it for 78 trips between buildings (2.9% of weighted demand). Without it, 78 of those trips would have no winter route.
 - Trips to and from DWE: 5.0% of weighted demand.
 - What UW Go believes rests on surveyed evidence.
@@ -2003,7 +1941,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 - [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
 - [ ] If hours are posted on the door, write them in the note.
 
-### 65. Tunnel between AL and ML
+### 63. Tunnel between AL and ML
 
 `link:305f1d9cc843f330` · link · AL · score 3.7 · evidence surveyed
 
@@ -2011,7 +1949,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Why it ranks here**
 
-- UW Go sends 2 trips through it instead of Google's walk (0.05% of weighted demand). Without it, they have an equally quick way.
+- UW Go sends 2 trips through it instead of Google's walk (0.05% of weighted demand). Without it, those trips take 20 s longer on average.
 - Winter routes use it for 64 trips between buildings (1.8% of weighted demand). Without it, those trips are 32 s worse on average, counting each second outside 4 times.
 - Step-free routes use it for 8 trips (0.23% of weighted demand), and nothing routing relies on says whether it is step-free.
 - Trips to and from AL and ML: 6.1% of weighted demand.
@@ -2032,40 +1970,36 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 - [ ] Doors on the way: automatic, or heavy manual ones?
 - [ ] Any posted hours or signs (locked after hours, staff only)? Write them in the note.
 
-### 66. EIT north doors (toward DC)
+### 64. MC north-west doors
 
-`door:289e514204e906de` · door · EIT · score 3.4 · evidence corroborated
+`door:b85d2d2762ad5853` · door · MC · score 3.5 · evidence surveyed
 
-**Where**: 43.471786, -80.542173 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.471786,-80.542173)). Where the WATIsGrass survey puts this door (EIT floor 1). Not checked on the ground.
+**Where**: 43.472262, -80.544372 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.472262,-80.544372)). Where the WATIsGrass survey puts this door (MC floor 2). Not checked on the ground.
 
 **Why it ranks here**
 
-- UW Go sends 12 trips through it instead of Google's walk (0.62% of weighted demand). Without it, those trips take 105 s longer on average.
-- Trips to and from EIT: 4.8% of weighted demand.
-- What UW Go believes rests on corroborated evidence.
-- Matched to the research by UW Go and never seen on the ground: The catalogue lists a north entrance toward DC; the survey's only EIT door faces north.
+- UW Go sends 3 trips through it instead of Google's walk (0.26% of weighted demand). Without it, those trips take 7 s longer on average.
+- Winter routes use it for 16 trips between buildings (0.66% of weighted demand). Without it, those trips are 7 s worse on average, counting each second outside 4 times.
+- Trips to and from MC: 7.3% of weighted demand.
+- What UW Go believes rests on surveyed evidence.
+- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
 
 **What UW Go believes now**
 
 - Inwards: usable. Outwards: usable.
-- Evidence: corroborated.
+- Evidence: surveyed (the survey alone).
 - Access: nothing recorded.
 
 **Check**
 
-- [ ] Find the door UW Go shows: EIT floor 1, north side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
-- [ ] Is this what the research calls "North, toward DC"?
+- [ ] Find the door UW Go shows: MC floor 2, north-west side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
 - [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
 - [ ] From inside, try to leave the same way.
 - [ ] Is there a working automatic opener?
 - [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
 - [ ] If hours are posted on the door, write them in the note.
 
-**Research**: EIT-P03 (official): "North, toward DC" (entry: documented_entrance_conditions_incomplete; exit: unknown; medium confidence)
-
-**Sources**: B_EIT
-
-### 67. Stairwell in MC (floors B, 1)
+### 65. Stairwell in MC (floors B, 1)
 
 `vertical:77a61af267b24056` · change of floor · MC · score 3.4 · evidence surveyed
 
@@ -2073,7 +2007,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Why it ranks here**
 
-- UW Go sends 2 trips through it instead of Google's walk (0.14% of weighted demand). Without it, those trips take 11 s longer on average.
+- UW Go sends 2 trips through it instead of Google's walk (0.14% of weighted demand). Without it, those trips take 19 s longer on average.
 - Winter routes use it for 132 trips between buildings (7.2% of weighted demand). Without it, those trips are 109 s worse on average, counting each second outside 4 times.
 - If a step-free way between these floors is confirmed here, step-free routes would improve by 0.3 s on average over all weighted demand, counting each second outside 4 times.
 - Trips to and from MC: 7.3% of weighted demand.
@@ -2093,80 +2027,15 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 - [ ] Is there a ramp between any of these levels? Mark "Ramp".
 - [ ] If stairs are the only way, mark "Stairs".
 
-### 68. EV1–EV2 link (floor 2)
+### 66. AL north doors (toward Dana Porter)
 
-`link:74685e0411c0f4e8` · link · EV1 · score 3 · evidence corroborated
-
-**Where**: 43.468030, -80.542876 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.468030,-80.542876)). Where the survey draws this door: EV1 floor 2 to EV2 floor 2. Not checked on the ground.
-
-**Why it ranks here**
-
-- UW Go sends 4 trips through it instead of Google's walk (0.12% of weighted demand). Without it, those trips take 12 s longer on average.
-- Winter routes use it for 76 trips between buildings (2.7% of weighted demand). Without it, those trips are 14 s worse on average, counting each second outside 4 times.
-- Step-free routes use it for 2 trips (0.08% of weighted demand), and nothing routing relies on says whether it is step-free.
-- Trips to and from EV1 and EV2: 7.6% of weighted demand.
-- What UW Go believes rests on corroborated evidence.
-- Matched to the research by UW Go and never seen on the ground: Both pages describe the EV1–EV2 connection; the survey draws it on floors 1 and 2.
-
-**What UW Go believes now**
-
-- EV1 → EV2: usable. EV2 → EV1: usable.
-- Evidence: corroborated.
-- Access: nothing recorded.
-
-**Check**
-
-- [ ] Walk it from EV1 (floor 2) to EV2 (floor 2). Is it where UW Go shows it? If it lands on a different floor at either end, say which in the note.
-- [ ] Can you go EV1 → EV2 without a card or key, and without passing through a room? And EV2 → EV1?
-- [ ] Any steps along it, a ramp, or an elevator you would need instead?
-- [ ] Doors on the way: automatic, or heavy manual ones?
-- [ ] Any posted hours or signs (locked after hours, staff only)? Write them in the note.
-
-**Research**: C17 (official): EV2–EV1, interior: Documented connection and indirect accessible entrance strategy. (candidate, medium confidence)
-
-**Sources**: B_EV2, B_EV1
-
-### 69. EV1–HH tunnel
-
-`link:fc8df53f6b2f3f8b` · link · EV1 · score 3 · evidence corroborated
-
-**Where**: 43.468119, -80.542001 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.468119,-80.542001)). Where the survey draws this tunnel: EV1 floor 1 to HH floor 1. Not checked on the ground.
-
-**Why it ranks here**
-
-- UW Go sends 4 trips through it instead of Google's walk (0.11% of weighted demand). Without it, those trips take 7 s longer on average.
-- Winter routes use it for 78 trips between buildings (2.2% of weighted demand). Without it, 78 of those trips would have no winter route.
-- Trips to and from EV1 and HH: 6.9% of weighted demand.
-- What UW Go believes rests on corroborated evidence.
-- Matched to the research by UW Go and never seen on the ground: HH's page describes the basement link to EV1 and the survey draws it. The research records it as not step-free: community reports describe stairs, and ML's page says the tunnels toward HH involve stairs.
-
-**What UW Go believes now**
-
-- EV1 → HH: usable. HH → EV1: usable.
-- Evidence: corroborated.
-- Access: not step-free.
-
-**Check**
-
-- [ ] Walk it from EV1 (floor 1) to HH (floor 1). Is it where UW Go shows it? If it lands on a different floor at either end, say which in the note.
-- [ ] Can you go EV1 → HH without a card or key, and without passing through a room? And HH → EV1?
-- [ ] Any steps along it, a ramp, or an elevator you would need instead?
-- [ ] Doors on the way: automatic, or heavy manual ones?
-- [ ] Any posted hours or signs (locked after hours, staff only)? Write them in the note.
-
-**Research**: C19 (official): EV1–HH, tunnel: Community describes stairs; do not use for step-free routing. (candidate, medium confidence)
-
-**Sources**: B_HH, R_MAP23
-
-### 70. AL north doors (toward Dana Porter)
-
-`door:8d097a89e6b7b905` · door · AL · score 2.3 · evidence corroborated
+`door:8d097a89e6b7b905` · door · AL · score 3.1 · evidence corroborated
 
 **Where**: 43.469010, -80.541925 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.469010,-80.541925)). Where the WATIsGrass survey puts this door (AL floor 1). Not checked on the ground.
 
 **Why it ranks here**
 
-- UW Go sends 18 trips through it instead of Google's walk (0.70% of weighted demand). Without it, they have an equally quick way.
+- UW Go sends 20 trips through it instead of Google's walk (0.81% of weighted demand). Without it, those trips take 39 s longer on average.
 - Winter routes use it for 30 trips between buildings (0.87% of weighted demand). Without it, those trips are 65 s worse on average, counting each second outside 4 times.
 - Step-free routes use it for 6 trips (0.14% of weighted demand).
 - Trips to and from AL: 2.6% of weighted demand.
@@ -2193,6 +2062,137 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Sources**: B_AL
 
+### 67. EV1–EV2 link (floor 2)
+
+`link:74685e0411c0f4e8` · link · EV1 · score 3 · evidence corroborated
+
+**Where**: 43.468030, -80.542876 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.468030,-80.542876)). Where the survey draws this door: EV1 floor 2 to EV2 floor 2. Not checked on the ground.
+
+**Why it ranks here**
+
+- UW Go sends 4 trips through it instead of Google's walk (0.12% of weighted demand). Without it, those trips take 13 s longer on average.
+- Winter routes use it for 76 trips between buildings (2.7% of weighted demand). Without it, those trips are 14 s worse on average, counting each second outside 4 times.
+- Step-free routes use it for 2 trips (0.08% of weighted demand), and nothing routing relies on says whether it is step-free.
+- Trips to and from EV1 and EV2: 7.6% of weighted demand.
+- What UW Go believes rests on corroborated evidence.
+- Matched to the research by UW Go and never seen on the ground: Both pages describe the EV1–EV2 connection; the survey draws it on floors 1 and 2.
+
+**What UW Go believes now**
+
+- EV1 → EV2: usable. EV2 → EV1: usable.
+- Evidence: corroborated.
+- Access: nothing recorded.
+
+**Check**
+
+- [ ] Walk it from EV1 (floor 2) to EV2 (floor 2). Is it where UW Go shows it? If it lands on a different floor at either end, say which in the note.
+- [ ] Can you go EV1 → EV2 without a card or key, and without passing through a room? And EV2 → EV1?
+- [ ] Any steps along it, a ramp, or an elevator you would need instead?
+- [ ] Doors on the way: automatic, or heavy manual ones?
+- [ ] Any posted hours or signs (locked after hours, staff only)? Write them in the note.
+
+**Research**: C17 (official): EV2–EV1, interior: Documented connection and indirect accessible entrance strategy. (candidate, medium confidence)
+
+**Sources**: B_EV2, B_EV1
+
+### 68. EV1–HH tunnel
+
+`link:fc8df53f6b2f3f8b` · link · EV1 · score 3 · evidence corroborated
+
+**Where**: 43.468119, -80.542001 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.468119,-80.542001)). Where the survey draws this tunnel: EV1 floor 1 to HH floor 1. Not checked on the ground.
+
+**Why it ranks here**
+
+- UW Go sends 4 trips through it instead of Google's walk (0.11% of weighted demand). Without it, those trips take 46 s longer on average.
+- Winter routes use it for 78 trips between buildings (2.2% of weighted demand). Without it, 78 of those trips would have no winter route.
+- Trips to and from EV1 and HH: 6.9% of weighted demand.
+- What UW Go believes rests on corroborated evidence.
+- Matched to the research by UW Go and never seen on the ground: HH's page describes the basement link to EV1 and the survey draws it. The research records it as not step-free: community reports describe stairs, and ML's page says the tunnels toward HH involve stairs.
+
+**What UW Go believes now**
+
+- EV1 → HH: usable. HH → EV1: usable.
+- Evidence: corroborated.
+- Access: not step-free.
+
+**Check**
+
+- [ ] Walk it from EV1 (floor 1) to HH (floor 1). Is it where UW Go shows it? If it lands on a different floor at either end, say which in the note.
+- [ ] Can you go EV1 → HH without a card or key, and without passing through a room? And HH → EV1?
+- [ ] Any steps along it, a ramp, or an elevator you would need instead?
+- [ ] Doors on the way: automatic, or heavy manual ones?
+- [ ] Any posted hours or signs (locked after hours, staff only)? Write them in the note.
+
+**Research**: C19 (official): EV1–HH, tunnel: Community describes stairs; do not use for step-free routing. (candidate, medium confidence)
+
+**Sources**: B_HH, R_MAP23
+
+### 69. HH main doors (toward AL)
+
+`door:ba963550df7cfd34` · door · HH · score 2.4 · evidence corroborated
+
+**Where**: 43.468204, -80.541793 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.468204,-80.541793)). Where the WATIsGrass survey puts this door (HH floor 1). Not checked on the ground.
+
+**Why it ranks here**
+
+- UW Go sends 20 trips through it instead of Google's walk (0.49% of weighted demand). Without it, those trips take 67 s longer on average.
+- Trips to and from HH: 2.8% of weighted demand.
+- What UW Go believes rests on corroborated evidence.
+- Matched to the research by UW Go and never seen on the ground: The catalogue lists the main and theatre vestibule toward AL; the survey's only HH door faces north toward AL.
+
+**What UW Go believes now**
+
+- Inwards: usable. Outwards: usable.
+- Evidence: corroborated.
+- Access: automatic door.
+
+**Check**
+
+- [ ] Find the door UW Go shows: HH floor 1, north side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
+- [ ] Is this what the research calls "Toward AL, main/theatre vestibule"?
+- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
+- [ ] From inside, try to leave the same way.
+- [ ] Is there a working automatic opener?
+- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
+- [ ] If hours are posted on the door, write them in the note.
+
+**Research**: HH-P01 (official): "Toward AL, main/theatre vestibule" (entry: documented_entrance_conditions_incomplete; exit: unknown; medium confidence)
+
+**Sources**: B_HH
+
+### 70. EIT north doors (toward DC)
+
+`door:289e514204e906de` · door · EIT · score 2.2 · evidence corroborated
+
+**Where**: 43.471786, -80.542173 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.471786,-80.542173)). Where the WATIsGrass survey puts this door (EIT floor 1). Not checked on the ground.
+
+**Why it ranks here**
+
+- UW Go sends 6 trips through it instead of Google's walk (0.24% of weighted demand). Without it, those trips take 95 s longer on average.
+- Trips to and from EIT: 4.8% of weighted demand.
+- What UW Go believes rests on corroborated evidence.
+- Matched to the research by UW Go and never seen on the ground: The catalogue lists a north entrance toward DC; the survey's only EIT door faces north.
+
+**What UW Go believes now**
+
+- Inwards: usable. Outwards: usable.
+- Evidence: corroborated.
+- Access: nothing recorded.
+
+**Check**
+
+- [ ] Find the door UW Go shows: EIT floor 1, north side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
+- [ ] Is this what the research calls "North, toward DC"?
+- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
+- [ ] From inside, try to leave the same way.
+- [ ] Is there a working automatic opener?
+- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
+- [ ] If hours are posted on the door, write them in the note.
+
+**Research**: EIT-P03 (official): "North, toward DC" (entry: documented_entrance_conditions_incomplete; exit: unknown; medium confidence)
+
+**Sources**: B_EIT
+
 ### 71. E6–PSE (E7) bridge
 
 `link:b0c5ea1235007cd6` · link · E6 · score 2.1 · evidence corroborated
@@ -2201,7 +2201,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Why it ranks here**
 
-- UW Go sends 4 trips through it instead of Google's walk (0.05% of weighted demand). Without it, those trips take 31 s longer on average.
+- UW Go sends 4 trips through it instead of Google's walk (0.05% of weighted demand). Without it, those trips take 50 s longer on average.
 - Winter routes use it for 78 trips between buildings (1.5% of weighted demand). Without it, 78 of those trips would have no winter route.
 - Step-free routes use it for 4 trips (0.05% of weighted demand), and nothing routing relies on says whether it is step-free.
 - Trips to and from E6 and PSE: 4.3% of weighted demand.
@@ -2226,7 +2226,35 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Sources**: B_E6
 
-### 72. BMH north-east doors (toward Columbia)
+### 72. SCH south-east doors
+
+`door:a79632160a96ad42` · door · SCH · score 1.9 · evidence surveyed
+
+**Where**: 43.469117, -80.540148 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.469117,-80.540148)). Where the WATIsGrass survey puts this door (SCH floor 1). Not checked on the ground.
+
+**Why it ranks here**
+
+- UW Go sends 4 trips through it instead of Google's walk (0.19% of weighted demand). Without it, those trips take 47 s longer on average.
+- Trips to and from SCH: 3.2% of weighted demand.
+- What UW Go believes rests on surveyed evidence.
+- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
+
+**What UW Go believes now**
+
+- Inwards: usable. Outwards: usable.
+- Evidence: surveyed (the survey alone).
+- Access: nothing recorded.
+
+**Check**
+
+- [ ] Find the door UW Go shows: SCH floor 1, south-east side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
+- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
+- [ ] From inside, try to leave the same way.
+- [ ] Is there a working automatic opener?
+- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
+- [ ] If hours are posted on the door, write them in the note.
+
+### 73. BMH north-east doors (toward Columbia)
 
 `door:baad47154396ed59` · door · BMH · score 1.9 · evidence corroborated
 
@@ -2234,7 +2262,7 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Why it ranks here**
 
-- UW Go sends 12 trips through it instead of Google's walk (0.30% of weighted demand). Without it, those trips take 4 s longer on average.
+- UW Go sends 4 trips through it instead of Google's walk (0.13% of weighted demand). Without it, those trips take 2 s longer on average.
 - Winter routes use it for 78 trips between buildings (1.4% of weighted demand). Without it, 78 of those trips would have no winter route.
 - Step-free routes use it for 20 trips (0.42% of weighted demand).
 - Trips to and from BMH: 3.5% of weighted demand.
@@ -2261,43 +2289,15 @@ Nobody has checked it on the ground, and UW Go sends students through it instead
 
 **Sources**: B_BMH
 
-### 73. SCH south-east doors
-
-`door:a79632160a96ad42` · door · SCH · score 1.7 · evidence surveyed
-
-**Where**: 43.469117, -80.540148 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.469117,-80.540148)). Where the WATIsGrass survey puts this door (SCH floor 1). Not checked on the ground.
-
-**Why it ranks here**
-
-- UW Go sends 4 trips through it instead of Google's walk (0.19% of weighted demand). Without it, they have an equally quick way.
-- Trips to and from SCH: 3.2% of weighted demand.
-- What UW Go believes rests on surveyed evidence.
-- Only the WATIsGrass survey says it is here. Nobody has recorded which ways it can be used, when, or whether it is step-free.
-
-**What UW Go believes now**
-
-- Inwards: usable. Outwards: usable.
-- Evidence: surveyed (the survey alone).
-- Access: nothing recorded.
-
-**Check**
-
-- [ ] Find the door UW Go shows: SCH floor 1, south-east side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist".
-- [ ] From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign?
-- [ ] From inside, try to leave the same way.
-- [ ] Is there a working automatic opener?
-- [ ] Is the way in step-free: no step at the door, and no ramp too steep to use?
-- [ ] If hours are posted on the door, write them in the note.
-
 ### 74. Stairwell in QNC (floors B, 1, 2, 3, 4, 5)
 
-`vertical:2937c2a29cf9d546` · change of floor · QNC · score 1.2 · evidence surveyed
+`vertical:2937c2a29cf9d546` · change of floor · QNC · score 1.3 · evidence surveyed
 
 **Where**: 43.471158, -80.543669 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.471158,-80.543669)). Where the survey puts this stairwell. Not checked on the ground.
 
 **Why it ranks here**
 
-- UW Go sends 8 trips through it instead of Google's walk (0.28% of weighted demand). Without it, those trips take 17 s longer on average.
+- UW Go sends 8 trips through it instead of Google's walk (0.28% of weighted demand). Without it, those trips take 44 s longer on average.
 - Winter routes use it for 52 trips between buildings (1.9% of weighted demand). Without it, those trips are 32 s worse on average, counting each second outside 4 times.
 - Trips to and from QNC: 4.2% of weighted demand.
 - What UW Go believes rests on surveyed evidence.
@@ -2436,14 +2436,10 @@ Some routing relies on it, sources disagree about it, or a reviewer asked for it
   Where: 43.472070, -80.542905 (approximate: the building's map point; [map](https://www.google.com/maps/search/?api=1&query=43.472070,-80.542905)). C2's campus-map point. The hours to read are the ones posted at its main doors.
   Now: Unknown. Routes pass through C2 only between 07:00 and 22:00, which is UW Go's assumption; a trip that starts or ends there is never refused.
   Check: (1) Read the hours posted at C2's main entrances: weekdays, Saturday and Sunday. Write them in the note exactly as posted. (2) Are any doors locked earlier than the building, or card-only after hours? Note which. (3) Note any exam-period, summer or holiday exceptions that are posted. (4) What are the opening hours of the buildings shortcuts and winter routes pass through (C2, B1, B2, ESC, EIT, PHY, E2, E3, QNC, MC, STC, AL, ML, EV1, EV2)?
-- **SLC opening hours** (`hours:SLC`, hours, score 4.6). Campus decisions or winter routes pass through SLC on 17.4% of weighted demand. Trips to and from SLC: 9.6% of weighted demand.
+- **SLC opening hours** (`hours:SLC`, hours, score 4.5). Campus decisions or winter routes pass through SLC on 17.4% of weighted demand. Trips to and from SLC: 9.6% of weighted demand.
   Where: 43.471601, -80.545455 (approximate: the building's map point; [map](https://www.google.com/maps/search/?api=1&query=43.471601,-80.545455)). SLC's campus-map point. The hours to read are the ones posted at its main doors.
   Now: Routing uses: open at all hours (official).
   Check: (1) Read the hours posted at SLC's main entrances: weekdays, Saturday and Sunday. Write them in the note exactly as posted. (2) Are any doors locked earlier than the building, or card-only after hours? Note which. (3) Note any exam-period, summer or holiday exceptions that are posted.
-- **M3 west doors** (`door:07600104d7b28420`, door, score 4.5). Winter routes use it for 78 trips between buildings (1.8% of weighted demand). Without it, 78 of those trips would have no winter route. Step-free routes use it for 20 trips (0.52% of weighted demand), and nothing routing relies on says whether it is step-free.
-  Where: 43.473297, -80.544394 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.473297,-80.544394)). Where the WATIsGrass survey puts this door (M3 floor 1). Not checked on the ground.
-  Now: Inwards: usable. Outwards: usable. Evidence: surveyed (the survey alone). Access: nothing recorded.
-  Check: (1) Find the door UW Go shows: M3 floor 1, west side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist". (2) From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign? (3) From inside, try to leave the same way. (4) Is there a working automatic opener? (5) Is the way in step-free: no step at the door, and no ramp too steep to use? (6) If hours are posted on the door, write them in the note.
 - **E2–RCH link** (`link:ded1b09ccca59dc8`, link, score 4.5). Winter routes use it for 74 trips between buildings (2.1% of weighted demand). Without it, those trips are 250 s worse on average, counting each second outside 4 times. Trips to and from E2 and RCH: 8.5% of weighted demand.
   Where: 43.470523, -80.540931 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.470523,-80.540931)). Where the survey draws this tunnel: E2 floor 1 to RCH floor 2. Not checked on the ground.
   Now: E2 → RCH: usable. RCH → E2: usable. Evidence: corroborated. Access: not step-free, needs help or a key.
@@ -2456,7 +2452,11 @@ Some routing relies on it, sources disagree about it, or a reviewer asked for it
   Where: 43.469219, -80.540213 (approximate: the building's map point; [map](https://www.google.com/maps/search/?api=1&query=43.469219,-80.540213)). SCH's campus-map point. The hours to read are the ones posted at its main doors.
   Now: Unknown. Routes pass through SCH only between 07:00 and 22:00, which is UW Go's assumption; a trip that starts or ends there is never refused.
   Check: (1) Read the hours posted at SCH's main entrances: weekdays, Saturday and Sunday. Write them in the note exactly as posted. (2) Are any doors locked earlier than the building, or card-only after hours? Note which. (3) Note any exam-period, summer or holiday exceptions that are posted.
-- **AL opening hours** (`hours:AL`, hours, score 3.9). Campus decisions or winter routes pass through AL on 5.8% of weighted demand. Trips to and from AL: 2.6% of weighted demand.
+- **RCH west doors** (`door:8de488af0c73895b`, door, score 4). Winter routes use it for 4 trips between buildings (0.09% of weighted demand). Without it, those trips are 57 s worse on average, counting each second outside 4 times. Step-free routes use it for 20 trips (0.47% of weighted demand), and nothing routing relies on says whether it is step-free.
+  Where: 43.470248, -80.541076 (surveyed position; [map](https://www.google.com/maps/search/?api=1&query=43.470248,-80.541076)). Where the WATIsGrass survey puts this door (RCH floor 3). Not checked on the ground.
+  Now: Inwards: usable. Outwards: usable. Evidence: surveyed (the survey alone). Access: nothing recorded.
+  Check: (1) Find the door UW Go shows: RCH floor 3, west side. If it is somewhere else, mark "Wrong location" and set where it is; if there is no such door, "Doesn't exist". (2) From outside, try to go in. Does it open without a card? Any "exit only", "no entry" or alarm sign? (3) From inside, try to leave the same way. (4) Is there a working automatic opener? (5) Is the way in step-free: no step at the door, and no ramp too steep to use? (6) If hours are posted on the door, write them in the note.
+- **AL opening hours** (`hours:AL`, hours, score 4). Campus decisions or winter routes pass through AL on 5.8% of weighted demand. Trips to and from AL: 2.6% of weighted demand.
   Where: 43.468941, -80.541871 (approximate: the building's map point; [map](https://www.google.com/maps/search/?api=1&query=43.468941,-80.541871)). AL's campus-map point. The hours to read are the ones posted at its main doors.
   Now: Unknown. Routes pass through AL only between 07:00 and 22:00, which is UW Go's assumption; a trip that starts or ends there is never refused.
   Check: (1) Read the hours posted at AL's main entrances: weekdays, Saturday and Sunday. Write them in the note exactly as posted. (2) Are any doors locked earlier than the building, or card-only after hours? Note which. (3) Note any exam-period, summer or holiday exceptions that are posted. (4) What are the opening hours of the buildings shortcuts and winter routes pass through (C2, B1, B2, ESC, EIT, PHY, E2, E3, QNC, MC, STC, AL, ML, EV1, EV2)?

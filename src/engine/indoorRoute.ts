@@ -3,7 +3,9 @@ import type { PlannerConfig } from "@/domain/config";
 import { findBuilding } from "@/data/buildings";
 import { decode, encode } from "@googlemaps/polyline-codec";
 import { haversineMeters } from "@/routing/EstimateRoutingProvider";
-import { INDOOR_PACE, anchorsOf, isOnIndoorNetwork, nearestEntrances, routeBetweenNodes, type AccessNeeds, type CampusConstraints, type IndoorGraphRoute, type IndoorSegment, type RouteOptions } from "./indoorGraph";
+import { anchorsOf, campusGraph, isOnIndoorNetwork, nearestEntrances, routeBetweenNodes, type AccessNeeds, type CampusConstraints, type IndoorGraphRoute, type IndoorSegment, type RouteOptions } from "./indoorGraph";
+import { GOOGLE_WALK_METRES_PER_SECOND } from "./campusRoute";
+import { edgesCut } from "./closureGeometry";
 import { isVertical, type IndoorNode } from "@/data/indoor/network";
 
 /**
@@ -25,9 +27,9 @@ export const CONNECTOR_MAX_METRES = 400;
 export const CONNECTOR_CANDIDATES = 2;
 
 /**
- * The doors a place off the network is joined to it by, and the walk each join is priced as: from
- * the place to the door, whichever end of the journey it is. The winter route and the campus-aware
- * fastest walk both join through here, so a door one has already priced costs the other nothing.
+ * The doors a place off the network is joined to it by. Each join is priced as the walk it is, from the place
+ * to the door at the start of a journey and from the door to the place at the end; the winter route and the
+ * campus-aware fastest walk price the same walks, so a door walk one has priced costs the other nothing.
  */
 export function connectorDoors(loc: LatLng, direction: "IN" | "OUT", search: RouteOptions) {
   return nearestEntrances(loc, CONNECTOR_CANDIDATES, undefined, { direction, opts: search }).filter((e) => e.metres <= CONNECTOR_MAX_METRES);
@@ -41,10 +43,10 @@ type Point = [number, number];
 interface End {
   /** Nodes the indoor search may start from (or end at). */
   nodes: number[];
-  /** The way from the place to those nodes, when it is not simply inside the building. */
+  /** The walk between the place and the door, its line in the direction walked, when the place is not inside the building. */
   connector?: { route: RouteOption; to: IndoorNode; polyline: Point[] };
-  /** Straight-line cost of the connector, for choosing between candidates; 0 when inside. */
-  minutes: number;
+  /** Seconds of that walk, the step between its line and the door included; 0 when inside. */
+  seconds: number;
 }
 
 const toPoint = (p: { latitude: number; longitude: number }): Point => [p.latitude, p.longitude];
@@ -57,17 +59,26 @@ const nodeLatLng = (n: IndoorNode): LatLng => ({ latitude: n.lat, longitude: n.l
  */
 async function joinEnds(loc: CampusLocation, fetcher: ConnectorFetcher | undefined, direction: "IN" | "OUT", search: RouteOptions): Promise<End[]> {
   if (loc.university === "UW" && isOnIndoorNetwork(loc.buildingCode)) {
-    return [{ nodes: anchorsOf(loc.buildingCode!).map((n) => n.id), minutes: 0 }];
+    // From the floor's own points on the network when the floor is known, where the campus-aware walk starts too.
+    const anchors = anchorsOf(loc.buildingCode!);
+    const onFloor = loc.floor ? anchors.filter((a) => a.floor === loc.floor) : [];
+    return [{ nodes: (onFloor.length ? onFloor : anchors).map((n) => n.id), seconds: 0 }];
   }
   if (!fetcher) return [];
   const ends: End[] = [];
-  // The walk is always priced from the place to the door, whichever end of the journey it is;
-  // the two directions differ by nothing worth a second lookup, and one key serves both.
+  // Each walk is priced in the direction it is walked: from the place to the door at the start of the
+  // journey, from the door to the place at the end. Google's two directions of a walk can differ by a minute.
   for (const e of connectorDoors(loc, direction, search)) {
-    const route = await fetcher.walk(loc, nodeLatLng(e.node));
+    const door = nodeLatLng(e.node);
+    const route = direction === "IN" ? await fetcher.walk(loc, door) : await fetcher.walk(door, loc);
     if (!route || route.isEstimate) continue; // a guessed straight line is exactly what this must not draw
-    const polyline: Point[] = route.polyline ? decode(route.polyline).map(([lat, lng]) => [lat, lng] as Point) : [toPoint(loc), [e.node.lat, e.node.lng]];
-    ends.push({ nodes: [e.node.id], connector: { route, to: e.node, polyline }, minutes: route.durationMinutes });
+    const drawn = route.polyline ? decode(route.polyline).map(([lat, lng]) => [lat, lng] as Point) : undefined;
+    const polyline: Point[] = drawn ?? (direction === "IN" ? [toPoint(loc), [e.node.lat, e.node.lng]] : [[e.node.lat, e.node.lng], toPoint(loc)]);
+    // The step between where Google's line stops and the door is walked too, and may not cut a path or a building.
+    const doorEnd = direction === "IN" ? polyline[polyline.length - 1] : polyline[0];
+    if (drawn && edgesCut(campusGraph().net, doorEnd, [e.node.lat, e.node.lng]).length) continue;
+    const across = haversineMeters({ latitude: doorEnd[0], longitude: doorEnd[1] }, door);
+    ends.push({ nodes: [e.node.id], connector: { route, to: e.node, polyline }, seconds: (route.durationSeconds ?? route.durationMinutes * 60) + across / GOOGLE_WALK_METRES_PER_SECOND });
   }
   return ends;
 }
@@ -139,7 +150,7 @@ export async function indoorRouteBetween(from: CampusLocation, to: CampusLocatio
     for (const end of ends) {
       const route = routeBetweenNodes(start.nodes, end.nodes, search);
       if (!route) continue;
-      const total = route.cost + (start.minutes + end.minutes) * 60;
+      const total = route.cost + start.seconds + end.seconds;
       if (!best || total < best.total) best = { start, end, route, total };
     }
   }
@@ -156,26 +167,27 @@ export async function indoorRouteBetween(from: CampusLocation, to: CampusLocatio
     if (blocked.length) avoidedClosures = [...new Set(blocked)];
   }
 
-  // The whole journey as one line: the way in, the network, the way out. Inside a building
-  // the way in is the short walk from where the map places the building to where the
-  // network does; it is drawn because it is under the same roof.
+  // The whole journey as one line: the walk to the door, the network, the walk from the door. Inside a
+  // building the line starts on the floor's own point on the network: nothing is drawn to where the map
+  // places the building, and nothing is timed for it.
   const first = route.segments[0]?.from ?? (start.connector?.to);
   const last = route.segments[route.segments.length - 1]?.to ?? end.connector?.to;
   if (!first || !last) return undefined;
-  const lead: Point[] = start.connector ? start.connector.polyline : [toPoint(from), [first.lat, first.lng]];
-  const tail: Point[] = end.connector ? [...end.connector.polyline].reverse() : [[last.lat, last.lng], toPoint(to)];
-  const line: Point[] = [...lead];
-  for (const s of route.segments) for (const p of s.path) { const prev = line[line.length - 1]; if (!prev || prev[0] !== p[0] || prev[1] !== p[1]) line.push(p); }
-  for (const p of tail) { const prev = line[line.length - 1]; if (!prev || prev[0] !== p[0] || prev[1] !== p[1]) line.push(p); }
+  const line: Point[] = [];
+  const add = (p: Point) => { const prev = line[line.length - 1]; if (!prev || prev[0] !== p[0] || prev[1] !== p[1]) line.push(p); };
+  if (start.connector) for (const p of start.connector.polyline) add(p);
+  add([first.lat, first.lng]);
+  for (const s of route.segments) for (const p of s.path) add(p);
+  add([last.lat, last.lng]);
+  if (end.connector) for (const p of end.connector.polyline) add(p);
 
-  const leadMetres = start.connector ? (start.connector.route.distanceMeters ?? length(lead)) : length(lead);
-  const tailMetres = end.connector ? (end.connector.route.distanceMeters ?? length(tail)) : length(tail);
-  const leadMinutes = start.connector ? start.connector.route.durationMinutes : leadMetres / INDOOR_PACE.indoorMetresPerSecond / 60;
-  const tailMinutes = end.connector ? end.connector.route.durationMinutes : tailMetres / INDOOR_PACE.indoorMetresPerSecond / 60;
+  const leadMetres = start.connector ? (start.connector.route.distanceMeters ?? length(start.connector.polyline)) : 0;
+  const tailMetres = end.connector ? (end.connector.route.distanceMeters ?? length(end.connector.polyline)) : 0;
   const totalMetres = leadMetres + route.metres + tailMetres;
-  const outdoorMetres = route.outdoorMetres + (start.connector ? leadMetres : 0) + (end.connector ? tailMetres : 0);
+  const outdoorMetres = route.outdoorMetres + leadMetres + tailMetres;
   const indoorShare = totalMetres > 0 ? 1 - outdoorMetres / totalMetres : 0;
   if (route.buildings.length < 2 || indoorShare < MIN_INDOOR_SHARE) return undefined;
+  const seconds = start.seconds + route.seconds + end.seconds;
 
   const steps: RouteStep[] = [];
   if (start.connector) steps.push({ mode: "WALK", durationMinutes: start.connector.route.durationMinutes, distanceMeters: start.connector.route.distanceMeters, instruction: `Walk to the ${start.connector.to.building} entrance` });
@@ -186,7 +198,8 @@ export async function indoorRouteBetween(from: CampusLocation, to: CampusLocatio
   const how = kinds.has("TUNNEL") && !kinds.has("BRIDGE") ? "tunnel" : kinds.has("BRIDGE") && !kinds.has("TUNNEL") ? "bridge" : "link";
   return {
     mode: "WALK",
-    durationMinutes: Math.max(1, Math.ceil(leadMinutes + route.seconds / 60 + tailMinutes)),
+    durationMinutes: Math.max(1, Math.ceil(seconds / 60)),
+    durationSeconds: Math.round(seconds),
     distanceMeters: Math.round(totalMetres),
     steps,
     polyline: encode(line),

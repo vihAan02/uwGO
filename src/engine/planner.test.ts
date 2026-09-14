@@ -58,7 +58,8 @@ describe("planner", () => {
         meeting({ courseCode: "MATH 135", start: 9 * 60, end: 9 * 60 + 50 }),
         meeting({ courseCode: "CS 135", start: 10 * 60 + 30, end: 11 * 60 + 20, location: { kind: "ROOM", buildingCode: "DC", roomNumber: "1350" } }),
       ],
-      home, mondayISO: MONDAY, config: CFG, days: ["M"],
+      // Fixture minutes are the inputs: campus knowledge, which times the floors the fixture knows nothing of, stays out.
+      home, mondayISO: MONDAY, config: CFG, days: ["M"], campus: false,
     }, provider);
     const day = plan.days.M!;
     expect(day.transitions.map((t) => t.kind)).toEqual(["HOME_TO_CLASS", "CLASS_TO_CLASS", "CLASS_TO_HOME"]);
@@ -80,9 +81,10 @@ describe("planner", () => {
 
   it("tight and impossible transitions are flagged", async () => {
     const provider = new FixtureProvider({ ...walks, [pairKey(MC, DC)]: 9 });
-    const tight = await buildWeekPlan({ meetings: [meeting({ start: 10 * 60, end: 10 * 60 + 20 }), meeting({ start: 10 * 60 + 30, end: 11 * 60 + 20, location: { kind: "ROOM", buildingCode: "DC", roomNumber: "1350" } })], mondayISO: MONDAY, config: CFG, days: ["M"] }, provider);
+    // Fixture minutes are the inputs: campus knowledge, which times the floors the fixture knows nothing of, stays out.
+    const tight = await buildWeekPlan({ meetings: [meeting({ start: 10 * 60, end: 10 * 60 + 20 }), meeting({ start: 10 * 60 + 30, end: 11 * 60 + 20, location: { kind: "ROOM", buildingCode: "DC", roomNumber: "1350" } })], mondayISO: MONDAY, config: CFG, days: ["M"], campus: false }, provider);
     expect(tight.days.M!.transitions[0].feasibility).toBe("TIGHT");
-    const late = await buildWeekPlan({ meetings: [meeting({ start: 10 * 60, end: 10 * 60 + 20 }), meeting({ start: 10 * 60 + 30, end: 11 * 60 + 20, location: { kind: "ROOM", buildingCode: "DC", roomNumber: "1350" } })], mondayISO: MONDAY, config: CFG, days: ["M"] }, new FixtureProvider({ ...walks, [pairKey(MC, DC)]: 17 }));
+    const late = await buildWeekPlan({ meetings: [meeting({ start: 10 * 60, end: 10 * 60 + 20 }), meeting({ start: 10 * 60 + 30, end: 11 * 60 + 20, location: { kind: "ROOM", buildingCode: "DC", roomNumber: "1350" } })], mondayISO: MONDAY, config: CFG, days: ["M"], campus: false }, new FixtureProvider({ ...walks, [pairKey(MC, DC)]: 17 }));
     expect(late.days.M!.transitions[0].feasibility).toBe("LIKELY_LATE");
     expect(late.days.M!.warnings[0]).toMatch(/likely be late/);
   });
@@ -125,7 +127,8 @@ describe("planner", () => {
         meeting({ university: "WLU", courseCode: "BU 111", start: 8 * 60 + 30, end: 9 * 60 + 50, location: { kind: "ROOM", buildingCode: "LH", roomNumber: "1001" } }),
         meeting({ start: 10 * 60 + 30, end: 11 * 60 + 20, location: { kind: "ROOM", buildingCode: "DC", roomNumber: "1350" } }),
       ],
-      home, mondayISO: MONDAY, config: CFG, days: ["M"],
+      // Fixture minutes are the inputs: campus knowledge, which times the floors the fixture knows nothing of, stays out.
+      home, mondayISO: MONDAY, config: CFG, days: ["M"], campus: false,
     }, provider);
     const [toFirst, cross] = plan.days.M!.transitions;
     expect(toFirst.crossCampus).toBe(true);
@@ -158,8 +161,9 @@ describe("planner", () => {
     expect(same.recommendedRoute!.durationMinutes).toBe(0);
     expect(same.reason).toBe("Same building.");
     // walking pairs used: UWP->DC, DC->UWP (home routes reuse), DC->UWP for last leg is the same pair -> 2 calls,
-    // plus the winter route's two connectors from home to its nearest network doors, fetched once for the whole plan.
-    expect(provider.calls.walk).toBe(4);
+    // plus the winter route's walks between home and its two nearest network doors, each priced in the direction it
+    // is walked (from home to the door, from the door home), fetched once for the whole plan.
+    expect(provider.calls.walk).toBe(6);
   });
 
   it("missing routes produce warnings, never invented durations; estimates are surfaced", async () => {

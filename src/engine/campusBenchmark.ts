@@ -9,8 +9,8 @@
  * Without real Google walks the benchmark stands Google in with a straight line, 30% longer, at 1.33 m/s,
  * for the trip and for every door walk alike. That shows what the engine does, not what Google's real
  * timing would make of it. A table of real walks can be given instead, and filled from Google as the
- * engine asks; a walk kept in one direction is served reversed for the other, as the engine already
- * treats door walks.
+ * engine asks. A walk kept in one direction can be served reversed for the other, which suits an engine
+ * from before door walks were priced in the direction walked; served exactly, each direction is its own walk.
  */
 import { decode, encode } from "@googlemaps/polyline-codec";
 import type { CampusLocation, CampusOutcome, LatLng, RouteOption } from "@/domain/types";
@@ -20,8 +20,9 @@ import { edgeLabel } from "@/data/indoor/edgeId";
 import { haversineMeters } from "@/routing/EstimateRoutingProvider";
 import { pairKey } from "@/routing/RoutingProvider";
 import { deserializeRoute, serializeRoute, type RouteOptionJSON } from "@/routing/serialize";
-import { campusWalk, type CampusSearchOptions } from "./campusRoute";
-import { campusGraph, type IndoorGraph } from "./indoorGraph";
+import { campusWalk, type CampusSearchOptions, type DrawnPiece } from "./campusRoute";
+import { anchorsOf, campusGraph, type IndoorGraph } from "./indoorGraph";
+import { edgesCut } from "./closureGeometry";
 import type { ConnectorFetcher } from "./indoorRoute";
 
 /** A stand-in for Google's walk, shaped like one: the straight line, 30% longer, at 1.33 m/s. */
@@ -172,6 +173,10 @@ export interface PairDecision {
   /** The walks asked for this pair, in order: Google's own first, then door walks. */
   asked?: { key: string; source: WalkSource }[];
   line?: LineCheck;
+  /** What the leg would show for Google's walk: floor to floor, where the engine times it so. */
+  googleShown?: number;
+  /** The line drawn for the walk the leg shows, checked piece by piece. */
+  drawing?: DrawingCheck;
 }
 
 export interface CampusSnapshot {
@@ -190,6 +195,10 @@ export function benchmarkPlaces(g: IndoorGraph = campusGraph()): CampusLocation[
 
 type Point = [number, number];
 const metres = (a: Point, b: Point) => haversineMeters({ latitude: a[0], longitude: a[1] }, { latitude: b[0], longitude: b[1] });
+const percentile = (xs: readonly number[], p: number) => {
+  const s = [...xs].sort((a, b) => a - b);
+  return s.length ? Math.round(s[Math.min(s.length - 1, Math.floor(p * s.length))]) : 0;
+};
 
 export function shapeOf(timing: readonly string[] | undefined): RouteShape {
   const lead = timing?.[0] === "GOOGLE";
@@ -264,6 +273,76 @@ export function checkLine(g: IndoorGraph, route: RouteOption, shape: RouteShape,
   };
 }
 
+/**
+ * Where a drawn line starts or ends: on a floor's point on the network, at the end of a line Google drew (the
+ * way inside charged, not drawn), at a place off the network, or somewhere else.
+ */
+export type LineEnd = "FLOOR" | "GOOGLE" | "PLACE" | "OTHER";
+
+/** The line drawn for a walk, checked piece by piece against the network it is drawn over. */
+export interface DrawingCheck {
+  start: LineEnd;
+  end: LineEnd;
+  /** Steps across between a Google line and a door, in metres. */
+  across: number[];
+  /** Steps across that cut a surveyed outdoor path, that cut a corridor, a link or another segment that is not an outdoor path, or that reach a door from its inside. */
+  cutsPath: number;
+  cutsBuilding: number;
+  behindDoor: number;
+  /** Pieces other than Google's own lines drawn to or from a network building's map point. */
+  mapPointJoins: number;
+  /** Surveyed segments the route names that the line does not pass through, in order. */
+  offLine: string[];
+}
+
+/**
+ * Whether a walk's line is drawn only where the trip goes: from a floor (or a place off the network, or the end of
+ * Google's own line) to a floor, with every step across between a Google line and a door short, outside the door
+ * it reaches, and cutting neither a surveyed path nor anything else of the network away from its ends (the rule
+ * the engine draws by, `edgesCut`), and nothing drawn to a building's map point.
+ */
+export function checkDrawing(g: IndoorGraph, drawn: readonly DrawnPiece[], from: CampusLocation, to: CampusLocation, offLine: string[] = []): DrawingCheck {
+  const TOUCH = 1.5;
+  const nodePoint = (n: number): Point => [g.net.nodes[n].lat, g.net.nodes[n].lng];
+  const anchors = (p: CampusLocation) => (p.buildingCode ? anchorsOf(p.buildingCode, g) : []);
+  const endOf = (place: CampusLocation, first: boolean): LineEnd => {
+    const piece = first ? drawn[0] : drawn[drawn.length - 1];
+    const point = first ? piece.points[0] : piece.points[piece.points.length - 1];
+    if (!anchors(place).length) return piece.kind === "GOOGLE" ? "PLACE" : "OTHER";
+    if (piece.kind === "GOOGLE") return "GOOGLE";
+    return anchors(place).some((n) => metres([n.lat, n.lng], point) <= TOUCH) ? "FLOOR" : "OTHER";
+  };
+  const mapPoints = [from, to].filter((p) => anchors(p).length).map((p): Point => [p.latitude, p.longitude]);
+  let cutsPath = 0, cutsBuilding = 0, behindDoor = 0;
+  const across: number[] = [];
+  for (const piece of drawn.filter((x) => x.kind === "ACROSS")) {
+    const [p, q] = piece.points as [Point, Point];
+    across.push(Math.round(metres(p, q) * 10) / 10);
+    const door = piece.door ? g.exteriorDoors.find((d) => g.ids[d.index] === piece.door) : undefined;
+    const cut = edgesCut(g.net, p, q, new Set(door ? [door.index] : []));
+    if (cut.some((i) => g.net.edges[i].kind === "OUTDOOR")) cutsPath++;
+    if (cut.some((i) => g.net.edges[i].kind !== "OUTDOOR")) cutsBuilding++;
+    if (door) {
+      const inside = nodePoint(door.inside);
+      const outside = nodePoint(door.outside);
+      const far = metres(p, outside) <= metres(q, outside) ? q : p;
+      const k = Math.cos((inside[0] * Math.PI) / 180);
+      const dot = (outside[0] - inside[0]) * (far[0] - inside[0]) + (outside[1] - inside[1]) * (far[1] - inside[1]) * k * k;
+      if (metres(inside, outside) >= 0.5 && metres(far, outside) > TOUCH && dot <= 0) behindDoor++;
+    }
+  }
+  return {
+    start: endOf(from, true),
+    end: endOf(to, false),
+    across,
+    cutsPath,
+    cutsBuilding,
+    behindDoor,
+    mapPointJoins: drawn.filter((x) => x.kind !== "GOOGLE" && x.points.some((pt) => mapPoints.some((m) => metres(m, pt) <= TOUCH))).length,
+    offLine,
+  };
+}
+
 /** Every ordered pair of places decided. */
 export async function campusSnapshot(g: IndoorGraph, cfg: PlannerConfig, at: Date, walks: BenchmarkWalks | undefined = undefined, places: CampusLocation[] = benchmarkPlaces(g), search: CampusSearchOptions = {}): Promise<CampusSnapshot> {
   const started = Date.now();
@@ -290,15 +369,16 @@ export async function campusSnapshot(g: IndoorGraph, cfg: PlannerConfig, at: Dat
       const ofKind = (kind: string) => (chosen ? [...new Set(chosen.edgeIds.filter((id) => kindById.get(id) === kind).map(labelOf))] : []);
       const shape = chosen ? shapeOf(chosen.timing) : undefined;
       const inside = d?.inside;
+      const line = r?.route?.polyline && chosen && shape ? checkLine(g, r.route, shape, chosen.edgeIds) : undefined;
       pairs[`${from.buildingCode}>${to.buildingCode}`] = {
         outcome: d?.outcome ?? "NONE",
         google: Math.round(googleSeconds),
-        googleTotal: Math.round((d?.googleSeconds ?? googleSeconds) + (inside?.originSeconds ?? 0) + (inside?.destinationSeconds ?? 0)),
-        ...(chosen ? { seconds: chosen.seconds, total: chosen.totalSeconds ?? chosen.seconds, cost: chosen.cost, via: chosen.via, edgeIds: chosen.edgeIds } : {}),
+        googleTotal: Math.round(d?.googleTotalSeconds ?? (d?.googleSeconds ?? googleSeconds) + (inside?.originSeconds ?? 0) + (inside?.destinationSeconds ?? 0)),
+        ...(chosen ? { seconds: chosen.seconds, total: chosen.seconds, cost: chosen.cost, via: chosen.via, edgeIds: chosen.edgeIds } : {}),
         through,
         links: ofKind("BRIDGE").length + ofKind("TUNNEL").length,
         lookups: Math.max(0, fetcher.asked - before - 1),
-        shown: Math.round(chosen ? chosen.seconds : googleSeconds),
+        shown: Math.round(r?.route ? (r.route.durationSeconds ?? r.route.durationMinutes * 60) : googleSeconds),
         ...(shape ? { shape } : {}),
         ...(d ? { googleUsable: d.googleUsable, margin: d.marginSeconds ?? d.thresholdSeconds, summary: d.summary } : {}),
         ...(inside ? { inside: { origin: inside.originSeconds, destination: inside.destinationSeconds, originDoor: inside.originDoor, destinationDoor: inside.destinationDoor } } : {}),
@@ -312,7 +392,9 @@ export async function campusSnapshot(g: IndoorGraph, cfg: PlannerConfig, at: Dat
         } : {}),
         ...(d?.rejected.length ? { rejected: d.rejected.slice(0, 4).map((x) => ({ label: x.label, because: x.because, seconds: x.seconds })) } : {}),
         asked: fetcher.log.slice(logged),
-        ...(r?.route?.polyline && chosen && shape ? { line: checkLine(g, r.route, shape, chosen.edgeIds) } : {}),
+        ...(line ? { line } : {}),
+        ...(d?.googleTotalSeconds !== undefined ? { googleShown: d.googleTotalSeconds } : {}),
+        ...(r?.drawn?.length ? { drawing: checkDrawing(g, r.drawn, from, to, line?.offLine) } : {}),
       };
     }
   }
@@ -335,14 +417,32 @@ export interface CampusMetrics {
   savings: { count: number; mean: number; max: number; maxPair?: string };
   /** Google door walks priced, in all and per pair. */
   lookups: { total: number; mean: number; max: number };
+  /** The lines drawn: how they start and end (counted per end), their steps across, and what those cut or join. */
+  drawing: { checked: number; ends: Record<LineEnd, number>; across: number; acrossMedian: number; acrossP90: number; acrossMax: number; acrossMaxPair?: string; cutsPath: number; cutsBuilding: number; behindDoor: number; mapPointJoins: number; offLine: number };
+  /** Routes taken over a usable Google walk that nevertheless show a longer time than the leg would show for Google's walk. */
+  shownLonger: number;
 }
 
 export function campusMetrics(s: CampusSnapshot): CampusMetrics {
   const all = Object.entries(s.pairs);
   const outcomes: Record<string, number> = {};
   const savings: { pair: string; saved: number }[] = [];
-  let corrected = 0, noUsableRoute = 0, walkThroughs = 0, linkRoutes = 0, links = 0, lookups = 0, maxLookups = 0;
+  let corrected = 0, noUsableRoute = 0, walkThroughs = 0, linkRoutes = 0, links = 0, lookups = 0, maxLookups = 0, shownLonger = 0;
+  const drawing = { checked: 0, ends: { FLOOR: 0, GOOGLE: 0, PLACE: 0, OTHER: 0 } as Record<LineEnd, number>, cutsPath: 0, cutsBuilding: 0, behindDoor: 0, mapPointJoins: 0, offLine: 0 };
+  const across: { pair: string; metres: number }[] = [];
   for (const [pair, d] of all) {
+    if (d.drawing) {
+      drawing.checked++;
+      drawing.ends[d.drawing.start]++;
+      drawing.ends[d.drawing.end]++;
+      drawing.cutsPath += d.drawing.cutsPath;
+      drawing.cutsBuilding += d.drawing.cutsBuilding;
+      drawing.behindDoor += d.drawing.behindDoor;
+      drawing.mapPointJoins += d.drawing.mapPointJoins;
+      if (d.drawing.offLine.length) drawing.offLine++;
+      for (const m of d.drawing.across) across.push({ pair, metres: m });
+    }
+    if ((d.outcome === "SHORTCUT" || d.outcome === "BETTER_ENTRANCE") && d.shown !== undefined && d.shown > (d.googleShown ?? d.google)) shownLonger++;
     outcomes[d.outcome] = (outcomes[d.outcome] ?? 0) + 1;
     if (d.outcome === "CORRECTED") corrected++;
     if (d.outcome === "NO_USABLE_ROUTE") noUsableRoute++;
@@ -363,6 +463,15 @@ export function campusMetrics(s: CampusSnapshot): CampusMetrics {
     links,
     savings: { count: savings.length, mean: savings.length ? Math.round(savings.reduce((n, x) => n + x.saved, 0) / savings.length) : 0, max: best ? Math.round(best.saved) : 0, maxPair: best?.pair },
     lookups: { total: lookups, mean: all.length ? Math.round((lookups / all.length) * 100) / 100 : 0, max: maxLookups },
+    drawing: {
+      ...drawing,
+      across: across.length,
+      acrossMedian: percentile(across.map((x) => x.metres), 0.5),
+      acrossP90: percentile(across.map((x) => x.metres), 0.9),
+      acrossMax: Math.round(Math.max(0, ...across.map((x) => x.metres))),
+      acrossMaxPair: across.reduce<{ pair: string; metres: number } | undefined>((m, x) => (!m || x.metres > m.metres ? x : m), undefined)?.pair,
+    },
+    shownLonger,
   };
 }
 
@@ -418,6 +527,9 @@ export function renderCampusMetrics(m: CampusMetrics, label: string): string[] {
     `Routes taken through a building: ${m.walkThroughs}. Routes taken over a bridge or tunnel: ${m.linkRoutes} (${m.links} crossings).`,
     `Savings over a usable Google walk, floor to floor: ${m.savings.count} routes, mean ${m.savings.mean} s, max ${m.savings.max} s${m.savings.maxPair ? ` (${m.savings.maxPair})` : ""}.`,
     `Google door walks priced: ${m.lookups.total} in all, ${m.lookups.mean} per pair, at most ${m.lookups.max} for one pair.`,
+    `Lines checked: ${m.drawing.checked}. Ends on a floor ${m.drawing.ends.FLOOR}, at Google's own line end ${m.drawing.ends.GOOGLE}, at a place off the network ${m.drawing.ends.PLACE}, elsewhere ${m.drawing.ends.OTHER}.`,
+    `Steps across between a Google line and a door: ${m.drawing.across}, median ${m.drawing.acrossMedian} m, p90 ${m.drawing.acrossP90} m, longest ${m.drawing.acrossMax} m${m.drawing.acrossMaxPair ? ` (${m.drawing.acrossMaxPair})` : ""}; cutting a surveyed path ${m.drawing.cutsPath}, cutting a building ${m.drawing.cutsBuilding}, reaching a door from inside ${m.drawing.behindDoor}. Pieces joined to a building's map point: ${m.drawing.mapPointJoins}. Routes with a named segment off the line: ${m.drawing.offLine}.`,
+    `Routes taken over Google's walk that show longer than the leg would show for it: ${m.shownLonger}.`,
   ];
 }
 

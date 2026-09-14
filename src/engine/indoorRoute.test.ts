@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { decode, encode } from "@googlemaps/polyline-codec";
 import { CONNECTOR_MAX_METRES, MIN_INDOOR_SHARE, indoorIsReasonable, indoorRouteBetween, networkBuildingLocation } from "./indoorRoute";
-import { nearestEntrances } from "./indoorGraph";
+import { anchorsOf, nearestEntrances } from "./indoorGraph";
 import { haversineMeters } from "@/routing/EstimateRoutingProvider";
 import { findBuilding } from "@/data/buildings";
 import { DEFAULT_PLANNER_CONFIG } from "@/domain/config";
@@ -20,6 +20,8 @@ function googleWalk(from: LatLng, to: LatLng): RouteOption {
 const fetcher = () => ({ walk: vi.fn(async (from: LatLng, to: LatLng) => googleWalk(from, to)) });
 /** Within polyline precision (5 decimals, about a metre) of a place. */
 const near = ([lat, lng]: number[], p: LatLng) => haversineMeters({ latitude: lat, longitude: lng }, p) < 2;
+/** On one of the points where the network places a building's floors. */
+const atAnchor = (p: number[], building: string) => anchorsOf(building).some((a) => near(p, { latitude: a.lat, longitude: a.lng }));
 
 describe("the winter route between two network buildings", () => {
   it("MC → DC: a route with a duration, a path of buildings, and a map line that starts and ends at the buildings", async () => {
@@ -34,9 +36,10 @@ describe("the winter route between two network buildings", () => {
     expect(r.provider).toMatch(/uw-indoor/);
     const line = decode(r.polyline!);
     expect(line.length).toBeGreaterThan(5);
-    // The line begins at MC's map point and ends at DC's: the whole journey, not just the tunnel.
-    expect(near(line[0], loc("MC"))).toBe(true);
-    expect(near(line[line.length - 1], loc("DC"))).toBe(true);
+    // The line begins on a floor of MC and ends on a floor of DC, where the network places them: the whole
+    // journey, not just the tunnel, and nothing drawn to the buildings' map points.
+    expect(atAnchor(line[0], "MC")).toBe(true);
+    expect(atAnchor(line[line.length - 1], "DC")).toBe(true);
     // Consecutive points are close together: no jump from a building to a tunnel far away.
     for (let i = 1; i < line.length; i++) {
       expect(haversineMeters({ latitude: line[i - 1][0], longitude: line[i - 1][1] }, { latitude: line[i][0], longitude: line[i][1] })).toBeLessThan(120);
@@ -95,7 +98,21 @@ describe("joining a place that is not on the network", () => {
     expect(r.indoorShare).toBeGreaterThanOrEqual(MIN_INDOOR_SHARE);
     const line = decode(r.polyline!);
     expect(near(line[0], HOME)).toBe(true);
-    expect(near(line[line.length - 1], loc("MC"))).toBe(true);
+    expect(atAnchor(line[line.length - 1], "MC")).toBe(true);
+  });
+
+  it("the walk from the network out to a residence is priced from the door to the residence, the way it is walked", async () => {
+    const f = fetcher();
+    const r = (await indoorRouteBetween(loc("MC"), HOME, f))!;
+    expect(f.walk).toHaveBeenCalled();
+    for (const [from, to] of f.walk.mock.calls) {
+      expect(to).toBe(HOME);
+      expect(from).not.toBe(HOME);
+    }
+    expect(r.indoorPath![0]).toBe("MC");
+    const line = decode(r.polyline!);
+    expect(atAnchor(line[0], "MC")).toBe(true);
+    expect(near(line[line.length - 1], HOME)).toBe(true);
   });
 
   it("refuses a connector that is only a straight-line estimate", async () => {
