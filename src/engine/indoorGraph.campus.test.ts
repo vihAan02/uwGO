@@ -5,7 +5,7 @@ import { UW_INDOOR_NETWORK as NET } from "@/data/indoor/uw-indoor-network.genera
 import { haversineMeters } from "@/routing/EstimateRoutingProvider";
 import { CAMPUS_RESEARCH, compileKnowledge, type Availability, type CampusOverlay, type EdgeFact } from "@/data/campus";
 import { torontoDate } from "@/time/toronto";
-import { anchorsOf, graphOver, nearestEntrances, openState, routeBetweenBuildings, routeBetweenNodes, searchTo, type RouteOptions } from "./indoorGraph";
+import { INDOOR_PACE, anchorsOf, edgeSeconds, graphOver, nearestEntrances, openState, refusalFor, routeBetweenBuildings, routeBetweenNodes, searchTo, type RouteOptions } from "./indoorGraph";
 
 /**
  * What the campus routing knowledge does to a search. A small made-up campus holds each rule on
@@ -166,6 +166,29 @@ describe("step-free routing", () => {
     const anecdote = knowing({ edges: [fact("bStairs", { evidence: "ANECDOTAL", access: { stepFree: true } })] });
     expect(route(anecdote, "a2", "bAnchor", stepFree)).toBeUndefined();
     expect(route(anecdote, "a2", "bAnchor", { constraints: { access: { stepFree: true }, experimental: true } })).toBeDefined();
+  });
+
+  it("does not take an elevator or ramp step-free until someone confirms it, and times each by its kind", () => {
+    const index = FULL.net.edges.indexOf(FULL.edge.bStairs);
+    for (const kind of ["ELEVATOR", "RAMP", "OTHER_VERTICAL"] as const) {
+      const net: IndoorNetwork = { ...FULL.net, edges: FULL.net.edges.map((e, i): IndoorEdge => (i === index ? { ...e, kind } : e)) };
+      const g = graphOver(net);
+      const down = g.adj[FULL.node.b2].find((a) => a.index === index)!;
+      expect(refusalFor(g, down, stepFree), kind).toBe("VERTICAL_UNCONFIRMED");
+      expect(routeBetweenNodes([FULL.node.a2], [FULL.node.bAnchor], stepFree, g), kind).toBeUndefined();
+      // The documented word that would make it usable is the same as for anything else: the survey's kind never is.
+      const documented = graphOver(net, compileKnowledge(CAMPUS_RESEARCH, { reviewedAt: "", edges: [fact("bStairs", { evidence: "CORROBORATED", access: { stepFree: true } })], historical: [], buildings: [], conflicts: [], fieldChecks: [] }));
+      expect(routeBetweenNodes([FULL.node.a2], [FULL.node.bAnchor], stepFree, documented)!.edgeIds, kind).toEqual([id("bridge"), id("bStairs")]);
+    }
+    const survey = graphOver(FULL.net);
+    expect(refusalFor(survey, survey.adj[FULL.node.b2].find((a) => a.index === index)!, stepFree)).toBe("STAIRS");
+
+    const oneFloor = { ...FULL.edge.bStairs, floors: 1 };
+    expect(edgeSeconds({ ...oneFloor, kind: "STAIRS" }).seconds).toBe(INDOOR_PACE.secondsPerFloor);
+    expect(edgeSeconds({ ...oneFloor, kind: "OTHER_VERTICAL" }).seconds).toBe(INDOOR_PACE.secondsPerFloor);
+    expect(edgeSeconds({ ...oneFloor, kind: "ELEVATOR" }).seconds).toBe(INDOOR_PACE.elevatorWaitSeconds + INDOOR_PACE.elevatorSecondsPerFloor);
+    expect(edgeSeconds({ ...oneFloor, kind: "RAMP" }).seconds).toBe(INDOOR_PACE.rampSecondsPerFloor);
+    expect(edgeSeconds({ ...oneFloor, kind: "ELEVATOR", floors: 0 }).seconds).toBe(0);
   });
 
   it("never takes a link known not to be step-free, even when it is the fastest", () => {
