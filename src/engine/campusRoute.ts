@@ -113,10 +113,12 @@ const GOOGLE_DOOR_REFUSALS: ReadonlySet<Refusal> = new Set<Refusal>(["CLOSED", "
 
 /**
  * The survey's outdoor walkways are drawn straighter than the paths they follow, so a campus route
- * times them at indoor pace rather than a pavement's. A route that only looks shorter because of how
- * a line was drawn should not beat Google's walk.
+ * times them as Google would time the straight line between their ends: Google's walking pace over
+ * its usual detour (about 1.4 m/s over 1.3 times the distance). A route that only looks shorter because
+ * of how a line was drawn should not beat Google's walk, and a stretch outside that Google could have
+ * priced should not beat the walk Google did price.
  */
-export const CAMPUS_PACE: Pace = { ...INDOOR_PACE, outdoorMetresPerSecond: INDOOR_PACE.indoorMetresPerSecond };
+export const CAMPUS_PACE: Pace = { ...INDOOR_PACE, outdoorMetresPerSecond: 1.05 };
 
 /**
  * What a Google walk between two points is likely to take, for deciding which door walks are worth
@@ -289,12 +291,18 @@ function edgeIdsOf(g: IndoorGraph, c: Candidate): string[] {
   return [...(c.lead ? [g.ids[c.lead.doorIndex]] : []), ...c.route.edgeIds, ...(c.tail ? [g.ids[c.tail.doorIndex]] : [])];
 }
 
-/** Buildings a candidate passes through on the way, other than the ones it starts and ends in. */
+/**
+ * Buildings a candidate walks through on the way, other than the ones it starts and ends in: it has a
+ * corridor, stairwell or open join inside them, not merely a door touched on the way past.
+ */
 function passesThrough(c: Candidate, ends: readonly (string | undefined)[]): string[] {
-  const inside = [...c.route.buildings];
-  if (c.lead && inside[0] !== c.lead.door.building) inside.unshift(c.lead.door.building);
-  if (c.tail && inside[inside.length - 1] !== c.tail.door.building) inside.push(c.tail.door.building);
-  return inside.filter((b) => !ends.includes(b));
+  const inside: string[] = [];
+  for (const seg of c.route.segments) {
+    const b = seg.from.building;
+    if (b === OUTSIDE || b !== seg.to.building || ends.includes(b)) continue;
+    if (inside[inside.length - 1] !== b) inside.push(b);
+  }
+  return [...new Set(inside)];
 }
 
 function viaOf(g: IndoorGraph, c: Candidate): string[] {
@@ -528,9 +536,10 @@ export async function campusWalk(req: CampusWalkRequest, google: RouteOption | u
       .map((d) => ({ d, likely: insideOf.origin + likelySeconds(start, doorPoint(d)) + pace.secondsPerDoor + toD.seconds.get(d.inside)! }))
       .filter((x) => x.likely < bound);
     for (const { d } of byLikely(entries).slice(0, CAMPUS_LOOKUPS.entries)) {
+      const arcs = arcsOf(toD, d.inside, true);
+      if (arcs[0]?.index === d.index) continue; // in by the door and straight back out: Google's walk with a detour
       const lead = await connector(g, fetcher, O.loc, d, req.closedEdgeIds, rejected);
       if (!lead) continue;
-      const arcs = arcsOf(toD, d.inside, true);
       make("ENTRY", { startNode: d.inside, endNode: arcs.length ? arcs[arcs.length - 1].to : d.inside, lead, arcs });
     }
   }
@@ -544,9 +553,10 @@ export async function campusWalk(req: CampusWalkRequest, google: RouteOption | u
       .map((d) => ({ d, likely: fromO.seconds.get(d.inside)! + pace.secondsPerDoor + likelySeconds(doorPoint(d), end) + insideOf.destination }))
       .filter((x) => x.likely < bound);
     for (const { d } of byLikely(exits).slice(0, CAMPUS_LOOKUPS.exits)) {
+      const arcs = arcsOf(fromO, d.inside);
+      if (arcs[arcs.length - 1]?.index === d.index) continue; // in by the door only to leave by it
       const tail = await connector(g, fetcher, D.loc, d, req.closedEdgeIds, rejected);
       if (!tail) continue;
-      const arcs = arcsOf(fromO, d.inside);
       make("EXIT", { startNode: arcs.length ? arcs[0].from : d.inside, endNode: d.inside, arcs, tail });
     }
   }
@@ -573,11 +583,13 @@ export async function campusWalk(req: CampusWalkRequest, google: RouteOption | u
     }
     throughs.sort((x, y) => x.likely - y.likely || x.d.inside - y.d.inside || x.e.inside - y.e.inside);
     for (const { d, e, search } of throughs.slice(0, CAMPUS_LOOKUPS.through)) {
+      const arcs = arcsOf(search, e.inside);
+      if (arcs[0]?.index === d.index || arcs[arcs.length - 1]?.index === e.index) continue; // touches a door without going through
       const lead = await connector(g, fetcher, O.loc, d, req.closedEdgeIds, rejected);
       if (!lead) continue;
       const tail = await connector(g, fetcher, D.loc, e, req.closedEdgeIds, rejected);
       if (!tail) continue;
-      make("THROUGH", { startNode: d.inside, endNode: e.inside, lead, arcs: arcsOf(search, e.inside), tail });
+      make("THROUGH", { startNode: d.inside, endNode: e.inside, lead, arcs, tail });
     }
   }
 
