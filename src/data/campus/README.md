@@ -12,11 +12,12 @@ is worth it).
 | `research/uwgo-routing-research-2026-09-14.json` | The research package as delivered, byte for byte. Never edited. |
 | `normalize.ts` | Reads the research into UW Go's shapes without adding anything, and reports whatever it cannot map. |
 | `types.ts` | The model: evidence, activation, passage per direction, access, availability, and the shapes of the reviewed decisions. |
-| `overlay.ts` | UW Go's reviewed decisions: which surveyed segment each research record is about, whether routing may use it, and why. The conflict register and the field-verification backlog are here too. |
-| `knowledge.ts` | Indexes research and decisions for routing, and checks every reference against the surveyed network. |
+| `overlay.ts` | UW Go's reviewed decisions: which surveyed segment each research record is about, whether routing may use it, and why. The conflict register and the reviewers' field checks are here too. |
+| `field/` | Field verification: observations imported from `/dev/campus-audit`, kept apart from routing, and the promotions that deliberately turn what they saw into facts. See `field/README.md`. |
+| `knowledge.ts` | Indexes research, decisions and promotions for routing, and checks every reference against the surveyed network. |
 | `report.ts` | Renders `docs/campus-routing-audit.md`. |
 
-Files here import only types, so `scripts/audit-campus-routing.mjs` can load them with Node.
+Files here import only types, so the scripts can load them with Node.
 
 ## What the research is, and is not
 
@@ -33,6 +34,7 @@ survey has already drawn.
 | Level | Meaning |
 |---|---|
 | OFFICIAL | An explicit university statement about this fact. |
+| FIELD_VERIFIED | Checked on the ground: a field observation a reviewer promoted (`field/promotions.ts`). Dated, because construction or a new survey can make it stale. |
 | CORROBORATED | Two independent sources agree, typically a university page and the survey's geometry pointing at the same door or link. |
 | SURVEYED | Drawn by the WATIsGrass survey and nothing more. Real geometry, silent on permission, hours and access. The default for every segment. |
 | ANECDOTAL | A student or community report without geometry. |
@@ -50,11 +52,20 @@ How the two combine:
 
 - A **restriction** (may not be entered, needs a key, not step-free) is honoured whatever its
   evidence. It can only remove an option.
-- A claim that **widens** what a route may use (a documented step-free lift, say) needs OFFICIAL or
-  CORROBORATED evidence, or ANECDOTAL/INFERRED with `experimentalCampus`.
+- A claim that **widens** what a route may use (a documented step-free elevator, say) needs
+  OFFICIAL, FIELD_VERIFIED or CORROBORATED evidence, or ANECDOTAL/INFERRED with `experimentalCampus`.
 - UNRESOLVED claims are never used.
 - Unknown is never false and never true: an undocumented door is not accessible and not
-  inaccessible, it is unknown, and step-free routing treats unknown changes of floor as impassable.
+  inaccessible, it is unknown, and step-free routing treats an unconfirmed change of floor as
+  impassable. An elevator the survey records is not assumed step-free either.
+
+## Where a route's evidence comes from
+
+Every campus decision names what activated it (a building's rule, students' closure reports, or the
+doors and links of a shortcut) and what each door and link it uses rests on: official research,
+community reports, UW Go's review, the WATIsGrass survey, a promoted field observation, or a
+combination (`src/engine/campusProvenance.ts`). The route's developer reasoning prints both, and in
+development `window.uwgoCampus.legs()` lists them for every planned leg.
 
 ## Changing the knowledge
 
@@ -63,7 +74,8 @@ How the two combine:
    its id and current rules; paste its output into geojson.io to find the one you mean.
 2. Write down the basis in plain words, and add or close the matching field check.
 3. `npx vitest run src/data/campus src/engine` checks every reference and the routing that depends on it.
-4. `node scripts/audit-campus-routing.mjs` regenerates `docs/campus-routing-audit.md`.
+4. `node scripts/audit-campus-routing.mjs` regenerates `docs/campus-routing-audit.md`, and
+   `npm run campus:field` regenerates the ranked field-verification list.
 
 A new edition of the research goes in `research/` beside the old one. Point `index.ts` at it, then fix
 whatever `normalizeResearch(...).issues` reports: a record that gained coordinates or hours is
@@ -71,6 +83,6 @@ reported, not silently dropped.
 
 ## After someone walks a check
 
-Promote only what was observed, only for the direction and time it was observed, and say when in the
-basis. A door seen locked inwards at 9 pm is a restriction; a door seen open at noon is not evidence
-that it is open at 11 pm.
+Record it at `/dev/campus-audit`, import the export, review it and promote only what was observed,
+only for the direction and time it was observed (`field/README.md`). A door seen locked inwards at
+9 pm is a restriction; a door seen open at noon is not evidence that it is open at 11 pm.
