@@ -4,7 +4,7 @@ import { findBuilding } from "@/data/buildings";
 import { decode, encode } from "@googlemaps/polyline-codec";
 import { haversineMeters } from "@/routing/EstimateRoutingProvider";
 import { INDOOR_PACE, anchorsOf, isOnIndoorNetwork, nearestEntrances, routeBetweenNodes, type AccessNeeds, type CampusConstraints, type IndoorGraphRoute, type IndoorSegment, type RouteOptions } from "./indoorGraph";
-import type { IndoorNode } from "@/data/indoor/network";
+import { isVertical, type IndoorNode } from "@/data/indoor/network";
 
 /**
  * The winter route: a walk that stays under a roof wherever the campus indoor network
@@ -79,7 +79,7 @@ function length(path: Point[]): number {
   return m;
 }
 
-const KIND_WORD: Record<IndoorSegment["kind"], string> = { TUNNEL: "tunnel", BRIDGE: "bridge", OUTDOOR: "outside", HALLWAY: "inside", DOOR: "door", OPEN: "inside", STAIRS: "stairs" };
+const KIND_WORD: Record<IndoorSegment["kind"], string> = { TUNNEL: "tunnel", BRIDGE: "bridge", OUTDOOR: "outside", HALLWAY: "inside", DOOR: "door", OPEN: "inside", STAIRS: "stairs", ELEVATOR: "elevator", RAMP: "ramp", OTHER_VERTICAL: "change of floor" };
 
 /** One step per building change, named for the way the boundary was crossed. */
 function stepsFor(r: IndoorGraphRoute): RouteStep[] {
@@ -96,7 +96,7 @@ function stepsFor(r: IndoorGraphRoute): RouteStep[] {
     if (s.to.building === "OUT") { outsideFrom = s.from.building; continue; }
     const from = outsideFrom ?? since;
     const how = outsideFrom ? "outside" : KIND_WORD[s.kind];
-    const floors = s.kind === "STAIRS" && s.floors ? ` (${s.floors > 0 ? "up" : "down"} ${Math.abs(s.floors)} floor${Math.abs(s.floors) === 1 ? "" : "s"})` : "";
+    const floors = isVertical(s.kind) && s.floors ? ` (${s.floors > 0 ? "up" : "down"} ${Math.abs(s.floors)} floor${Math.abs(s.floors) === 1 ? "" : "s"})` : "";
     steps.push({ mode: "WALK", durationMinutes: Math.round(seconds / 60), distanceMeters: Math.round(metres), instruction: `${from} → ${s.to.building}: ${how}${floors}` });
     metres = 0; seconds = 0; since = s.to.building; outsideFrom = undefined;
   }

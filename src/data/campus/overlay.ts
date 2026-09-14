@@ -638,10 +638,13 @@ export const CAMPUS_OVERLAY: CampusOverlay = {
       treatment: "Not routed.",
     },
     {
-      id: "SURVEY_LIFTS_AS_STAIRS",
-      subject: "Lifts in the surveyed network",
-      positions: [{ says: "The network generator (scripts/gen-indoor-network.mjs) records the survey's elevators with the same kind as stairs.", sourceIds: [] }],
-      treatment: "Step-free routing cannot tell a lift from a stairwell, so it uses neither. Regenerating the network with lifts kept distinct would lift that restriction.",
+      id: "SURVEY_HAS_NO_ELEVATORS",
+      subject: "Elevators in the surveyed network",
+      positions: [
+        { says: "The survey's format has an elevator type, but the survey records none: all 53 of its changes of floor are stairwells, in every revision checked from September 2024 to February 2026. UW Go's generator keeps stairs, elevators and ramps apart, so none was lost on the way in.", sourceIds: [] },
+        { says: "The research records at least one elevator the survey does not have: E2's main west lift to RCH floor 2, which needs a term-issued key.", sourceIds: ["B_E2", "B_RCH"] },
+      ],
+      treatment: "Step-free routing never changes floor by stairs, and uses an elevator or ramp only once it is confirmed step-free. With no elevator in the network, step-free routes stay on one level until elevators are located and confirmed in the field.",
     },
   ],
 
@@ -659,7 +662,7 @@ export const CAMPUS_OVERLAY: CampusOverlay = {
     { id: "FC_E3_E5_FLOOR", priority: 2, where: "E3–E5 bridge", question: "Which E3 floor does the E5 bridge land on?", why: "The survey says 4, E3's page says 3, and E5's page says both 3 and 5.", research: { connections: ["C11"] }, edgeIds: ["6461ff856f562761"] },
     { id: "FC_STC_NH_HOURS", priority: 2, where: "STC–NH link", question: "Does the STC–NH link lock after hours, and when?", why: "A community report says it does; UW Go does not assume hours.", research: { connections: ["C05"] }, edgeIds: ["4522007ba4210597"] },
     { id: "FC_SLC_MC_BRIDGE_HOURS", priority: 2, where: "SLC–MC bridge", question: "When is the SLC–MC bridge open, and where does it land in SLC?", why: "After-hours availability is not established.", research: { connections: ["C25"] }, edgeIds: ["72119d6a85c7d4de"] },
-    { id: "FC_LIFTS", priority: 2, where: "Whole network", question: "Regenerate the network with lifts kept distinct from stairs, then confirm the lifts step-free routes would use.", why: "Step-free routing currently uses no lifts at all.", research: {} },
+    { id: "FC_ELEVATORS", priority: 2, where: "Buildings step-free trips need to change floor in", question: "Where are the elevators (and any ramps between levels) that step-free routes would use, which floors does each serve, and can each be used without a key?", why: "The survey records no elevators, so step-free routes cannot change floor until one is confirmed.", research: { connections: ["C15"] } },
     { id: "FC_PASS_THROUGH_HOURS", priority: 2, where: "Buildings routes pass through", question: "What are the opening hours of the buildings shortcuts and winter routes pass through (C2, B1, B2, ESC, EIT, PHY, E2, E3, QNC, MC, STC, AL, ML, EV1, EV2)?", why: "With hours unknown, UW Go only routes through them between 07:00 and 22:00." },
     { id: "FC_SLC_TIMING", priority: 2, where: "SLC", question: "Time the walk from each SLC door to the PAC front desk, in both directions, and through SLC from west to east.", why: "These are survey estimates, and they decide which door a PAC trip uses.", edgeIds: ["5ba0e3d2964bf706", "b97df0c640324bea", "07284470cb96f524", "dc942af2f1e25066", "c34ea719b8b9dee5"] },
     { id: "FC_STC_RING_ROAD", priority: 3, where: "STC", question: "Is the Ring Road corner entrance on the north-west or north-east corner?", why: "The catalogue page says both.", research: { portals: ["STC-P02"] } },

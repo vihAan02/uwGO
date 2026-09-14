@@ -8,6 +8,8 @@ import type { RoutingProvider } from "@/routing/RoutingProvider";
 import { findBuilding } from "@/data/buildings";
 import { UW_INDOOR_NETWORK as NET } from "@/data/indoor/uw-indoor-network.generated";
 import { edgeById, edgeId } from "@/data/indoor/edgeId";
+import { isVertical } from "@/data/indoor/network";
+import { CAMPUS_KNOWLEDGE, claimsUsable } from "@/data/campus";
 import { torontoDate } from "@/time/toronto";
 import { campusWalk, explainCampusDecision, type CampusWalkRequest } from "./campusRoute";
 import { graphOver } from "./indoorGraph";
@@ -194,11 +196,13 @@ describe("closures, access and what may not be used", () => {
     expect(r.route!.indoorEdgeIds).not.toContain(edgeId(NET, outdoor));
   });
 
-  it("a step-free trip to PAC never changes floor by stairs or lift of unknown kind", async () => {
+  it("a step-free trip to PAC never changes floor by stairs, or by an elevator or ramp nobody has confirmed step-free", async () => {
     const r = (await walk(MC, PAC, google(), { access: { stepFree: true } }))!;
     for (const id of r.route?.indoorEdgeIds ?? []) {
       const e = edgeById(NET, id)!;
-      expect(e.kind === "STAIRS" && e.floors !== 0, id).toBe(false);
+      const fact = CAMPUS_KNOWLEDGE.edgeFacts.get(id);
+      const confirmed = fact?.access?.stepFree === true && claimsUsable(fact.evidence, false);
+      expect(isVertical(e.kind) && e.floors !== 0 && !confirmed, id).toBe(false);
     }
   });
 

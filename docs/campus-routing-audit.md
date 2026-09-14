@@ -216,11 +216,12 @@ Treatment: Routed as surveyed. The level links are not added until they are meas
 
 Treatment: Not routed.
 
-### Lifts in the surveyed network (`SURVEY_LIFTS_AS_STAIRS`)
+### Elevators in the surveyed network (`SURVEY_HAS_NO_ELEVATORS`)
 
-- The network generator (scripts/gen-indoor-network.mjs) records the survey's elevators with the same kind as stairs. [survey]
+- The survey's format has an elevator type, but the survey records none: all 53 of its changes of floor are stairwells, in every revision checked from September 2024 to February 2026. UW Go's generator keeps stairs, elevators and ramps apart, so none was lost on the way in. [survey]
+- The research records at least one elevator the survey does not have: E2's main west lift to RCH floor 2, which needs a term-issued key. [B_E2, B_RCH]
 
-Treatment: Step-free routing cannot tell a lift from a stairwell, so it uses neither. Regenerating the network with lifts kept distinct would lift that restriction.
+Treatment: Step-free routing never changes floor by stairs, and uses an elevator or ramp only once it is confirmed step-free. With no elevator in the network, step-free routes stay on one level until elevators are located and confirmed in the field.
 
 ## Field verification backlog
 
@@ -244,7 +245,7 @@ Things to walk out and check. Priority 1 blocks a production decision; 2 would i
 - [ ] **E3–E5 bridge**: Which E3 floor does the E5 bridge land on? _The survey says 4, E3's page says 3, and E5's page says both 3 and 5._ (C11, `6461ff856f562761`)
 - [ ] **STC–NH link**: Does the STC–NH link lock after hours, and when? _A community report says it does; UW Go does not assume hours._ (C05, `4522007ba4210597`)
 - [ ] **SLC–MC bridge**: When is the SLC–MC bridge open, and where does it land in SLC? _After-hours availability is not established._ (C25, `72119d6a85c7d4de`)
-- [ ] **Whole network**: Regenerate the network with lifts kept distinct from stairs, then confirm the lifts step-free routes would use. _Step-free routing currently uses no lifts at all._
+- [ ] **Buildings step-free trips need to change floor in**: Where are the elevators (and any ramps between levels) that step-free routes would use, which floors does each serve, and can each be used without a key? _The survey records no elevators, so step-free routes cannot change floor until one is confirmed._ (C15)
 - [ ] **Buildings routes pass through**: What are the opening hours of the buildings shortcuts and winter routes pass through (C2, B1, B2, ESC, EIT, PHY, E2, E3, QNC, MC, STC, AL, ML, EV1, EV2)? _With hours unknown, UW Go only routes through them between 07:00 and 22:00._
 - [ ] **SLC**: Time the walk from each SLC door to the PAC front desk, in both directions, and through SLC from west to east. _These are survey estimates, and they decide which door a PAC trip uses._ (`5ba0e3d2964bf706`, `b97df0c640324bea`, `07284470cb96f524`, `dc942af2f1e25066`, `c34ea719b8b9dee5`)
 - [ ] **AL north doors (toward Dana Porter)**: Is the surveyed door at `8d097a89e6b7b905` the AL-P01 "North, toward Dana Porter"? Record its coordinates, which way it may be used, and its hours. _Placed as corroborated by UW Go, not observed._ (`8d097a89e6b7b905`)

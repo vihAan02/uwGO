@@ -76,7 +76,7 @@ export const ENTRANCE_LOOKUPS = 3;
 const NEARBY_DOOR_METRES = 200;
 
 /** Reasons worth naming even when Google's walk stood: a restriction or a closure, not a door merely outside routing hours. */
-const RESTRICTIONS: ReadonlySet<Refusal> = new Set<Refusal>(["CLOSED", "DIRECTION", "CREDENTIAL", "EMERGENCY_ONLY", "QUARANTINED", "HISTORICAL", "NOT_STEP_FREE", "NOT_INDEPENDENT", "STAIRS_OR_LIFT"]);
+const RESTRICTIONS: ReadonlySet<Refusal> = new Set<Refusal>(["CLOSED", "DIRECTION", "CREDENTIAL", "EMERGENCY_ONLY", "QUARANTINED", "HISTORICAL", "NOT_STEP_FREE", "NOT_INDEPENDENT", "STAIRS", "VERTICAL_UNCONFIRMED"]);
 
 /**
  * The survey's outdoor walkways are drawn straighter than the paths they follow, so a campus route

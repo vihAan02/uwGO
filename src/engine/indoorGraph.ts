@@ -13,7 +13,7 @@
  * widen what a route may use needs official or corroborated evidence.
  */
 import { UW_INDOOR_NETWORK } from "@/data/indoor/uw-indoor-network.generated";
-import type { IndoorEdge, IndoorEdgeKind, IndoorNetwork, IndoorNode } from "@/data/indoor/network";
+import { isVertical, type IndoorEdge, type IndoorEdgeKind, type IndoorNetwork, type IndoorNode } from "@/data/indoor/network";
 import { haversineMeters } from "@/routing/EstimateRoutingProvider";
 import { edgeId } from "@/data/indoor/edgeId";
 import { CAMPUS_KNOWLEDGE } from "@/data/campus";
@@ -26,8 +26,15 @@ export const OUTSIDE = "OUT";
 export interface Pace {
   indoorMetresPerSecond: number;
   outdoorMetresPerSecond: number;
+  /** A flight of stairs, one floor, either direction. Also a change of floor of a kind UW Go does not recognise. */
   secondsPerFloor: number;
   secondsPerDoor: number;
+  /** Waiting for an elevator, getting in and getting out, however many floors it goes. */
+  elevatorWaitSeconds: number;
+  /** An elevator's travel, per floor. */
+  elevatorSecondsPerFloor: number;
+  /** A ramp's climb, per floor. */
+  rampSecondsPerFloor: number;
 }
 
 /** Walking paces. Corridors, doors and people make indoor walking slower than a pavement. */
@@ -38,6 +45,11 @@ export const INDOOR_PACE = {
   secondsPerFloor: 14,
   /** Opening and passing a door. */
   secondsPerDoor: 3,
+  /** UW Go's estimate, not a measurement: no elevator on campus has been timed. */
+  elevatorWaitSeconds: 45,
+  elevatorSecondsPerFloor: 5,
+  /** One storey at an accessible gradient (1:12) is some 45 m of ramp and landings. An estimate, not a measurement. */
+  rampSecondsPerFloor: 40,
 } as const;
 
 /**
@@ -185,9 +197,14 @@ export function indoorNetworkBuildings(): string[] {
 
 /** Seconds to walk an edge, and how many of them are outdoors. */
 export function edgeSeconds(edge: IndoorEdge, pace: Pace = INDOOR_PACE): { seconds: number; outdoor: number } {
+  const floors = Math.abs(edge.floors);
   switch (edge.kind) {
     case "OUTDOOR": { const s = edge.metres / pace.outdoorMetresPerSecond; return { seconds: s, outdoor: s }; }
-    case "STAIRS": return { seconds: Math.abs(edge.floors) * pace.secondsPerFloor, outdoor: 0 };
+    // A change of floor of a kind UW Go does not recognise is timed as stairs, the survey's usual meaning.
+    case "STAIRS":
+    case "OTHER_VERTICAL": return { seconds: floors * pace.secondsPerFloor, outdoor: 0 };
+    case "ELEVATOR": return { seconds: floors ? pace.elevatorWaitSeconds + floors * pace.elevatorSecondsPerFloor : 0, outdoor: 0 };
+    case "RAMP": return { seconds: floors * pace.rampSecondsPerFloor, outdoor: 0 };
     case "DOOR": return { seconds: pace.secondsPerDoor, outdoor: 0 };
     case "OPEN": return { seconds: 0, outdoor: 0 };
     default: return { seconds: edge.metres / pace.indoorMetresPerSecond, outdoor: 0 };
@@ -233,7 +250,7 @@ class Heap {
 }
 
 export interface AccessNeeds {
-  /** No steps anywhere. Unknown is not step-free: a change of floor by stairs or lift of unknown kind is refused. */
+  /** No steps anywhere. Unknown is not step-free: stairs are refused, and so is an elevator or ramp nobody has confirmed is step-free. */
   stepFree?: boolean;
   /** Nothing that needs a key, a call button or someone's help. */
   independent?: boolean;
@@ -278,7 +295,10 @@ export type Refusal =
   | "CREDENTIAL"
   | "EMERGENCY_ONLY"
   | "NOT_STEP_FREE"
-  | "STAIRS_OR_LIFT"
+  /** A change of floor by stairs. */
+  | "STAIRS"
+  /** A change of floor by an elevator, a ramp or something the survey does not name, that nobody has confirmed is step-free. */
+  | "VERTICAL_UNCONFIRMED"
   | "NOT_INDEPENDENT"
   | "HOURS_CLOSED"
   | "HOURS_UNKNOWN";
@@ -292,7 +312,8 @@ export const REFUSAL_TEXT: Record<Refusal, string> = {
   CREDENTIAL: "needs a key or card",
   EMERGENCY_ONLY: "emergency exit only",
   NOT_STEP_FREE: "not step-free",
-  STAIRS_OR_LIFT: "a change of floor that is not known to be step-free",
+  STAIRS: "a change of floor by stairs",
+  VERTICAL_UNCONFIRMED: "an elevator or ramp nobody has confirmed is step-free",
   NOT_INDEPENDENT: "needs a key, a call button or help",
   HOURS_CLOSED: "closed at that time",
   HOURS_UNKNOWN: "hours unknown, and it is outside the hours UW Go routes through buildings",
@@ -374,7 +395,9 @@ export function refusalFor(g: Graph, arc: Arc, opts: RouteOptions = {}, atMs?: n
     const usable = usableAccess(fact, experimental);
     if (c.access.stepFree) {
       if (stated?.stepFree === false) return "NOT_STEP_FREE";
-      if (arc.edge.kind === "STAIRS" && arc.edge.floors !== 0 && usable?.stepFree !== true) return "STAIRS_OR_LIFT";
+      // A change of floor is step-free only on documented word: stairs never are by their kind, and an
+      // elevator or ramp the survey records says nothing about whether it works, needs a key or is too steep.
+      if (isVertical(arc.edge.kind) && arc.edge.floors !== 0 && usable?.stepFree !== true) return arc.edge.kind === "STAIRS" ? "STAIRS" : "VERTICAL_UNCONFIRMED";
     }
     if (c.access.independent && stated?.independent === false) return "NOT_INDEPENDENT";
   }
