@@ -562,7 +562,7 @@ export async function campusWalk(req: CampusWalkRequest, google: RouteOption | u
   const insideOf = { origin: inside.originSeconds, destination: inside.destinationSeconds };
   const googleTotal = googleSeconds + inside.originSeconds + inside.destinationSeconds;
   const m = cfg.campusShortcutMargin;
-  const marginFor = (through: number) => m.baseSeconds + m.shareOfGoogle * googleSeconds + m.perBuildingSeconds * through;
+  const marginFor = (through: number) => m.baseSeconds + m.shareOfGoogle * googleSeconds + m.perBuildingSeconds * Math.min(through, m.buildingsCharged);
 
   // Can Google's walk be used as it is?
   const noEntry = exteriorRestriction(g, D.building, "in");

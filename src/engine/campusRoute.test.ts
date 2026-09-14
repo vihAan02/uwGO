@@ -360,6 +360,20 @@ describe("falling back to Google's walk", () => {
     expect(r.decision.warnings).toHaveLength(1);
   });
 
+  it("charges a way through buildings for each one it walks through, up to the number the margin counts", async () => {
+    const STC = loc("STC");
+    const f = google({ [key(STC, MC)]: 900 });
+    const baseline = await f.walk(STC, MC);
+    const m = CFG.campusShortcutMargin;
+    const decide = async (buildingsCharged: number) => (await campusWalk({ from: STC, to: MC, at: NOON }, baseline, f, { ...CFG, campusShortcutMargin: { ...m, buildingsCharged } }, NOON))!.decision;
+    const counted = await decide(3);
+    expect(counted.outcome).toBe("SHORTCUT");
+    const through = new Set(counted.chosen!.via.filter((v) => v.startsWith("through ")).map((v) => v.slice("through ".length)).filter((b) => b !== "STC" && b !== "MC")).size;
+    expect(through).toBeGreaterThanOrEqual(2);
+    expect(counted.marginSeconds).toBe(Math.round(m.baseSeconds + m.shareOfGoogle * 900 + m.perBuildingSeconds * Math.min(through, 3)));
+    expect((await decide(1)).marginSeconds).toBeLessThanOrEqual(Math.round(m.baseSeconds + m.shareOfGoogle * 900 + m.perBuildingSeconds));
+  });
+
   it("reads the walk to a door off Google's own line when the line passes it, with no walk of its own", async () => {
     const f = { walk: vi.fn(async (from: LatLng, to: LatLng) => (to === PAC ? google().walk(from, to) : undefined)) };
     const r = (await walk(HOME, PAC, f))!;
