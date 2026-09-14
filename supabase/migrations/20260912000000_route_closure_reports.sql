@@ -79,18 +79,45 @@ create policy "closures: delete own" on public.route_closure_reports
 -- something cleared overnight is not still diverting people the next afternoon. A closure that
 -- really does last weeks stays in force because people keep meeting it and keep reporting,
 -- and each report refreshes that account's row.
-create or replace view public.route_closure_consensus as
-  select
-    edge_id,
-    count(*)::int as reports,
-    max(reported_at) as latest
-  from public.route_closure_reports
-  where status = 'CLOSED'
-    and reported_at > now() - interval '24 hours'
-  group by edge_id;
+--
+-- A tally has to count rows the reader is not allowed to read, and the policies above rightly
+-- forbid that. So the counting is done by one function that runs as its owner and can only ever
+-- return totals. It lives in `private`, a schema the Supabase API does not expose, so it cannot
+-- be called over REST; its search_path is pinned empty so nothing a caller creates can be
+-- substituted for the tables it names; and only signed-in students may execute it.
+create schema if not exists private;
+revoke all on schema private from public, anon;
+grant usage on schema private to authenticated;
 
--- The view runs as its owner, so it can count rows the caller may not read. That is the point:
--- it exposes totals without exposing who. It selects no reporter_id, and anon gets nothing.
+create or replace function private.route_closure_tallies()
+returns table (edge_id text, reports int, latest timestamptz)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select
+    r.edge_id,
+    count(*)::int,
+    max(r.reported_at)
+  from public.route_closure_reports r
+  where r.status = 'CLOSED'
+    and r.reported_at > now() - interval '24 hours'
+  group by r.edge_id
+$$;
+
+revoke all on function private.route_closure_tallies() from public, anon;
+grant execute on function private.route_closure_tallies() to authenticated;
+
+-- The view itself runs with the reader's privileges and RLS (security_invoker), never its
+-- owner's: all it can do is what the reader could do by calling the function above. Reporter
+-- identities are not in it, and anon gets nothing.
+create or replace view public.route_closure_consensus
+  with (security_invoker = true)
+as
+  select edge_id, reports, latest
+  from private.route_closure_tallies();
+
 revoke all on public.route_closure_consensus from anon;
 grant select on public.route_closure_consensus to authenticated;
 
