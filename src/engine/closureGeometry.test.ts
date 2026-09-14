@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { UW_INDOOR_NETWORK as NET } from "@/data/indoor/uw-indoor-network.generated";
 import { edgeId } from "@/data/indoor/edgeId";
-import { closuresOnRoute, distanceToSegment, routeRunsAlong, type LatLngTuple } from "./closureGeometry";
+import { closuresOnRoute, distanceToSegment, projectOntoPath, routeRunsAlong, type LatLngTuple } from "./closureGeometry";
 
 /** A short east-west path near the middle of campus. */
 const A: LatLngTuple = [43.4720, -80.5440];
@@ -14,6 +14,23 @@ describe("measuring how near a route passes", () => {
     const mid: LatLngTuple = [43.4720, -80.5435];
     expect(distanceToSegment(north(mid, 10), A, B)).toBeCloseTo(10, 0);
     expect(distanceToSegment(mid, A, B)).toBeCloseTo(0, 1);
+  });
+
+  it("finds how far along a route the point nearest a place is, and how far off the route the place is", () => {
+    // A to B is about 80.7 m east, then 100 m north.
+    const path: LatLngTuple[] = [A, B, north(B, 100)];
+    const beside = projectOntoPath(north([43.4720, -80.5435], 10), path);
+    expect(beside.segment).toBe(0);
+    expect(beside.off).toBeCloseTo(10, 0);
+    expect(Math.abs(beside.along - 40.4)).toBeLessThan(1);
+    expect(Math.abs(beside.metres - 180.7)).toBeLessThan(1.5);
+    const later = projectOntoPath(east(north(B, 50), 10), path);
+    expect(later.segment).toBe(1);
+    expect(later.off).toBeCloseTo(10, 0);
+    expect(Math.abs(later.along - 130.7)).toBeLessThan(1.5);
+    const before = projectOntoPath(east(A, -30), path);
+    expect(before.along).toBe(0);
+    expect(before.off).toBeCloseTo(30, 0);
   });
 });
 

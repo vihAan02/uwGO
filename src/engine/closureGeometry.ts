@@ -36,6 +36,42 @@ export function distanceToSegment(p: LatLngTuple, a: LatLngTuple, b: LatLngTuple
   return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
 }
 
+/** Where a polyline passes nearest a point. */
+export interface PathProjection {
+  /** Metres along the path, from its first point to the nearest point. */
+  along: number;
+  /** Metres from the point to the path. */
+  off: number;
+  /** The whole path, in metres. */
+  metres: number;
+  /** The nearest point lies between `path[segment]` and `path[segment + 1]`. */
+  segment: number;
+  point: LatLngTuple;
+}
+
+/** The point of a polyline nearest a point, and how far along the polyline it is, in the same local flat frame. */
+export function projectOntoPath(p: LatLngTuple, path: readonly LatLngTuple[]): PathProjection {
+  const metresBetween = (a: LatLngTuple, b: LatLngTuple) => haversineMeters({ latitude: a[0], longitude: a[1] }, { latitude: b[0], longitude: b[1] });
+  if (path.length < 2) return { along: 0, off: path.length ? metresBetween(p, path[0]) : Infinity, metres: 0, segment: 0, point: path[0] ?? p };
+  const mPerLat = 111_320;
+  const mPerLng = mPerLat * Math.cos((p[0] * Math.PI) / 180);
+  let best: Omit<PathProjection, "metres"> = { along: 0, off: Infinity, segment: 0, point: path[0] };
+  let run = 0;
+  for (let i = 0; i < path.length - 1; i++) {
+    const a = path[i];
+    const b = path[i + 1];
+    const ax = (a[1] - p[1]) * mPerLng, ay = (a[0] - p[0]) * mPerLat;
+    const dx = (b[1] - a[1]) * mPerLng, dy = (b[0] - a[0]) * mPerLat;
+    const len2 = dx * dx + dy * dy;
+    const t = len2 === 0 ? 0 : Math.min(1, Math.max(0, -(ax * dx + ay * dy) / len2));
+    const off = Math.hypot(ax + t * dx, ay + t * dy);
+    const length = metresBetween(a, b);
+    if (off < best.off) best = { along: run + t * length, off, segment: i, point: [a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])] };
+    run += length;
+  }
+  return { ...best, metres: run };
+}
+
 /** Metres from a point to the nearest part of a polyline. */
 export function distanceToPath(p: LatLngTuple, path: readonly LatLngTuple[]): number {
   if (path.length === 0) return Infinity;
