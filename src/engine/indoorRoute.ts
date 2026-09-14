@@ -3,7 +3,7 @@ import type { PlannerConfig } from "@/domain/config";
 import { findBuilding } from "@/data/buildings";
 import { decode, encode } from "@googlemaps/polyline-codec";
 import { haversineMeters } from "@/routing/EstimateRoutingProvider";
-import { INDOOR_PACE, anchorsOf, isOnIndoorNetwork, nearestEntrances, routeBetweenNodes, type IndoorGraphRoute, type IndoorSegment } from "./indoorGraph";
+import { INDOOR_PACE, anchorsOf, isOnIndoorNetwork, nearestEntrances, routeBetweenNodes, type AccessNeeds, type CampusConstraints, type IndoorGraphRoute, type IndoorSegment, type RouteOptions } from "./indoorGraph";
 import type { IndoorNode } from "@/data/indoor/network";
 
 /**
@@ -22,7 +22,16 @@ export interface ConnectorFetcher {
 /** A place further than this from any network door gets no winter route: it would be mostly outdoors anyway. */
 export const CONNECTOR_MAX_METRES = 400;
 /** Doors tried for an off-network end; each costs one (cached) walking-route lookup. */
-const CONNECTOR_CANDIDATES = 2;
+export const CONNECTOR_CANDIDATES = 2;
+
+/**
+ * The doors a place off the network is joined to it by, and the walk each join is priced as: from
+ * the place to the door, whichever end of the journey it is. The winter route and the campus-aware
+ * fastest walk both join through here, so a door one has already priced costs the other nothing.
+ */
+export function connectorDoors(loc: LatLng, direction: "IN" | "OUT", search: RouteOptions) {
+  return nearestEntrances(loc, CONNECTOR_CANDIDATES, undefined, { direction, opts: search }).filter((e) => e.metres <= CONNECTOR_MAX_METRES);
+}
 /** A winter route must be at least this much under cover, or it is not one. */
 export const MIN_INDOOR_SHARE = 0.5;
 
@@ -41,8 +50,12 @@ interface End {
 const toPoint = (p: { latitude: number; longitude: number }): Point => [p.latitude, p.longitude];
 const nodeLatLng = (n: IndoorNode): LatLng => ({ latitude: n.lat, longitude: n.lng });
 
-/** Where the network is entered from a place: inside its own building, or by a short walk to the nearest door. */
-async function joinEnds(loc: CampusLocation, fetcher: ConnectorFetcher | undefined): Promise<End[]> {
+/**
+ * Where the network is entered from a place: inside its own building, or by a short walk to the
+ * nearest door. `direction` is how the walk uses that door: in at the start of a journey, out at
+ * the end, so a door that may only be used one way is only offered that way.
+ */
+async function joinEnds(loc: CampusLocation, fetcher: ConnectorFetcher | undefined, direction: "IN" | "OUT", search: RouteOptions): Promise<End[]> {
   if (loc.university === "UW" && isOnIndoorNetwork(loc.buildingCode)) {
     return [{ nodes: anchorsOf(loc.buildingCode!).map((n) => n.id), minutes: 0 }];
   }
@@ -50,8 +63,7 @@ async function joinEnds(loc: CampusLocation, fetcher: ConnectorFetcher | undefin
   const ends: End[] = [];
   // The walk is always priced from the place to the door, whichever end of the journey it is;
   // the two directions differ by nothing worth a second lookup, and one key serves both.
-  for (const e of nearestEntrances(loc, CONNECTOR_CANDIDATES)) {
-    if (e.metres > CONNECTOR_MAX_METRES) continue;
+  for (const e of connectorDoors(loc, direction, search)) {
     const route = await fetcher.walk(loc, nodeLatLng(e.node));
     if (!route || route.isEstimate) continue; // a guessed straight line is exactly what this must not draw
     const polyline: Point[] = route.polyline ? decode(route.polyline).map(([lat, lng]) => [lat, lng] as Point) : [toPoint(loc), [e.node.lat, e.node.lng]];
@@ -100,20 +112,32 @@ function stepsFor(r: IndoorGraphRoute): RouteStep[] {
 export interface IndoorRouteOptions {
   /** Canonical ids of segments reported shut; the search will not use them. */
   closedEdgeIds?: ReadonlySet<string>;
+  /** When the trip happens. Opening hours of the buildings it passes through are only checked when this is given. */
+  at?: Date;
+  access?: AccessNeeds;
+  /** Also use experimental campus data. */
+  experimental?: boolean;
 }
 
 export async function indoorRouteBetween(from: CampusLocation, to: CampusLocation, fetcher?: ConnectorFetcher, now = new Date(), opts: IndoorRouteOptions = {}): Promise<RouteOption | undefined> {
   if (from.id === to.id) return undefined;
   if (from.buildingCode && from.buildingCode === to.buildingCode) return undefined;
-  const starts = await joinEnds(from, fetcher);
+  const constraints: CampusConstraints = {
+    at: opts.at,
+    endpoints: [from.buildingCode, to.buildingCode].filter((b): b is string => Boolean(b)),
+    access: opts.access,
+    experimental: opts.experimental,
+  };
+  const search: RouteOptions = { closedEdgeIds: opts.closedEdgeIds, constraints };
+  const starts = await joinEnds(from, fetcher, "IN", search);
   if (!starts.length) return undefined;
-  const ends = await joinEnds(to, fetcher);
+  const ends = await joinEnds(to, fetcher, "OUT", search);
   if (!ends.length) return undefined;
 
   let best: { start: End; end: End; route: IndoorGraphRoute; total: number } | undefined;
   for (const start of starts) {
     for (const end of ends) {
-      const route = routeBetweenNodes(start.nodes, end.nodes, { closedEdgeIds: opts.closedEdgeIds });
+      const route = routeBetweenNodes(start.nodes, end.nodes, search);
       if (!route) continue;
       const total = route.cost + (start.minutes + end.minutes) * 60;
       if (!best || total < best.total) best = { start, end, route, total };
@@ -127,7 +151,7 @@ export async function indoorRouteBetween(from: CampusLocation, to: CampusLocatio
   // note can name the segment rather than vaguely announcing that something is shut.
   let avoidedClosures: string[] | undefined;
   if (opts.closedEdgeIds?.size) {
-    const unclosed = routeBetweenNodes(start.nodes, end.nodes);
+    const unclosed = routeBetweenNodes(start.nodes, end.nodes, { constraints });
     const blocked = unclosed?.edgeIds.filter((id) => opts.closedEdgeIds!.has(id)) ?? [];
     if (blocked.length) avoidedClosures = [...new Set(blocked)];
   }
