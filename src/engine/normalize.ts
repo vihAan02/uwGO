@@ -4,6 +4,7 @@ import { withinMeetingDates } from "@/domain/meetingDates";
 import { buildingLocation, findBuilding } from "@/data/buildings";
 import { parseRawLocation } from "@/rooms/roomParser";
 import { dateForDay, torontoDate } from "@/time/toronto";
+import { networkFloor } from "./indoorGraph";
 
 export interface NormalizedWeek {
   mondayISO: string;
@@ -34,8 +35,11 @@ export function normalizeWeek(meetings: CourseMeeting[], mondayISO: string): Nor
     const room = parseRawLocation(m.location, m.university);
     const building = room?.resolved ? findBuilding(room.university ?? m.university, room.buildingCode) : undefined;
     if (!room || !building) { skipped.push({ meeting: m, reason: `Unknown building code "${m.location.buildingCode}"` }); continue; }
-    const location: CampusLocation | undefined = buildingLocation(building);
-    if (!location) { skipped.push({ meeting: m, reason: `No coordinates on file for ${building.name}` }); continue; }
+    const point = buildingLocation(building);
+    if (!point) { skipped.push({ meeting: m, reason: `No coordinates on file for ${building.name}` }); continue; }
+    // The room and its floor travel with the place, so a campus route can start on the right floor.
+    const floor = building.university === "UW" ? networkFloor(building.code, room.floor) : undefined;
+    const location: CampusLocation = { ...point, ...(room.roomNumber ? { room: room.roomNumber } : {}), ...(floor ? { floor } : {}) };
 
     for (const day of m.days) {
       const date = dateForDay(mondayISO, day);

@@ -3,6 +3,7 @@ import type { CampusLocation, LatLng, RouteOption } from "@/domain/types";
 import { DEFAULT_PLANNER_CONFIG as CFG } from "@/domain/config";
 import { haversineMeters } from "@/routing/EstimateRoutingProvider";
 import { encode } from "@googlemaps/polyline-codec";
+import { CAMPUS_LOOKUPS } from "./campusRoute";
 import { nearestEntrances } from "./indoorGraph";
 import { networkBuildingLocation } from "./indoorRoute";
 import { fetcherDeps, livePosition, selectRoute } from "./selectRoute";
@@ -49,9 +50,12 @@ const select = (from: CampusLocation, to: CampusLocation, preference: "FASTEST" 
 
 describe("choosing between the outdoor walk and the winter route", () => {
   it("FASTEST walks outside, and still offers the winter route as the alternative", async () => {
-    const s = await select(MC, DC, "FASTEST");
+    const s = await select(MC, DC, "FASTEST", makeFetcher({ [key(MC, DC)]: 1 }));
     expect(s.recommended!.indoorPath).toBeUndefined();
-    expect(s.recommended).toBe(s.walking);
+    // Google's walk, timed floor to floor: out from the class's floor to the door, and in from the door to the next.
+    expect(s.recommended).toBe(s.campusWalk);
+    expect(s.recommended!.provider).toBe(s.walking!.provider);
+    expect(s.recommended!.durationSeconds).toBe(s.campus!.googleTotalSeconds);
     expect(s.indoor!.indoorPath).toEqual(["MC", "C2", "DC"]);
   });
 
@@ -75,7 +79,9 @@ describe("choosing between the outdoor walk and the winter route", () => {
     const s = await select(MC, HH, "INDOORS", f);
     expect(s.indoor).toBeDefined();
     expect(s.recommended!.indoorPath).toBeUndefined();
-    expect(s.recommended!.durationMinutes).toBe(2);
+    // The two-minute walk, timed floor to floor, and still far quicker than staying inside.
+    expect(s.recommended!.durationSeconds).toBe(s.campus!.googleTotalSeconds);
+    expect(s.recommended!.durationMinutes).toBeLessThan(s.indoor!.durationMinutes);
   });
 });
 
@@ -112,9 +118,13 @@ describe("routing from where the student actually is", () => {
 
   it("prices no winter route at all when it could not be recommended anyway", async () => {
     const f = makeFetcher();
-    await select(outside, DC, "FASTEST", f, { indoorAlternative: false });
-    // One lookup: the outdoor walk. No door connectors, because the answer could not change.
-    expect(f.walk).toHaveBeenCalledTimes(1);
+    const s = await select(outside, DC, "FASTEST", f, { indoorAlternative: false });
+    // The outdoor walk, and the few door walks the campus-aware walk itself considers; no joins for a winter route that could not be recommended.
+    expect(s.indoor).toBeUndefined();
+    expect(f.walk.mock.calls.length).toBeLessThanOrEqual(1 + CAMPUS_LOOKUPS.calls + CAMPUS_LOOKUPS.highValueCalls);
+    const withWinter = makeFetcher();
+    await select(outside, DC, "FASTEST", withWinter, { indoorAlternative: true });
+    expect(withWinter.walk.mock.calls.length).toBeGreaterThanOrEqual(f.walk.mock.calls.length);
     expect(f.transit).not.toHaveBeenCalled();
   });
 

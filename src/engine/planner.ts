@@ -20,6 +20,10 @@ import { resolveStudySpots } from "@/data/study";
 import { chosenFor, type ChosenGap, type GapChoices } from "@/domain/gapChoices";
 import { estimateCrowd, type PacReading, type PacSample } from "@/data/pac/crowd";
 import { buildingLocation, findBuilding } from "@/data/buildings";
+import type { AccessNeeds } from "./indoorGraph";
+
+/** What every trip in a plan shares: the closures, the student's access needs, and whether experimental campus data is on. */
+type TripContext = Pick<RouteRequest, "closedEdgeIds" | "access" | "experimentalCampus" | "campus">;
 
 export interface PlanInput {
   meetings: CourseMeeting[];
@@ -38,6 +42,15 @@ export interface PlanInput {
   endOfDay?: EndOfDayDestination;
   /** Segments students have reported shut, by canonical id. Routing avoids them. */
   closedEdgeIds?: ReadonlySet<string>;
+  /** What the student needs from doors, links and changes of floor. */
+  access?: AccessNeeds;
+  /** Also use campus data that is only experimental. Off in normal routing. */
+  experimentalCampus?: boolean;
+  /**
+   * False plans every walk exactly as Google gives it, without campus knowledge: a switch for
+   * comparing the two, and for turning campus routing off if it ever misleads.
+   */
+  campus?: boolean;
   /** Latest live PAC reading and the samples kept so far, for crowd estimates. */
   pacLive?: PacReading;
   pacSamples?: readonly PacSample[];
@@ -49,11 +62,12 @@ export function homeLocation(home: UserHome): CampusLocation {
 
 /**
  * Per-plan memo. Walking depends only on the pair, so it is fetched once even when the pair
- * occurs on several days. Transit is schedule-bound and is never memoised here by pair; the
- * provider's own cache keys it by requested minute.
+ * occurs on several days. Transit is schedule-bound, so it is memoised by the pair and the minute
+ * asked for: a class and a study spot in the same building ask for the same bus, and get it once.
  */
 class RouteMemo implements RouteFetcher {
   private readonly walks = new Map<string, Promise<RouteOption | undefined>>();
+  private readonly transits = new Map<string, Promise<RouteOption | undefined>>();
   constructor(private readonly provider: RoutingProvider, readonly errors: string[]) {}
 
   private async guard<T>(label: string, p: Promise<T>): Promise<T | undefined> {
@@ -75,8 +89,20 @@ class RouteMemo implements RouteFetcher {
     return p;
   }
 
+  /** Whether a walk has been asked for already in this plan, so asking for it again costs nothing. */
+  priced(from: LatLng, to: LatLng): boolean {
+    return this.walks.has(pairKey(from, to));
+  }
+
   transit(from: LatLng, to: LatLng, opts: TransitOptions): Promise<RouteOption | undefined> {
-    return this.guard("transit route", this.provider.getTransitRoute(from, to, opts));
+    const minute = opts.arrivalTime ? `A${Math.floor(opts.arrivalTime.getTime() / 60_000)}` : `D${Math.floor((opts.departureTime?.getTime() ?? 0) / 60_000)}`;
+    const key = `${pairKey(from, to)}|${minute}`;
+    let p = this.transits.get(key);
+    if (!p) {
+      p = this.guard("transit route", this.provider.getTransitRoute(from, to, opts));
+      this.transits.set(key, p);
+    }
+    return p;
   }
 }
 
@@ -87,24 +113,51 @@ class RouteMemo implements RouteFetcher {
  */
 class LegResolver {
   private readonly cache = new Map<string, Promise<BestRoute>>();
-  constructor(private readonly memo: RouteMemo, private readonly cfg: PlannerConfig) {}
+  /** The context is the plan's, so it is the same for every request and needs no place in the key. */
+  constructor(private readonly memo: RouteMemo, private readonly cfg: PlannerConfig, private readonly context: TripContext = {}) {}
 
   resolve(req: RouteRequest): Promise<BestRoute> {
-    const key = `${pairKey(req.from, req.to)}|${req.departAfter.getTime()}|${req.arriveBy?.getTime() ?? "open"}`;
+    // Two classes in one building on different floors are two trips: the campus route starts on the
+    // floor. Google's walk between the buildings' map points is still fetched once, by the memo.
+    const key = `${pairKey(req.from, req.to)}|${req.from.floor ?? ""}>${req.to.floor ?? ""}|${req.departAfter.getTime()}|${req.arriveBy?.getTime() ?? "open"}`;
+    const optionKey = `${key}|option`;
+    const price = () => resolveBestRoute({ ...req, ...this.context }, this.memo, this.cfg);
+    // An option priced only for weighing takes the full answer when the trip has already been planned in full.
+    if (req.speculative) return this.cache.get(key) ?? this.memoise(optionKey, price);
+    return this.memoise(key, async () => {
+      const option = this.cache.get(optionKey);
+      if (!option) return price();
+      // The trip was weighed as an option first. When that search left no door walk unasked, or the full search
+      // finds the same walk, the plan keeps the very answer the option was weighed on.
+      const weighed = await option;
+      if (!weighed.campus?.skippedDoorWalks) return weighed;
+      const full = await price();
+      return sameAnswer(weighed, full) ? weighed : full;
+    });
+  }
+
+  private memoise(key: string, price: () => Promise<BestRoute>): Promise<BestRoute> {
     let p = this.cache.get(key);
     if (!p) {
-      p = resolveBestRoute(req, this.memo, this.cfg);
+      p = price();
       this.cache.set(key, p);
     }
     return p;
   }
 }
 
+/** Two resolutions of one trip that recommend the same way, taking the same time, leaving at the same moment. */
+function sameAnswer(a: BestRoute, b: BestRoute): boolean {
+  const x = a.recommended;
+  const y = b.recommended;
+  return x?.mode === y?.mode && x?.durationSeconds === y?.durationSeconds && x?.durationMinutes === y?.durationMinutes && x?.polyline === y?.polyline && a.departure?.getTime() === b.departure?.getTime();
+}
+
 function requestFor(t: ClassTransition): RouteRequest {
   return { from: t.from, to: t.to, departAfter: t.departAfter, arriveBy: t.hasDeadline ? t.arriveBy : undefined, crossCampus: t.crossCampus };
 }
 
-async function resolveTransition(t: ClassTransition, resolver: LegResolver, memo: RouteMemo, cfg: PlannerConfig, routePreference: RoutePreference, closedEdgeIds?: ReadonlySet<string>): Promise<ClassTransition> {
+async function resolveTransition(t: ClassTransition, resolver: LegResolver, memo: RouteMemo, cfg: PlannerConfig, routePreference: RoutePreference, context: TripContext = {}): Promise<ClassTransition> {
   // Walking, transit and the winter route are all priced and chosen between by `selectRoute`,
   // the same function Trip Mode reroutes through. The leg resolver keeps its per-request cache
   // of the walk-vs-transit answer; the indoor joins are priced through the same memo as every
@@ -112,7 +165,7 @@ async function resolveTransition(t: ClassTransition, resolver: LegResolver, memo
   // asked for and not unreasonably slower than the fastest walk. A chosen bus is never
   // overridden: that decision was about time.
   const best = await selectRoute(
-    { ...requestFor(t), preference: routePreference, closedEdgeIds },
+    { ...requestFor(t), preference: routePreference, ...context },
     { best: (req) => resolver.resolve(req), connector: memo },
     cfg,
   );
@@ -129,6 +182,8 @@ async function resolveTransition(t: ClassTransition, resolver: LegResolver, memo
     walkingRoute: best.walking,
     transitRoute: best.transit,
     indoorRoute,
+    campus: best.campus,
+    campusWalk: best.campusWalk,
     recommendedRoute: recommended,
     recommendedDeparture: departure,
     expectedArrival: arrival,
@@ -146,6 +201,9 @@ interface DayExtras {
   gapChoices?: GapChoices;
   routePreference: RoutePreference;
   closedEdgeIds?: ReadonlySet<string>;
+  access?: AccessNeeds;
+  experimentalCampus?: boolean;
+  campus?: boolean;
   endOfDay?: EndOfDayDestination;
   crowdAt: (at: Date) => CrowdEstimate;
 }
@@ -159,19 +217,22 @@ const STUDY_SPOTS = resolveStudySpots("UW");
 
 async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledClass[], home: CampusLocation | undefined, memo: RouteMemo, cfg: PlannerConfig, extras: DayExtras): Promise<DayPlan> {
   const warnings: string[] = [];
-  const resolver = new LegResolver(memo, cfg);
+  const context: TripContext = { closedEdgeIds: extras.closedEdgeIds, access: extras.access, experimentalCampus: extras.experimentalCampus, campus: extras.campus };
+  const resolver = new LegResolver(memo, cfg, context);
   const cross = (a: CampusLocation, b: CampusLocation) => Boolean(a.university && b.university && a.university !== b.university);
 
-  // One adapter for every engine that needs a route: the gym windows, the gap options and the
-  // itinerary all go through this resolver, so they can never disagree about a trip.
-  const resolveLeg = async (a: CampusLocation, b: CampusLocation, departAfter: Date, arriveBy?: Date): Promise<ResolvedLeg | undefined> => {
-    const r = await resolver.resolve({ from: a, to: b, departAfter, arriveBy, crossCampus: cross(a, b) });
+  // One adapter for the engines that price options: the gym windows and the gap options go through the
+  // itinerary's resolver, so they time a trip floor to floor exactly as the itinerary does. What they price
+  // is only an option until the student picks it, so it asks Google for no new door walks (bar a couple to
+  // correct a walk into PAC), and takes the full answer wherever the itinerary has planned the same trip.
+  const resolveOption = async (a: CampusLocation, b: CampusLocation, departAfter: Date, arriveBy?: Date): Promise<ResolvedLeg | undefined> => {
+    const r = await resolver.resolve({ from: a, to: b, departAfter, arriveBy, crossCampus: cross(a, b), speculative: true });
     return r.recommended && r.departure && r.arrival ? { route: r.recommended, departure: r.departure, arrival: r.arrival } : undefined;
   };
 
   // 1. Price every way to spend each gap, and say which one we would pick. The same resolver
-  //    and the same clock as the itinerary, so an option the student picks costs no extra call
-  //    and the numbers on the card stay the numbers on the timeline.
+  //    and the same clock as the itinerary; a picked option is then searched in full, so its walk on
+  //    the timeline can come out a little quicker than on the card, never slower.
   const gapOptions = new Map<number, GapOption[]>();
   const gapAdvice = new Map<number, GapRecommendation>();
   for (let i = 0; i < classes.length - 1; i++) {
@@ -180,7 +241,7 @@ async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledC
     if (minutesBetween(a.end, b.start) < cfg.minGapForHomeAnalysisMinutes) continue;
     const options = await priceGapOptions({
       from: a, to: b, home, pac: PAC_LOCATION, studySpots: STUDY_SPOTS, dateISO,
-      gym: extras.gym, cfg, resolve: resolveLeg,
+      gym: extras.gym, cfg, resolve: resolveOption,
     });
     gapAdvice.set(i, recommendGapOption(options, cfg));
     gapOptions.set(i, options);
@@ -207,7 +268,7 @@ async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledC
     if (extras.endOfDay === "GYM") {
       endDestination = PAC_LOCATION ?? home;
     } else if (extras.endOfDay === "LIBRARY") {
-      const spot = await nearestSpot(STUDY_SPOTS, last.location, last.end, dateISO, resolveLeg);
+      const spot = await nearestSpot(STUDY_SPOTS, last.location, last.end, dateISO, resolveOption);
       endDestination = spot?.spot.at ?? home;
     }
   }
@@ -225,7 +286,7 @@ async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledC
     const spec: LegSpec = earliest && earliest.getTime() > leg.departAfter.getTime()
       ? { ...leg, departAfter: earliest, availableMinutes: leg.hasDeadline ? minutesBetween(earliest, leg.arriveBy) : 0 }
       : leg;
-    const resolved = await resolveTransition(spec, resolver, memo, cfg, extras.routePreference, extras.closedEdgeIds);
+    const resolved = await resolveTransition(spec, resolver, memo, cfg, extras.routePreference, context);
     transitions.push(resolved);
     readyAt = resolved.expectedArrival ?? spec.arriveBy;
   }
@@ -250,7 +311,7 @@ async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledC
       // A workout in the building you are already in is not a trip anywhere; the gap options
       // deliberately do allow a same-place stay, because a class inside the library is the best
       // case there rather than a degenerate one.
-      resolve: async (from, to, departAfter, arriveBy) => (from.id === to.id ? undefined : resolveLeg(from, to, departAfter, arriveBy)),
+      resolve: async (from, to, departAfter, arriveBy) => (from.id === to.id ? undefined : resolveOption(from, to, departAfter, arriveBy)),
     });
   }
 
@@ -328,6 +389,9 @@ export async function buildWeekPlan(input: PlanInput, provider: RoutingProvider)
     gym: input.gym,
     routePreference: input.routePreference ?? "FASTEST",
     closedEdgeIds: input.closedEdgeIds,
+    access: input.access,
+    experimentalCampus: input.experimentalCampus,
+    campus: input.campus,
     gapChoices: input.gapChoices,
     endOfDay: input.endOfDay,
     crowdAt: (at) => estimateCrowd(at, input.pacLive, input.pacSamples ?? []),

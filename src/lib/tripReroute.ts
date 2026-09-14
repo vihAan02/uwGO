@@ -35,6 +35,8 @@ export function canReroute(route: RouteOption): boolean {
 /** What the student is told when the route under them changes, naming a change of kind. */
 export function rerouteNote(previous: RouteOption, next: RouteOption): string {
   if (next.mode === "TRANSIT") return "There is a better way from here by bus.";
+  // A way in the student could not have used from here is worth saying out loud.
+  if (next.campus?.decision.outcome === "CORRECTED") return next.campus.summary;
   if (next.indoorPath && !previous.indoorPath) return `Indoor route from here: ${indoorPathLabel(next)}.`;
   if (previous.indoorPath && !next.indoorPath) return "You have left the indoor route, so this is the way from outside.";
   if (next.indoorPath && previous.indoorPath) return `Indoor route updated: ${indoorPathLabel(next)}.`;

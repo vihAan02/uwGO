@@ -1,0 +1,5294 @@
+{
+  "schema_version": "1.0",
+  "as_of": "2026-09-14",
+  "timezone": "America/Toronto",
+  "status": "research_seed_not_navigation_ready",
+  "scope": "Waterloo main campus and adjacent north/east campus; selected colleges and residences",
+  "confidence_definitions": {
+    "high": "Explicit authoritative claim, without identified conflict for this attribute; not a field observation.",
+    "medium": "Official description or partly corroborated connection with unverified currency, geometry or conditions.",
+    "low": "Anecdote, inference with weak support, stale closure or unresolved conflict."
+  },
+  "buildings": [
+    {
+      "id": "AL",
+      "name": "Arts Lecture Hall",
+      "aliases": [],
+      "source_ids": [
+        "B_AL"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Elevator; lower-level links have manual doors.",
+      "confidence": "medium"
+    },
+    {
+      "id": "B1",
+      "name": "Biology 1",
+      "aliases": [],
+      "source_ids": [
+        "B_B1"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "North elevator. NH-facing closure notice is undated; heavy doors reported by UW.",
+      "confidence": "low"
+    },
+    {
+      "id": "B2",
+      "name": "Biology 2",
+      "aliases": [],
+      "source_ids": [
+        "B_B2"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Use B1 elevator. Undated construction limits need rechecking.",
+      "confidence": "low"
+    },
+    {
+      "id": "BMH",
+      "name": "B.C. Matthews Hall",
+      "aliases": [],
+      "source_ids": [
+        "B_BMH"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "East main elevator; corridors to EXP and LHI.",
+      "confidence": "medium"
+    },
+    {
+      "id": "C2",
+      "name": "Chemistry 2",
+      "aliases": [],
+      "source_ids": [
+        "B_C2"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "South elevator; DC connecting ramp described as steep.",
+      "confidence": "medium"
+    },
+    {
+      "id": "CIF",
+      "name": "Columbia Icefield",
+      "aliases": [],
+      "source_ids": [
+        "B_CIF"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "South approach is gravel; icefield-wing door is heavy.",
+      "confidence": "medium"
+    },
+    {
+      "id": "CPH",
+      "name": "Carl A. Pollock Hall",
+      "aliases": [],
+      "source_ids": [
+        "B_CPH"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Elevator beside washrooms; ramp to lounge; E2 corridors on levels 1–3.",
+      "confidence": "medium"
+    },
+    {
+      "id": "DC",
+      "name": "Davis Centre",
+      "aliases": [],
+      "source_ids": [
+        "B_DC"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Elevators northwest/east. M4 works invalidate old bridge guidance; food-court entrance status needs checking.",
+      "confidence": "low"
+    },
+    {
+      "id": "DWE",
+      "name": "Douglas Wright Engineering",
+      "aliases": [],
+      "source_ids": [
+        "B_DWE"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Elevators; RCH passage through room 1501 depends on vacancy.",
+      "confidence": "medium"
+    },
+    {
+      "id": "E2",
+      "name": "Engineering 2",
+      "aliases": [],
+      "source_ids": [
+        "B_E2"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "RCH lift needs a term-issued key. Historical E1 landmark needs mapping.",
+      "confidence": "medium"
+    },
+    {
+      "id": "E3",
+      "name": "Engineering 3",
+      "aliases": [],
+      "source_ids": [
+        "B_E3"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Elevators north/northeast; E5 bridge doors require manual assistance.",
+      "confidence": "medium"
+    },
+    {
+      "id": "E5",
+      "name": "Engineering 5",
+      "aliases": [],
+      "source_ids": [
+        "B_E5"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Southeast elevators; page inconsistently places E3 bridge on level 3 and level 5.",
+      "confidence": "medium"
+    },
+    {
+      "id": "E6",
+      "name": "Engineering 6",
+      "aliases": [],
+      "source_ids": [
+        "B_E6"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Northwest elevators; automated hall doors; level-3 link to E7/PSE.",
+      "confidence": "medium"
+    },
+    {
+      "id": "EIT",
+      "name": "Centre for Environmental and Information Technology",
+      "aliases": [],
+      "source_ids": [
+        "B_EIT"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Southeast and northeast elevators; level descriptions require reconciliation with ESC/DC.",
+      "confidence": "medium"
+    },
+    {
+      "id": "ESC",
+      "name": "Earth Sciences and Chemistry",
+      "aliases": [],
+      "source_ids": [
+        "B_ESC"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Some elevator access via B1; internal links to C2 and B1.",
+      "confidence": "medium"
+    },
+    {
+      "id": "EV1",
+      "name": "Environment 1",
+      "aliases": [],
+      "source_ids": [
+        "B_EV1"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "This is an indirect access instruction, not an exterior EV1 door location. Elevators listed.",
+      "confidence": "medium"
+    },
+    {
+      "id": "EV2",
+      "name": "Environment 2",
+      "aliases": [],
+      "source_ids": [
+        "B_EV2"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Links to EV1; no local elevator listed.",
+      "confidence": "medium"
+    },
+    {
+      "id": "EV3",
+      "name": "Environment 3",
+      "aliases": [],
+      "source_ids": [
+        "B_EV3"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Internal EV2 link. Upper-floor elevator statements are questionable; verify service.",
+      "confidence": "medium"
+    },
+    {
+      "id": "EXP",
+      "name": "Health Expansion Building",
+      "aliases": [],
+      "source_ids": [
+        "B_EXP"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Elevators; foyer ramp; BMH corridors. Research-lab area locks after 16:30, not necessarily whole building.",
+      "confidence": "medium"
+    },
+    {
+      "id": "HH",
+      "name": "Hagey Hall",
+      "aliases": [],
+      "source_ids": [
+        "B_HH"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Northeast and extension elevators; many interior fire doors.",
+      "confidence": "medium"
+    },
+    {
+      "id": "LIB",
+      "name": "Dana Porter Library",
+      "aliases": [
+        "DP",
+        "DPL"
+      ],
+      "source_ids": [
+        "B_LIB"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Elevators; staff-only areas listed on levels 4–5 need comparison with current library plans.",
+      "confidence": "medium"
+    },
+    {
+      "id": "M3",
+      "name": "Mathematics 3",
+      "aliases": [],
+      "source_ids": [
+        "B_M3"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Elevators available. Old bridge access superseded by M4 construction.",
+      "confidence": "medium"
+    },
+    {
+      "id": "MC",
+      "name": "Mathematics and Computer",
+      "aliases": [],
+      "source_ids": [
+        "B_MC"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "North/south elevators; UW warns about slippery ramp descent in snowy conditions.",
+      "confidence": "medium"
+    },
+    {
+      "id": "ML",
+      "name": "Modern Languages",
+      "aliases": [],
+      "source_ids": [
+        "B_ML"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Northeast elevator; some onward arts tunnels involve stairs.",
+      "confidence": "medium"
+    },
+    {
+      "id": "NH",
+      "name": "Needles Hall",
+      "aliases": [],
+      "source_ids": [
+        "B_NH"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Elevators. Claimed library tunnel and ambiguous parking-door wording require validation.",
+      "confidence": "medium"
+    },
+    {
+      "id": "PAC",
+      "name": "Physical Activities Complex",
+      "aliases": [],
+      "source_ids": [
+        "B_PAC"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Public elevators on levels 1–3; basement not public. Box office conditional on event opening.",
+      "confidence": "high"
+    },
+    {
+      "id": "PAS",
+      "name": "Psychology, Anthropology, Sociology",
+      "aliases": [],
+      "source_ids": [
+        "B_PAS"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Public east elevator; northeast service elevator is in locked research zone. Source wrongly labels PAS as PAC.",
+      "confidence": "medium"
+    },
+    {
+      "id": "PHY",
+      "name": "Physics",
+      "aliases": [],
+      "source_ids": [
+        "B_PHY"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "UW favors library-facing approach; elevators and EIT links.",
+      "confidence": "medium"
+    },
+    {
+      "id": "QNC",
+      "name": "Quantum-Nano Centre",
+      "aliases": [],
+      "source_ids": [
+        "B_QNC"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Several elevators; IQC is guarded. Conflicting floor descriptions must be resolved.",
+      "confidence": "medium"
+    },
+    {
+      "id": "RCH",
+      "name": "J.R. Coutts Engineering Lecture Hall",
+      "aliases": [],
+      "source_ids": [
+        "B_RCH"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Northeast elevator; E2 connector lift requires key.",
+      "confidence": "medium"
+    },
+    {
+      "id": "SCH",
+      "name": "South Campus Hall",
+      "aliases": [],
+      "source_ids": [
+        "B_SCH"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Elevators; upper-level route through kitchen must not become an unrestricted shortcut.",
+      "confidence": "medium"
+    },
+    {
+      "id": "SLC",
+      "name": "Student Life Centre",
+      "aliases": [],
+      "source_ids": [
+        "B_SLC"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Elevators and ramps listed; old tenant names and PAC link descriptions need remapping.",
+      "confidence": "medium"
+    },
+    {
+      "id": "TC",
+      "name": "Tatham Centre",
+      "aliases": [],
+      "source_ids": [
+        "B_TC"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "South elevator; tunnel permission disputed; building hours restricted.",
+      "confidence": "medium"
+    },
+    {
+      "id": "LHI",
+      "name": "Lyle S. Hallman Institute",
+      "aliases": [],
+      "source_ids": [
+        "B_LHI"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "SE versus NE location conflict; LHI/LHN naming needs normalization. Elevator and BMH corridors.",
+      "confidence": "medium"
+    },
+    {
+      "id": "CGR",
+      "name": "Conrad Grebel",
+      "aliases": [],
+      "source_ids": [
+        "B_CGR"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Dining doors 2–3 become emergency-only in cold months; two elevator systems.",
+      "confidence": "medium"
+    },
+    {
+      "id": "ECH",
+      "name": "East Campus Hall",
+      "aliases": [],
+      "source_ids": [
+        "B_ECH"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "UW describes parking B approach as quickest; second-floor access unavailable in listing.",
+      "confidence": "medium"
+    },
+    {
+      "id": "FED",
+      "name": "Federation Hall",
+      "aliases": [],
+      "source_ids": [
+        "B_FED"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "One storey; administration doorway is not evidence of public through access.",
+      "confidence": "medium"
+    },
+    {
+      "id": "MKV",
+      "name": "Mackenzie King Village",
+      "aliases": [],
+      "source_ids": [
+        "B_MKV"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Green-facing automation works from inside only. East/west elevators; residence permissions unverified.",
+      "confidence": "medium"
+    },
+    {
+      "id": "REN",
+      "name": "Renison",
+      "aliases": [],
+      "source_ids": [
+        "B_REN"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Several elevators and chapel lift; chapel ramp described as lacking rails.",
+      "confidence": "medium"
+    },
+    {
+      "id": "REV",
+      "name": "Ron Eydt Village",
+      "aliases": [],
+      "source_ids": [
+        "B_REV"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Central Complex elevator; North E entry requires key.",
+      "confidence": "medium"
+    },
+    {
+      "id": "SJU",
+      "name": "St. Jerome’s",
+      "aliases": [
+        "STJ"
+      ],
+      "source_ids": [
+        "B_SJU"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Separate buildings, not one portal. Elevators in SJ1, SJ2, Sweeney.",
+      "confidence": "medium"
+    },
+    {
+      "id": "TJB",
+      "name": "Toby Jenkins Applied Health Research",
+      "aliases": [],
+      "source_ids": [
+        "B_TJB"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Public elevator; basement restricted; selected washroom needs reception key.",
+      "confidence": "medium"
+    },
+    {
+      "id": "UTD",
+      "name": "United College",
+      "aliases": [
+        "United College",
+        "St. Paul’s"
+      ],
+      "source_ids": [
+        "B_UTD"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Lift requires calling for access; listing says doors lock after 20:00.",
+      "confidence": "medium"
+    },
+    {
+      "id": "V1",
+      "name": "Village 1",
+      "aliases": [],
+      "source_ids": [
+        "B_V1"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "South 6 opener uses pull handle; cafeteria elevator assistance may be required.",
+      "confidence": "medium"
+    },
+    {
+      "id": "HS",
+      "name": "Health Services",
+      "aliases": [],
+      "source_ids": [
+        "B_HS"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Bell/buzzer assistance described; undated expansion notice makes current door status uncertain.",
+      "confidence": "low"
+    },
+    {
+      "id": "GH",
+      "name": "Graduate House",
+      "aliases": [],
+      "source_ids": [
+        "B_GH"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "No elevator; listing excludes upper floor and patio from accessible access.",
+      "confidence": "medium"
+    },
+    {
+      "id": "OPT",
+      "name": "Optometry",
+      "aliases": [],
+      "source_ids": [
+        "B_OPT"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Rear interior doors controlled; side doors daytime only. WEI construction makes old descriptions provisional.",
+      "confidence": "low"
+    },
+    {
+      "id": "PSE",
+      "name": "Pearl Sullivan Engineering, formerly E7",
+      "aliases": [
+        "E7",
+        "Engineering 7"
+      ],
+      "source_ids": [
+        "B_PSE"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Official destination directions; automation, ramp and full exterior inventory not established here.",
+      "confidence": "high"
+    },
+    {
+      "id": "STC",
+      "name": "Science Teaching Complex",
+      "aliases": [],
+      "source_ids": [
+        "B_STC"
+      ],
+      "entrance_inventory_complete": false,
+      "notes": "Elevators; Ring Road corner called northwest and northeast on same page.",
+      "confidence": "medium"
+    }
+  ],
+  "portals": [
+    {
+      "id": "AL-P01",
+      "building_id": "AL",
+      "description": "North, toward Dana Porter",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": true,
+      "accessible_designation": true,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_AL"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "B1-P01",
+      "building_id": "B1",
+      "description": "Toward MC",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "low",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_B1"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "B1-P02",
+      "building_id": "B1",
+      "description": "Toward ESC",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "low",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_B1"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "B1-P03",
+      "building_id": "B1",
+      "description": "Toward NH",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "low",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_B1"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "B2-P01",
+      "building_id": "B2",
+      "description": "Toward Ring Road",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "low",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_B2"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "B2-P02",
+      "building_id": "B2",
+      "description": "Toward MC",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "low",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_B2"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "B2-P03",
+      "building_id": "B2",
+      "description": "Toward NH",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "low",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_B2"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "BMH-P01",
+      "building_id": "BMH",
+      "description": "Northeast, toward Columbia",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": true,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_BMH"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "BMH-P02",
+      "building_id": "BMH",
+      "description": "Southeast, toward MC",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": true,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_BMH"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "C2-P01",
+      "building_id": "C2",
+      "description": "Toward ESC",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": true,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_C2"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "C2-P02",
+      "building_id": "C2",
+      "description": "Toward DC food-court wing",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": true,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_C2"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "C2-P03",
+      "building_id": "C2",
+      "description": "Toward DC service lane",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": true,
+      "accessible_designation": true,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_C2"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "CIF-P01",
+      "building_id": "CIF",
+      "description": "Northeast, toward OPT",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": true,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_CIF"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "CIF-P02",
+      "building_id": "CIF",
+      "description": "South, toward Warrior Field",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": true,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_CIF"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "CIF-P03",
+      "building_id": "CIF",
+      "description": "Rear",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": true,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_CIF"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "CPH-P01",
+      "building_id": "CPH",
+      "description": "East corner, Ring Road",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": true,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_CPH"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "DC-P01",
+      "building_id": "DC",
+      "description": "Ring Road main",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "low",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_DC"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "DC-P02",
+      "building_id": "DC",
+      "description": "Toward MC",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "low",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_DC"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "DC-P03",
+      "building_id": "DC",
+      "description": "Toward GSC",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "low",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_DC"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "DC-P04",
+      "building_id": "DC",
+      "description": "Food-court courtyard, toward C2",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "low",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_DC"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "DWE-P01",
+      "building_id": "DWE",
+      "description": "Ring Road",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_DWE"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "DWE-P02",
+      "building_id": "DWE",
+      "description": "Opposite Graduate House, level 2",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_DWE"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "DWE-P03",
+      "building_id": "DWE",
+      "description": "Lower courtyard toward CPH, three doors",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_DWE"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "E2-P01",
+      "building_id": "E2",
+      "description": "Toward RCH, double doors",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": true,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_E2"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "E2-P02",
+      "building_id": "E2",
+      "description": "Toward historical Engineering 1",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": true,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_E2"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "E3-P01",
+      "building_id": "E3",
+      "description": "Toward DC",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_E3"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "E3-P02",
+      "building_id": "E3",
+      "description": "Near service bay/E5 link",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_E3"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "E5-P01",
+      "building_id": "E5",
+      "description": "Toward DC, enters level 2",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": true,
+      "accessible_designation": true,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_E5"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "E6-P01",
+      "building_id": "E6",
+      "description": "Phillip Street",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_E6"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "E6-P02",
+      "building_id": "E6",
+      "description": "Toward E5",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": true,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_E6"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "EIT-P01",
+      "building_id": "EIT",
+      "description": "South, toward PHY",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": true,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_EIT"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "EIT-P02",
+      "building_id": "EIT",
+      "description": "Underpass-side entrance, level 2",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": true,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_EIT"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "EIT-P03",
+      "building_id": "EIT",
+      "description": "North, toward DC",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_EIT"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "ESC-P01",
+      "building_id": "ESC",
+      "description": "Toward EIT",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_ESC"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "ESC-P02",
+      "building_id": "ESC",
+      "description": "Toward C2",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_ESC"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "ESC-P03",
+      "building_id": "ESC",
+      "description": "Toward B1",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_ESC"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "EV1-P01",
+      "building_id": "EV1",
+      "description": "Accessible approach through EV2/EV3",
+      "record_type": "indirect_access",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": true,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_EV1"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "EV2-P01",
+      "building_id": "EV2",
+      "description": "Ring Road",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_EV2"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "EV2-P02",
+      "building_id": "EV2",
+      "description": "Toward ML/EV3",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_EV2"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "EV2-P03",
+      "building_id": "EV2",
+      "description": "Toward HH/PAS",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": true,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_EV2"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "EV3-P01",
+      "building_id": "EV3",
+      "description": "Ring Road",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_EV3"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "EV3-P02",
+      "building_id": "EV3",
+      "description": "Toward EV1",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_EV3"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "EXP-P01",
+      "building_id": "EXP",
+      "description": "North, toward Columbia",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": true,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_EXP"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "EXP-P02",
+      "building_id": "EXP",
+      "description": "Southwest, toward Lot M",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": true,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_EXP"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "HH-P01",
+      "building_id": "HH",
+      "description": "Toward AL, main/theatre vestibule",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_HH"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "HH-P02",
+      "building_id": "HH",
+      "description": "Theatre toward University Avenue",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": true,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_HH"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "HH-P03",
+      "building_id": "HH",
+      "description": "Accountancy wing toward AL",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": true,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_HH"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "LIB-P01",
+      "building_id": "LIB",
+      "description": "Main, toward AL",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": true,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_LIB"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "M3-P01",
+      "building_id": "M3",
+      "description": "Main, toward MC",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": true,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_M3"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "MC-P01",
+      "building_id": "MC",
+      "description": "Toward B1, at lower ramp",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_MC"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "ML-P01",
+      "building_id": "ML",
+      "description": "Main, toward library",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": true,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_ML"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "ML-P02",
+      "building_id": "ML",
+      "description": "Lower level toward NH",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_ML"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "ML-P03",
+      "building_id": "ML",
+      "description": "Lower level toward EV1",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_ML"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "NH-P01",
+      "building_id": "NH",
+      "description": "Parking beneath building, near elevator",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_NH"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "NH-P02",
+      "building_id": "NH",
+      "description": "Toward ML",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_NH"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "PAC-P01",
+      "building_id": "PAC",
+      "description": "East main, front-desk turnstiles",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": true,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "high",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_PAC"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "PAC-P02",
+      "building_id": "PAC",
+      "description": "East outdoor box office",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": true,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "high",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_PAC"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "PAC-P03",
+      "building_id": "PAC",
+      "description": "Other corner doors, grouped",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "prohibited_normal_entry",
+      "exit_permission": "exit_only_reported",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "high",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_PAC"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "PAS-P01",
+      "building_id": "PAS",
+      "description": "Driveway toward University Avenue",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_PAS"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "PAS-P02",
+      "building_id": "PAS",
+      "description": "Lower level near EV1/ECEC",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_PAS"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "PAS-P03",
+      "building_id": "PAS",
+      "description": "Toward Environment, level 2",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": true,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_PAS"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "PHY-P01",
+      "building_id": "PHY",
+      "description": "Toward parking B1",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_PHY"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "PHY-P02",
+      "building_id": "PHY",
+      "description": "Toward rear of library",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_PHY"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "PHY-P03",
+      "building_id": "PHY",
+      "description": "Toward E2",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_PHY"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "QNC-P01",
+      "building_id": "QNC",
+      "description": "Ring Road main",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_QNC"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "QNC-P02",
+      "building_id": "QNC",
+      "description": "Toward SLC",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": true,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_QNC"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "QNC-P03",
+      "building_id": "QNC",
+      "description": "Toward MC",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_QNC"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "QNC-P04",
+      "building_id": "QNC",
+      "description": "Toward B1/B2",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_QNC"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "RCH-P01",
+      "building_id": "RCH",
+      "description": "DWE side, described as right side",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": true,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_RCH"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "SCH-P01",
+      "building_id": "SCH",
+      "description": "Basement driveway near receiving",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_SCH"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "SCH-P02",
+      "building_id": "SCH",
+      "description": "Main level toward Graduate House",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_SCH"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "SLC-P01",
+      "building_id": "SLC",
+      "description": "Lower service lane/bicycle centre",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_SLC"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "SLC-P02",
+      "building_id": "SLC",
+      "description": "Main level toward HS",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_SLC"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "SLC-P03",
+      "building_id": "SLC",
+      "description": "Courtyard/MC, southern door group",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_SLC"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "SLC-P04",
+      "building_id": "SLC",
+      "description": "Main floor toward PAC",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_SLC"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "TC-P01",
+      "building_id": "TC",
+      "description": "Toward AL",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_TC"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "TC-P02",
+      "building_id": "TC",
+      "description": "Toward SCH",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_TC"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "LHI-P01",
+      "building_id": "LHI",
+      "description": "Columbia-facing LHN entrance",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": true,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_LHI"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "CGR-P01",
+      "building_id": "CGR",
+      "description": "Academic campus-facing level 1",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_CGR"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "CGR-P02",
+      "building_id": "CGR",
+      "description": "Academic parking/reception level 2",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_CGR"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "CGR-P03",
+      "building_id": "CGR",
+      "description": "Terrace student-services door 1",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_CGR"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "CGR-P04",
+      "building_id": "CGR",
+      "description": "Terrace dining door 2",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_CGR"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "CGR-P05",
+      "building_id": "CGR",
+      "description": "Terrace dining door 3",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_CGR"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "CGR-P06",
+      "building_id": "CGR",
+      "description": "Toward United, level 3",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": true,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_CGR"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "ECH-P01",
+      "building_id": "ECH",
+      "description": "Toward parking B/E5",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_ECH"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "ECH-P02",
+      "building_id": "ECH",
+      "description": "Toward E6 parking/plaza",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_ECH"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "FED-P01",
+      "building_id": "FED",
+      "description": "Main, Ring Road",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": true,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_FED"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "FED-P02",
+      "building_id": "FED",
+      "description": "Administration, Residence Road",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": true,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_FED"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "MKV-P01",
+      "building_id": "MKV",
+      "description": "East main",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_MKV"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "MKV-P02",
+      "building_id": "MKV",
+      "description": "West vestibule",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_MKV"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "MKV-P03",
+      "building_id": "MKV",
+      "description": "Green-facing door group",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_MKV"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "REN-P01",
+      "building_id": "REN",
+      "description": "Founders toward Luxton",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_REN"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "REN-P02",
+      "building_id": "REN",
+      "description": "Luxton rear parking",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": true,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_REN"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "REN-P03",
+      "building_id": "REN",
+      "description": "Luxton toward Founders",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_REN"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "REN-P04",
+      "building_id": "REN",
+      "description": "Academic centre rear parking",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": true,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_REN"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "REN-P05",
+      "building_id": "REN",
+      "description": "Academic centre toward St Jerome",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_REN"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "REV-P01",
+      "building_id": "REV",
+      "description": "Central Complex toward southeast quad",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_REV"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "REV-P02",
+      "building_id": "REV",
+      "description": "North E toward Central Complex",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "credential_required",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_REV"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "SJU-P01",
+      "building_id": "SJU",
+      "description": "SJ1 cafe/chapel door groups",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_SJU"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "SJU-P02",
+      "building_id": "SJU",
+      "description": "SJ2 both entrances",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_SJU"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "SJU-P03",
+      "building_id": "SJU",
+      "description": "Sweeney public entrances",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_SJU"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "SJU-P04",
+      "building_id": "SJU",
+      "description": "J.R. Finn south",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_SJU"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "SJU-P05",
+      "building_id": "SJU",
+      "description": "Letson south",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_SJU"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "TJB-P01",
+      "building_id": "TJB",
+      "description": "South, toward Columbia",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": true,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_TJB"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "UTD-P01",
+      "building_id": "UTD",
+      "description": "Toward Renison/residence",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": true,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_UTD"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "UTD-P02",
+      "building_id": "UTD",
+      "description": "South, near lecture hall/cafe",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_UTD"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "UTD-P03",
+      "building_id": "UTD",
+      "description": "Main-campus side by Watson Student Centre",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": true,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_UTD"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "V1-P01",
+      "building_id": "V1",
+      "description": "South 1 dining",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_V1"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "V1-P02",
+      "building_id": "V1",
+      "description": "South 1 village green",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_V1"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "V1-P03",
+      "building_id": "V1",
+      "description": "Toward South 1/residences",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": true,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_V1"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "V1-P04",
+      "building_id": "V1",
+      "description": "South 6 toward South 3",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_V1"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "V1-P05",
+      "building_id": "V1",
+      "description": "West",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_V1"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "V1-P06",
+      "building_id": "V1",
+      "description": "East",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_V1"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "HS-P01",
+      "building_id": "HS",
+      "description": "Pond-side main",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "low",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_HS"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "HS-P02",
+      "building_id": "HS",
+      "description": "Rear parking/St Jerome side",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "low",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_HS"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "GH-P01",
+      "building_id": "GH",
+      "description": "Rear, toward ML",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": true,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_GH"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "OPT-P01",
+      "building_id": "OPT",
+      "description": "Columbia-facing parking main",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "low",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_OPT"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "OPT-P02",
+      "building_id": "OPT",
+      "description": "Columbia-facing cafe side",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "low",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_OPT"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "OPT-P03",
+      "building_id": "OPT",
+      "description": "Rear Lot X",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "credential_required",
+      "exit_permission": "unknown",
+      "automatic_entry": true,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "low",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_OPT"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "PSE-P01",
+      "building_id": "PSE",
+      "description": "Main beside mirrored engineering sign, opposite bus terminals",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": null,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "high",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_PSE"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "STC-P01",
+      "building_id": "STC",
+      "description": "Southeast toward Dana Porter",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": true,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_STC"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    },
+    {
+      "id": "STC-P02",
+      "building_id": "STC",
+      "description": "Ring Road corner, NW/NE conflict",
+      "record_type": "portal_or_group",
+      "geometry": null,
+      "interior_level": null,
+      "entry_permission": "documented_entrance_conditions_incomplete",
+      "exit_permission": "unknown",
+      "automatic_entry": null,
+      "automatic_exit": null,
+      "ramp_reported": null,
+      "accessible_designation": true,
+      "step_free_end_to_end": null,
+      "opening_hours": null,
+      "confidence": "medium",
+      "evidence_type": "official_description",
+      "source_ids": [
+        "B_STC"
+      ],
+      "field_verified_at": null,
+      "checked_date": "2026-09-14",
+      "routing_enabled": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "C01",
+      "from_building": "SLC",
+      "to_building": "PAC",
+      "levels": null,
+      "connection_type": "controlled_interior",
+      "condition": "Fitness approach via east-facing SLC doors; valid tap WatCard and eligibility; event rules override.",
+      "confidence": "high",
+      "source_ids": [
+        "PACFIT",
+        "PACUSE"
+      ],
+      "status": "candidate",
+      "step_free_end_to_end": null,
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "C02",
+      "from_building": "MC",
+      "to_building": "QNC",
+      "levels": {
+        "MC": "3",
+        "QNC": "2"
+      },
+      "connection_type": "bridge",
+      "condition": "Explicit entrance sections agree; QNC floor-body conflict requires plan check.",
+      "confidence": "medium",
+      "source_ids": [
+        "B_MC",
+        "B_QNC"
+      ],
+      "status": "candidate",
+      "step_free_end_to_end": null,
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "C03",
+      "from_building": "QNC",
+      "to_building": "B2",
+      "levels": {
+        "QNC": "2",
+        "B2": "2"
+      },
+      "connection_type": "bridge",
+      "condition": "Door automation documented; verify approach and any construction restrictions.",
+      "confidence": "medium",
+      "source_ids": [
+        "B_QNC",
+        "B_B2"
+      ],
+      "status": "candidate",
+      "step_free_end_to_end": null,
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "C04",
+      "from_building": "STC",
+      "to_building": "B2",
+      "levels": {
+        "STC": [
+          "1",
+          "2 mezzanine",
+          "3 mezzanine"
+        ],
+        "B2": [
+          "1",
+          "2",
+          "3"
+        ]
+      },
+      "connection_type": "interior",
+      "condition": "Accessible links described at three levels; split into separate measured edges.",
+      "confidence": "medium",
+      "source_ids": [
+        "B_STC"
+      ],
+      "status": "candidate",
+      "step_free_end_to_end": null,
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "C05",
+      "from_building": "STC",
+      "to_building": "NH",
+      "levels": {
+        "STC": "3 southwest",
+        "NH": null
+      },
+      "connection_type": "interior",
+      "condition": "Official connection; anecdotal after-hours locking; NH landing unverified.",
+      "confidence": "medium",
+      "source_ids": [
+        "B_STC",
+        "R_MC_HH"
+      ],
+      "status": "candidate",
+      "step_free_end_to_end": null,
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "C06",
+      "from_building": "B1",
+      "to_building": "B2",
+      "levels": {
+        "B1": [
+          "1",
+          "2",
+          "3"
+        ],
+        "B2": [
+          "1",
+          "2",
+          "3"
+        ]
+      },
+      "connection_type": "interior",
+      "condition": "Level-specific corridors; B2 relies on neighboring elevator access.",
+      "confidence": "medium",
+      "source_ids": [
+        "B_B1",
+        "B_B2"
+      ],
+      "status": "candidate",
+      "step_free_end_to_end": null,
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "C07",
+      "from_building": "B1",
+      "to_building": "ESC",
+      "levels": {
+        "B1": [
+          "2",
+          "3"
+        ],
+        "ESC": null
+      },
+      "connection_type": "interior",
+      "condition": "Landing levels and full accessible path need survey.",
+      "confidence": "medium",
+      "source_ids": [
+        "B_B1",
+        "B_ESC"
+      ],
+      "status": "candidate",
+      "step_free_end_to_end": null,
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "C08",
+      "from_building": "ESC",
+      "to_building": "C2",
+      "levels": {
+        "ESC": [
+          "2",
+          "3"
+        ],
+        "C2": [
+          "2",
+          "3"
+        ]
+      },
+      "connection_type": "interior",
+      "condition": "Two documented levels.",
+      "confidence": "medium",
+      "source_ids": [
+        "B_ESC",
+        "B_C2"
+      ],
+      "status": "candidate",
+      "step_free_end_to_end": null,
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "C09",
+      "from_building": "C2",
+      "to_building": "DC",
+      "levels": {
+        "C2": "3",
+        "DC": "2"
+      },
+      "connection_type": "ramped_bridge",
+      "condition": "Steep ramp; gradient unmeasured.",
+      "confidence": "medium",
+      "source_ids": [
+        "B_C2",
+        "B_DC"
+      ],
+      "status": "candidate",
+      "step_free_end_to_end": null,
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "C10",
+      "from_building": "EIT",
+      "to_building": "DC",
+      "levels": {
+        "EIT": "3 by 3033",
+        "DC": "2 by 2836D"
+      },
+      "connection_type": "interior",
+      "condition": "Use paired landing identifiers; confirm same connector.",
+      "confidence": "medium",
+      "source_ids": [
+        "B_EIT",
+        "B_DC"
+      ],
+      "status": "candidate",
+      "step_free_end_to_end": null,
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "C11",
+      "from_building": "E3",
+      "to_building": "E5",
+      "levels": {
+        "E3": "3",
+        "E5": "3 (conflicting 5 in listing)"
+      },
+      "connection_type": "bridge",
+      "condition": "E3 elevator approach; nonautomated doors; do not promise independent access.",
+      "confidence": "medium",
+      "source_ids": [
+        "B_E3",
+        "B_E5"
+      ],
+      "status": "candidate",
+      "step_free_end_to_end": null,
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "C12",
+      "from_building": "E6",
+      "to_building": "PSE",
+      "levels": {
+        "E6": "3",
+        "PSE": null
+      },
+      "connection_type": "bridge",
+      "condition": "E7 alias retained; destination landing and permissions need check.",
+      "confidence": "medium",
+      "source_ids": [
+        "B_E6"
+      ],
+      "status": "candidate",
+      "step_free_end_to_end": null,
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "C13",
+      "from_building": "CPH",
+      "to_building": "E2",
+      "levels": {
+        "CPH": [
+          "1",
+          "2",
+          "3"
+        ],
+        "E2": [
+          "1",
+          "2",
+          "3"
+        ]
+      },
+      "connection_type": "interior",
+      "condition": "Confirm each corridor independently.",
+      "confidence": "medium",
+      "source_ids": [
+        "B_CPH",
+        "B_E2"
+      ],
+      "status": "candidate",
+      "step_free_end_to_end": null,
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "C14",
+      "from_building": "DWE",
+      "to_building": "RCH",
+      "levels": {
+        "DWE": "1 via 1501",
+        "RCH": null
+      },
+      "connection_type": "lecture_room_passage",
+      "condition": "Only while lecture room unoccupied; exclude until occupancy and permission can be established.",
+      "confidence": "high",
+      "source_ids": [
+        "B_DWE",
+        "B_RCH"
+      ],
+      "status": "conditional_exclude",
+      "step_free_end_to_end": null,
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "C15",
+      "from_building": "E2",
+      "to_building": "RCH",
+      "levels": {
+        "E2": "main west lift 2",
+        "RCH": "2"
+      },
+      "connection_type": "keyed_lift",
+      "condition": "User must possess authorized lift key; do not equate with normal elevator.",
+      "confidence": "high",
+      "source_ids": [
+        "B_E2",
+        "B_RCH"
+      ],
+      "status": "credential_conditional",
+      "step_free_end_to_end": null,
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "C16",
+      "from_building": "EV3",
+      "to_building": "EV2",
+      "levels": null,
+      "connection_type": "interior",
+      "condition": "Documented physical link; full level/access survey required.",
+      "confidence": "medium",
+      "source_ids": [
+        "B_EV3",
+        "B_EV2"
+      ],
+      "status": "candidate",
+      "step_free_end_to_end": null,
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "C17",
+      "from_building": "EV2",
+      "to_building": "EV1",
+      "levels": null,
+      "connection_type": "interior",
+      "condition": "Documented connection and indirect accessible entrance strategy.",
+      "confidence": "medium",
+      "source_ids": [
+        "B_EV2",
+        "B_EV1"
+      ],
+      "status": "candidate",
+      "step_free_end_to_end": null,
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "C18",
+      "from_building": "ML",
+      "to_building": "EV1",
+      "levels": null,
+      "connection_type": "tunnel",
+      "condition": "Secondary to exterior-route project; door automation and level transitions need survey.",
+      "confidence": "medium",
+      "source_ids": [
+        "B_ML",
+        "B_EV1"
+      ],
+      "status": "candidate",
+      "step_free_end_to_end": null,
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "C19",
+      "from_building": "EV1",
+      "to_building": "HH",
+      "levels": null,
+      "connection_type": "tunnel",
+      "condition": "Community describes stairs; do not use for step-free routing.",
+      "confidence": "medium",
+      "source_ids": [
+        "B_HH",
+        "R_MAP23"
+      ],
+      "status": "candidate",
+      "step_free_end_to_end": false,
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "C20",
+      "from_building": "TC",
+      "to_building": "AL",
+      "levels": null,
+      "connection_type": "tunnel",
+      "condition": "Official description conflicts with community report of no student access; quarantine.",
+      "confidence": "low",
+      "source_ids": [
+        "B_TC",
+        "R_MAP23"
+      ],
+      "status": "disputed_exclude",
+      "step_free_end_to_end": null,
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "C21",
+      "from_building": "BMH",
+      "to_building": "EXP",
+      "levels": {
+        "BMH": [
+          "1",
+          "2"
+        ],
+        "EXP": [
+          "1",
+          "2"
+        ]
+      },
+      "connection_type": "interior",
+      "condition": "Documented corridors; research areas excluded.",
+      "confidence": "medium",
+      "source_ids": [
+        "B_BMH",
+        "B_EXP"
+      ],
+      "status": "candidate",
+      "step_free_end_to_end": null,
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "C22",
+      "from_building": "BMH",
+      "to_building": "LHI",
+      "levels": {
+        "BMH": [
+          "1",
+          "2",
+          "3"
+        ],
+        "LHI": [
+          "1",
+          "2",
+          "3"
+        ]
+      },
+      "connection_type": "interior",
+      "condition": "Resolve LHI/LHN identifiers before mapping.",
+      "confidence": "medium",
+      "source_ids": [
+        "B_BMH",
+        "B_LHI"
+      ],
+      "status": "candidate",
+      "step_free_end_to_end": null,
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "C23",
+      "from_building": "MC",
+      "to_building": "DC",
+      "levels": null,
+      "connection_type": "bridge",
+      "condition": "Old bridge demolished for M4; never import as active.",
+      "confidence": "high",
+      "source_ids": [
+        "M4",
+        "M4OLD"
+      ],
+      "status": "demolished_exclude",
+      "step_free_end_to_end": null,
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "C24",
+      "from_building": "MC",
+      "to_building": "M3",
+      "levels": null,
+      "connection_type": "bridge_network",
+      "condition": "Old M3-linked bridge system removed; replacements are future infrastructure.",
+      "confidence": "high",
+      "source_ids": [
+        "M4",
+        "M4OLD"
+      ],
+      "status": "demolished_exclude",
+      "step_free_end_to_end": null,
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "C25",
+      "from_building": "SLC",
+      "to_building": "MC",
+      "levels": {
+        "MC": "3",
+        "SLC": null
+      },
+      "connection_type": "bridge",
+      "condition": "Official MC listing; SLC landing and after-hours availability require confirmation.",
+      "confidence": "medium",
+      "source_ids": [
+        "B_MC"
+      ],
+      "status": "candidate",
+      "step_free_end_to_end": null,
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    }
+  ],
+  "route_candidates": [
+    {
+      "id": "R01",
+      "origin_destination": "MC/courtyard → PAC fitness",
+      "sequence": [
+        "outside",
+        "SLC east entrance",
+        "PAC turnstiles"
+      ],
+      "route_type": "official_approach",
+      "reported_benefit": "Correct entry instead of locked PAC corners.",
+      "limitation": "Eligibility and opening hours apply; time saving unmeasured.",
+      "confidence": "medium",
+      "source_ids": [
+        "PACFIT",
+        "B_PAC"
+      ],
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "R02",
+      "origin_destination": "MC → PAS",
+      "sequence": [
+        "QNC/STC",
+        "outside toward HH",
+        "HH vicinity",
+        "PAS"
+      ],
+      "route_type": "community_candidate",
+      "reported_benefit": "September 2026 commenter uses a mixed indoor/outdoor route.",
+      "limitation": "HH-to-PAS exact doors unspecified; never invent a direct indoor connector.",
+      "confidence": "low",
+      "source_ids": [
+        "R_MC_PAS"
+      ],
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "R03",
+      "origin_destination": "STC → EXP, upper-floor start",
+      "sequence": [
+        "STC level 2",
+        "B2",
+        "QNC",
+        "outside past SLC",
+        "EXP"
+      ],
+      "route_type": "community_candidate",
+      "reported_benefit": "Student recommends upper-floor cut-through.",
+      "limitation": "Compare against ground-level route; five-minute claim is not measured.",
+      "confidence": "low",
+      "source_ids": [
+        "R_STC_EXP",
+        "B_STC",
+        "B_QNC"
+      ],
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "R04",
+      "origin_destination": "STC → EXP, ground-floor start",
+      "sequence": [
+        "STC",
+        "B2",
+        "outside past SLC",
+        "EXP"
+      ],
+      "route_type": "community_candidate",
+      "reported_benefit": "Avoid climbing solely to use a bridge.",
+      "limitation": "B2 exits and construction must be checked.",
+      "confidence": "low",
+      "source_ids": [
+        "R_STC_EXP"
+      ],
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "R05",
+      "origin_destination": "RCH → MC",
+      "sequence": [
+        "RCH doors near PHY",
+        "outdoor central path",
+        "MC"
+      ],
+      "route_type": "community_candidate",
+      "reported_benefit": "Students prefer direct outdoor route over indoor detour.",
+      "limitation": "2022 anecdote; exact RCH portal not mapped.",
+      "confidence": "low",
+      "source_ids": [
+        "R_RCH_MC"
+      ],
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "R06",
+      "origin_destination": "MC → HH, sheltered alternative",
+      "sequence": [
+        "MC",
+        "QNC",
+        "B2",
+        "STC",
+        "NH",
+        "outside",
+        "ML",
+        "EV1",
+        "HH"
+      ],
+      "route_type": "community_candidate",
+      "reported_benefit": "Community suggests a more direct sheltered route than DWE.",
+      "limitation": "NH link may lock; stairs toward HH; no time benchmark.",
+      "confidence": "low",
+      "source_ids": [
+        "R_MC_HH",
+        "B_ML"
+      ],
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "R07",
+      "origin_destination": "EV1/EV2 → EV3",
+      "sequence": [
+        "shared foyer",
+        "outdoor courtyard/loading-area crossing",
+        "EV3 rear"
+      ],
+      "route_type": "community_candidate",
+      "reported_benefit": "Commenter estimates roughly 20 m outdoors, avoiding internal detour.",
+      "limitation": "Confirm pedestrian designation, steps and door directions; do not route through loading operations.",
+      "confidence": "low",
+      "source_ids": [
+        "R_MAP23"
+      ],
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "R08",
+      "origin_destination": "Environment → PAS",
+      "sequence": [
+        "EV1/EV2 foyer",
+        "partly covered outdoor link",
+        "PAS Environment-facing level 2"
+      ],
+      "route_type": "community_candidate",
+      "reported_benefit": "Short exterior transition misrepresented as tunnel in some maps.",
+      "limitation": "Physical approach plausible; verify slope and exact portal.",
+      "confidence": "low",
+      "source_ids": [
+        "R_MAP23",
+        "B_PAS",
+        "B_EV2"
+      ],
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "R09",
+      "origin_destination": "SCH → DWE/RCH",
+      "sequence": [
+        "SCH",
+        "short outdoor segment",
+        "DWE",
+        "RCH"
+      ],
+      "route_type": "community_candidate",
+      "reported_benefit": "Student journalism recommends a mixed commute.",
+      "limitation": "Room 1501 occupancy overrides old shortcut advice; no general through access.",
+      "confidence": "low",
+      "source_ids": [
+        "IW19",
+        "B_DWE"
+      ],
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "R10",
+      "origin_destination": "E5 → DC",
+      "sequence": [
+        "E5 DC-facing exit",
+        "outside",
+        "DC"
+      ],
+      "route_type": "community_candidate",
+      "reported_benefit": "Student article contrasts direct outdoor route with longer E3 indoor path.",
+      "limitation": "2019 route; check current M4 barriers and DC entry.",
+      "confidence": "low",
+      "source_ids": [
+        "IW19",
+        "M4"
+      ],
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "R11",
+      "origin_destination": "Transit hub → PSE/E7",
+      "sequence": [
+        "bus terminals",
+        "public pedestrian approach",
+        "mirrored-sign main entrance"
+      ],
+      "route_type": "official_approach",
+      "reported_benefit": "Official Outreach directions identify the useful entrance.",
+      "limitation": "Crossing geometry and step-free attributes not measured.",
+      "confidence": "medium",
+      "source_ids": [
+        "B_PSE"
+      ],
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "R12",
+      "origin_destination": "West Ring Road → central campus",
+      "sequence": [
+        "QNC Ring Road entrance",
+        "public circulation",
+        "QNC B1/B2-facing exit"
+      ],
+      "route_type": "inferred_candidate",
+      "reported_benefit": "Opposite-side entrances suggest useful building cut-through.",
+      "limitation": "Analytical hypothesis, not a verified continuous corridor or faster route.",
+      "confidence": "medium",
+      "source_ids": [
+        "B_QNC"
+      ],
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    },
+    {
+      "id": "R13",
+      "origin_destination": "North health cluster",
+      "sequence": [
+        "EXP exterior door",
+        "EXP/BMH public corridor",
+        "BMH exterior door"
+      ],
+      "route_type": "inferred_candidate",
+      "reported_benefit": "Multiple exterior approaches and official internal links support survey priority.",
+      "limitation": "Exact pairing, public access and timing not verified.",
+      "confidence": "medium",
+      "source_ids": [
+        "B_EXP",
+        "B_BMH"
+      ],
+      "geometry": null,
+      "measured_seconds": null,
+      "routing_enabled": false
+    }
+  ],
+  "rules": [
+    {
+      "id": "RULE_PAC_NORMAL",
+      "scope": "PAC",
+      "type": "directed_access",
+      "rule": "Other corner doors reject normal inward travel; normal fitness arrival uses C01.",
+      "source_ids": [
+        "B_PAC",
+        "PACFIT"
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "RULE_PAC_EXAM",
+      "scope": "PAC",
+      "type": "event_override",
+      "rule": "Fall 2026 page specifies South/West entry, opening 15 minutes before exam; East/North locked.",
+      "source_ids": [
+        "EXAM26"
+      ],
+      "confidence": "high",
+      "event_dates_must_be_confirmed": true
+    },
+    {
+      "id": "RULE_PAC_ACCESSIBLE_EXAM",
+      "scope": "PAC",
+      "type": "unresolved_conflict",
+      "rule": "2025 notice allowed assisted East entry; 2026 page says locked. Obtain current accommodation instructions; do not auto-route.",
+      "source_ids": [
+        "EXAM25",
+        "EXAM26"
+      ],
+      "confidence": "low"
+    },
+    {
+      "id": "RULE_CGR_COLD",
+      "scope": "CGR-P04,CGR-P05",
+      "type": "seasonal",
+      "rule": "Emergency-only during cold months; exact season dates unknown; exclude routine routing then.",
+      "source_ids": [
+        "B_CGR"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "id": "RULE_MKV",
+      "scope": "MKV-P03",
+      "type": "directional_automation",
+      "rule": "Interior-only opener does not prove exit-only access; entry automation remains unknown.",
+      "source_ids": [
+        "B_MKV"
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "RULE_BIO",
+      "scope": "B1-P03,B2-P03",
+      "type": "undated_closure",
+      "rule": "NH-facing doors reported construction-closed in catalogue; no validity interval. Quarantine pending confirmation.",
+      "source_ids": [
+        "B_B1",
+        "B_B2"
+      ],
+      "confidence": "low"
+    },
+    {
+      "id": "RULE_STC_SIGN",
+      "scope": "STC unidentified central door",
+      "type": "anecdote_exclude",
+      "rule": "2020 commenters dispute emergency-only sign. This is not authorization to disregard present signage.",
+      "source_ids": [
+        "R_STCDOOR"
+      ],
+      "confidence": "low"
+    },
+    {
+      "id": "RULE_SLC_HOURS",
+      "scope": "SLC building",
+      "type": "hours",
+      "rule": "Building advertises 24/7/365; does not establish every portal or connecting bridge stays unlocked.",
+      "source_ids": [
+        "SLCHOURS"
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "RULE_TC_HOURS",
+      "scope": "TC building",
+      "type": "hours",
+      "rule": "Weekdays 08:30–21:00; exam-period extension to 23:00 as specified by owner; weekends not established here.",
+      "source_ids": [
+        "TCHOURS"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "id": "RULE_UTD_HOURS",
+      "scope": "UTD",
+      "type": "hours",
+      "rule": "Catalogue reports doors locked after 20:00; opening time and exceptions unknown.",
+      "source_ids": [
+        "B_UTD"
+      ],
+      "confidence": "medium"
+    },
+    {
+      "id": "RULE_PAS_SERVICE",
+      "scope": "PAS northeast service elevator",
+      "type": "restricted_zone",
+      "rule": "Exclude locked research-area elevator from public routes.",
+      "source_ids": [
+        "B_PAS"
+      ],
+      "confidence": "high"
+    },
+    {
+      "id": "RULE_EXP_LABS",
+      "scope": "EXP research labs",
+      "type": "zone_hours",
+      "rule": "16:30 lock applies to research-lab area; never propagate automatically to whole EXP building.",
+      "source_ids": [
+        "B_EXP"
+      ],
+      "confidence": "medium"
+    }
+  ],
+  "sources": [
+    {
+      "id": "B_AL",
+      "title": "Arts Lecture Hall — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/al-arts-lecture-hall",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_B1",
+      "title": "Biology 1 — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/b1-biology-1",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_B2",
+      "title": "Biology 2 — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/b2-biology-2",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_BMH",
+      "title": "B.C. Matthews Hall — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/bmh-bc-matthews-hall",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_C2",
+      "title": "Chemistry 2 — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/c2-chemistry-2",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_CIF",
+      "title": "Columbia Icefield — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/cif-columbia-icefield",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_CPH",
+      "title": "Carl A. Pollock Hall — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/cph-carl-pollock-hall",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_DC",
+      "title": "Davis Centre — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/dc-wg-davis-computer-research-centre",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_DWE",
+      "title": "Douglas Wright Engineering — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/dwe-douglas-wright-engineering",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_E2",
+      "title": "Engineering 2 — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/e2-engineering-2",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_E3",
+      "title": "Engineering 3 — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/e3-engineering-3",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_E5",
+      "title": "Engineering 5 — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/e5-engineering-5",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_E6",
+      "title": "Engineering 6 — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/e6-engineering-6",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_EIT",
+      "title": "Centre for Environmental and Information Technology — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/eit-centre-environmental-information-technology-eit",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_ESC",
+      "title": "Earth Sciences and Chemistry — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/esc-earth-sciences-chemistry-1",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_EV1",
+      "title": "Environment 1 — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/ev1-environment-1",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_EV2",
+      "title": "Environment 2 — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/getting-around/building-accessibility/environment-2-ev2",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_EV3",
+      "title": "Environment 3 — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/ev3-environment-3",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_EXP",
+      "title": "Health Expansion Building — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/exp-health-expansion-building",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_HH",
+      "title": "Hagey Hall — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/hh-hagey-hall-humanitities",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_LIB",
+      "title": "Dana Porter Library — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/lib-dana-porter-arts-library",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_M3",
+      "title": "Mathematics 3 — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/m3-mathematics-3",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_MC",
+      "title": "Mathematics and Computer — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/mc-mathematics-and-computer",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_ML",
+      "title": "Modern Languages — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/ml-modern-languages",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_NH",
+      "title": "Needles Hall — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/getting-around/building-accessibility/needles-hall-nh",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_PAC",
+      "title": "Physical Activities Complex — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/pac-physical-activities-complex",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_PAS",
+      "title": "Psychology, Anthropology, Sociology — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/pac-psychology-anthropology-sociology",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_PHY",
+      "title": "Physics — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/phy-physics",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_QNC",
+      "title": "Quantum-Nano Centre — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/qnc-quantum-nano-centre",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_RCH",
+      "title": "J.R. Coutts Engineering Lecture Hall — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/rch-jr-coutts-engineering-lecture-hall",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_SCH",
+      "title": "South Campus Hall — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/sch-south-campus-hall",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_SLC",
+      "title": "Student Life Centre — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/slc-student-life-centre",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_TC",
+      "title": "Tatham Centre — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/tc-william-m-tatham-centre",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_LHI",
+      "title": "Lyle S. Hallman Institute — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/lhi-lyle-s-hallman-institute-health-promotion",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_CGR",
+      "title": "Conrad Grebel — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/conrad-grebel-university-college",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_ECH",
+      "title": "East Campus Hall — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/ech-east-campus-hall",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_FED",
+      "title": "Federation Hall — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/fed-federation-hall",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_MKV",
+      "title": "Mackenzie King Village — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/mkv-mackenzie-king-village",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_REN",
+      "title": "Renison — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/ren-renison-university-college",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_REV",
+      "title": "Ron Eydt Village — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/rev-ron-eydt-village",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_SJU",
+      "title": "St. Jerome’s — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/sju-st-jeromes-university",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_TJB",
+      "title": "Toby Jenkins Applied Health Research — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/tjb-toby-jenkins-applied-health-research-building",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_UTD",
+      "title": "United College — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/united-college",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_V1",
+      "title": "Village 1 — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/v1-student-village-1",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_HS",
+      "title": "Health Services — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/getting-around/building-accessibility/health-services-hs",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_GH",
+      "title": "Graduate House — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/getting-around/building-accessibility/graduate-house-gh",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_OPT",
+      "title": "Optometry — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/getting-around/building-accessibility/optometry-opt",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_PSE",
+      "title": "Pearl Sullivan Engineering, formerly E7 — entrance/access information",
+      "url": "https://uwaterloo.ca/engineering-outreach/contact-us/parking-and-directions",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "MAP",
+      "title": "Campus map",
+      "url": "https://uwaterloo.ca/map/",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "MAP25",
+      "title": "2025 campus map PDF",
+      "url": "https://uwaterloo.ca/about/sites/default/files/uploads/documents/fp3574-2025-campusmap-padded-tearoff_lr-final-ua.pdf",
+      "published_date": "2025",
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "PLANS",
+      "title": "Plant Operations floor-plan index",
+      "url": "https://uwaterloo.ca/plant-operations/floor-plans",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "GETTING",
+      "title": "Getting Around",
+      "url": "https://uwaterloo.ca/accessibility/getting-around",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "INDEX",
+      "title": "Building Accessibility catalogue",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "PACFIT",
+      "title": "PAC Fitness Centre",
+      "url": "https://athletics.uwaterloo.ca/sports/2021/9/8/pac-fitness-centre.aspx",
+      "published_date": "2021-09-08",
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "PACUSE",
+      "title": "PAC facility access",
+      "url": "https://athletics.uwaterloo.ca/sports/2010/7/21/Physical_Activities_Complex.aspx?path=life",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "EXAM26",
+      "title": "Final examinations — Fall 2026",
+      "url": "https://uwaterloo.ca/the-centre/academics/final-examinations",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "EXAM25",
+      "title": "Fall 2025 Examination Reminders",
+      "url": "https://uwaterloo.ca/the-centre/news/fall-2025-examination-reminders",
+      "published_date": "2025-11-25",
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "PACNAMES",
+      "title": "PAC corner renaming, Daily Bulletin",
+      "url": "https://uwaterloo.ca/daily-bulletin/2018-04-27",
+      "published_date": "2018-04-27",
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "SLCHOURS",
+      "title": "Student Life Centre home",
+      "url": "https://uwaterloo.ca/student-life-centre/",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "GYMHOURS",
+      "title": "Fitness Centre Hours",
+      "url": "https://athletics.uwaterloo.ca/sports/2010/7/21/Facility_Hours.aspx?id=39",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "TCHOURS",
+      "title": "Tatham Centre room use principles",
+      "url": "https://uwaterloo.ca/co-operative-education/contact-us/tc-room-use-principles",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "M4",
+      "title": "Mathematics 4 Update",
+      "url": "https://uwaterloo.ca/mathematics-4/news/mathematics-4-update",
+      "published_date": "2026-03-24",
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "M4OLD",
+      "title": "Bridge closure notice, Daily Bulletin",
+      "url": "https://uwaterloo.ca/daily-bulletin/2024-10-28",
+      "published_date": "2024-10-28",
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "M4DAY",
+      "title": "M4 crane dismantling detour, Daily Bulletin",
+      "url": "https://uwaterloo.ca/daily-bulletin/2026-04-13",
+      "published_date": "2026-04-13",
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "OUTAGES",
+      "title": "Service Interruptions",
+      "url": "https://uwaterloo.ca/plant-operations/service-interruptions-main-page/service-interruptions",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "STATUS",
+      "title": "Campus Status",
+      "url": "https://uwaterloo.ca/campus-status",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "PLAN26",
+      "title": "University of Waterloo Campus Plan, pathway/accessibility upgrades, p.60",
+      "url": "https://uwaterloo.ca/campus-plan/sites/default/files/uploads/documents/2026-03-06-uw-campus-plan-final-aoda_compressed_revised.pdf",
+      "published_date": "2026-03-06",
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "Search-index excerpt of p.60; full PDF retrieval failed; not visually inspected",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "CONVOCATION",
+      "title": "Convocation venue and accessible wayfinding",
+      "url": "https://uwaterloo.ca/convocation/ceremonies/venue",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "PACLAYOUT",
+      "title": "PAC exam seating layout and accessible text description",
+      "url": "https://uwaterloo.ca/the-centre/sites/default/files/uploads/documents/pac-layout-1.pdf",
+      "published_date": "2022-05-03",
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "WEI",
+      "title": "Helping People See: 2024–25 Progress Report",
+      "url": "https://uwaterloo.ca/optometry-vision-science/sites/default/files/uploads/documents/2025-annual-report-acrobat_0.pdf",
+      "published_date": "2025",
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "Indexed excerpts; do not treat uninspected visual details as verified",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "GREBELHOURS",
+      "title": "Conrad Grebel contact and building hours",
+      "url": "https://uwaterloo.ca/grebel/contact-us",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "WATCONNECT",
+      "title": "WAT connects us",
+      "url": "https://uwaterloo.ca/news/mathematics/wat-connects-us",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "IMPRINT",
+      "title": "M4 building construction update",
+      "url": "https://uwimprint.ca/m4-building-construction-update/",
+      "published_date": "2026-05-20",
+      "publisher": "Mikayla Perez, Imprint",
+      "source_type": "student_journalism",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "R_MC_PAS",
+      "title": "MC to PAS Time/Shortcuts",
+      "url": "https://www.reddit.com/r/uwaterloo/comments/1w79gjb/mc_to_pas_timeshortcuts/",
+      "published_date": "2026-09-04",
+      "publisher": "r/uwaterloo contributors",
+      "source_type": "community_anecdote",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "R_STC_EXP",
+      "title": "What is the fastest way to get between STC and EXP?",
+      "url": "https://www.reddit.com/r/uwaterloo/comments/1mcmv5o/",
+      "published_date": "2025-07-29",
+      "publisher": "r/uwaterloo contributors",
+      "source_type": "community_anecdote",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "R_RCH_MC",
+      "title": "How do you get from RCH to MC",
+      "url": "https://www.reddit.com/r/uwaterloo/comments/x7o97h/",
+      "published_date": "2022-09-06",
+      "publisher": "r/uwaterloo contributors",
+      "source_type": "community_anecdote",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "R_MC_HH",
+      "title": "Is there a shortcut/tunnel route from MC to HH?",
+      "url": "https://www.reddit.com/r/uwaterloo/comments/zv0gr7/",
+      "published_date": "2022-12-25",
+      "publisher": "r/uwaterloo contributors",
+      "source_type": "community_anecdote",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "R_MAP23",
+      "title": "Bridge + Tunnel Map (Info in Comments)",
+      "url": "https://www.reddit.com/r/uwaterloo/comments/17mfg8f/bridge_tunnel_map_info_in_comments/",
+      "published_date": "2023-11",
+      "publisher": "r/uwaterloo contributors",
+      "source_type": "community_anecdote",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "R_MAP25",
+      "title": "UWaterloo Tunnels & Bridges Map (2025)",
+      "url": "https://www.reddit.com/r/uwaterloo/comments/1owcodf/uwaterloo_tunnels_bridges_map_2025/",
+      "published_date": "2025-11",
+      "publisher": "r/uwaterloo contributors",
+      "source_type": "community_anecdote",
+      "access": "Indexed excerpts; do not treat uninspected visual details as verified",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "R_STCDOOR",
+      "title": "Probably one of the least respected signs on campus",
+      "url": "https://www.reddit.com/r/uwaterloo/comments/fchdhb/",
+      "published_date": "2020-03-02",
+      "publisher": "r/uwaterloo contributors",
+      "source_type": "community_anecdote",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "IW19",
+      "title": "The Ins of Campus: So You Never Have To Go Out",
+      "url": "https://iwarrior.uwaterloo.ca/2019/02/20/48021/the-inside-routes-on-campus/",
+      "published_date": "2019-02-20",
+      "publisher": "Saatvik Walia, The Iron Warrior",
+      "source_type": "student_journalism",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "IW17",
+      "title": "Secret Things on Campus",
+      "url": "https://iwarrior.uwaterloo.ca/2017/10/14/43331/secret-things-on-campus/",
+      "published_date": "2017-10-14",
+      "publisher": "Donovan Maudsley, The Iron Warrior",
+      "source_type": "student_journalism",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "BLOG14",
+      "title": "Waterloo Tunnel Tour (Or, how to get coffee without going outside)",
+      "url": "https://englishatwaterloo.wordpress.com/2014/02/03/waterloo-tunnel-tour-or-how-to-get-coffee-without-going-outside/",
+      "published_date": "2014-02-03",
+      "publisher": "English at Waterloo blog",
+      "source_type": "historical_blog",
+      "access": "Indexed excerpts; do not treat uninspected visual details as verified",
+      "checked_date": "2026-09-14"
+    },
+    {
+      "id": "B_STC",
+      "title": "Science Teaching Complex — entrance/access information",
+      "url": "https://uwaterloo.ca/accessibility/catalogs/building-accessibility/stc-science-teaching-complex",
+      "published_date": null,
+      "publisher": "University of Waterloo",
+      "source_type": "official",
+      "access": "public page",
+      "checked_date": "2026-09-14"
+    }
+  ],
+  "global_unknowns": [
+    "door coordinates",
+    "complete door count",
+    "most door-specific hours",
+    "normal egress permissions",
+    "corridor geometry",
+    "slopes and widths",
+    "live elevator/door outages",
+    "measured travel times"
+  ],
+  "import_policy": {
+    "enable_any_record_without_validation": false,
+    "unknown_boolean": null,
+    "never_infer_bidirectionality": true,
+    "emergency_egress_is_not_routine_shortcut": true
+  }
+}

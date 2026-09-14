@@ -47,3 +47,17 @@ accessibility pages state a link the source does not have (the DC–MC and DC–
 which the source removed in October 2024), the network follows the source and the audit
 lists the difference for someone to check on the ground. A pair of buildings the network
 does not join gets no winter route, never a straight line.
+
+Changes of floor keep the kind the survey gives them: `STAIRS`, `ELEVATOR`, `RAMP`, or
+`OTHER_VERTICAL` (with the survey's own word in `sourceType`) for a type UW Go does not
+recognise. The survey's format has an elevator type, but its data records none: all 53 changes
+of floor are stairwells, in every revision checked from September 2024 to February 2026. An
+elevator or ramp is never assumed step-free; step-free routing uses one only once someone has
+confirmed it (see `src/data/campus`). Every change of floor is keyed with one id family, so
+learning that a stairwell is really an elevator keeps its closure reports and reviewed facts
+attached.
+
+The generator compares its result with the committed network before writing, and will not
+replace it when anything differs unless run with `--accept`. `--out FILE` writes a trial copy
+instead, whose routes can be compared with the committed network's first:
+`UWGO_NETWORK_CANDIDATE=FILE npm run campus:regression`.

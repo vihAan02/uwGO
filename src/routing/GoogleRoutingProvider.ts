@@ -85,6 +85,7 @@ export class GoogleRoutingProvider implements RoutingProvider {
     return {
       mode: "WALK",
       durationMinutes: toMinutes(route.staticDuration ?? route.duration),
+      durationSeconds: seconds(route.staticDuration ?? route.duration),
       distanceMeters: route.distanceMeters,
       polyline: route.polyline?.encodedPolyline,
       steps: steps.length ? steps : undefined,

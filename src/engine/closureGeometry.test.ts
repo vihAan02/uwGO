@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { UW_INDOOR_NETWORK as NET } from "@/data/indoor/uw-indoor-network.generated";
 import { edgeId } from "@/data/indoor/edgeId";
-import { closuresOnRoute, distanceToSegment, routeRunsAlong, type LatLngTuple } from "./closureGeometry";
+import type { IndoorNetwork } from "@/data/indoor/network";
+import { STEP_END_METRES, closuresOnRoute, distanceToSegment, edgesCut, projectOntoPath, routeRunsAlong, type LatLngTuple } from "./closureGeometry";
 
 /** A short east-west path near the middle of campus. */
 const A: LatLngTuple = [43.4720, -80.5440];
@@ -14,6 +15,23 @@ describe("measuring how near a route passes", () => {
     const mid: LatLngTuple = [43.4720, -80.5435];
     expect(distanceToSegment(north(mid, 10), A, B)).toBeCloseTo(10, 0);
     expect(distanceToSegment(mid, A, B)).toBeCloseTo(0, 1);
+  });
+
+  it("finds how far along a route the point nearest a place is, and how far off the route the place is", () => {
+    // A to B is about 80.7 m east, then 100 m north.
+    const path: LatLngTuple[] = [A, B, north(B, 100)];
+    const beside = projectOntoPath(north([43.4720, -80.5435], 10), path);
+    expect(beside.segment).toBe(0);
+    expect(beside.off).toBeCloseTo(10, 0);
+    expect(Math.abs(beside.along - 40.4)).toBeLessThan(1);
+    expect(Math.abs(beside.metres - 180.7)).toBeLessThan(1.5);
+    const later = projectOntoPath(east(north(B, 50), 10), path);
+    expect(later.segment).toBe(1);
+    expect(later.off).toBeCloseTo(10, 0);
+    expect(Math.abs(later.along - 130.7)).toBeLessThan(1.5);
+    const before = projectOntoPath(east(A, -30), path);
+    expect(before.along).toBe(0);
+    expect(before.off).toBeCloseTo(30, 0);
   });
 });
 
@@ -67,5 +85,20 @@ describe("finding closures on an outdoor route", () => {
       && Math.abs(e.path[0][1] - outdoor.path[0][1]) > 0.002)!;
     const hits = closuresOnRoute(NET, outdoor.path as LatLngTuple[], new Set([edgeId(NET, elsewhere)]));
     expect(hits).toEqual([]);
+  });
+});
+
+describe("a straight step drawn between a line and a door", () => {
+  const mid: LatLngTuple = [43.4720, -80.5435];
+  const path = { nodes: [], anchors: [], edges: [{ a: 0, b: 1, kind: "OUTDOOR", metres: 81, floors: 0, path: [A, B] }] } as unknown as IndoorNetwork;
+
+  it("cuts a path it crosses away from its ends", () => {
+    expect(edgesCut(path, north(mid, 10), north(mid, -10))).toEqual([0]);
+  });
+
+  it("does not cut a path it meets within a few metres of an end, one it never meets, or one it is told to pass", () => {
+    expect(edgesCut(path, north(mid, STEP_END_METRES - 1), north(mid, -10))).toEqual([]);
+    expect(edgesCut(path, north(mid, 10), north(mid, 20))).toEqual([]);
+    expect(edgesCut(path, north(mid, 10), north(mid, -10), new Set([0]))).toEqual([]);
   });
 });

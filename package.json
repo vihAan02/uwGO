@@ -11,6 +11,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "gen:uw-buildings": "node scripts/gen-uw-buildings.mjs",
+    "gen:indoor-network": "node scripts/gen-indoor-network.mjs",
+    "campus:regression": "vitest run --config vitest.tools.config.ts src/engine/networkRegression.tool.ts",
+    "campus:field": "vitest run --config vitest.tools.config.ts src/engine/fieldVerification.tool.ts",
+    "campus:benchmark": "vitest run --config vitest.tools.config.ts src/engine/campusBenchmark.tool.ts",
     "ingest:floorplans": "node scripts/floorplans/ingest.mjs"
   },
   "dependencies": {

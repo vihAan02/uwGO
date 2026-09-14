@@ -1,4 +1,4 @@
-import type { IndoorEdge, IndoorNetwork } from "./network";
+import type { IndoorEdge, IndoorEdgeKind, IndoorNetwork } from "./network";
 
 /**
  * Canonical, stable identifiers for the segments of the campus indoor network.
@@ -10,6 +10,11 @@ import type { IndoorEdge, IndoorNetwork } from "./network";
  * The key is the segment's kind plus its two endpoints, each as coordinate, building and floor,
  * written in a fixed order so that a→b and b→a give the same answer. Verified unique across the
  * whole network: 794 edges, 794 distinct keys.
+ *
+ * Every change of floor is keyed with one kind, "STAIRS", the word the survey has always used for
+ * all of them. Learning that a stairwell is really an elevator or a ramp changes what the segment is
+ * known to be, not which segment it is, so its closure reports and reviewed facts stay attached. The
+ * generator refuses a network in which two segments would share an id.
  *
  * If a future survey moves a segment, its id changes and reports filed against the old one stop
  * matching. That is the safe direction to fail: a stale closure quietly stops applying, rather
@@ -28,6 +33,11 @@ function fnv1a(input: string, seed: number): number {
 
 const hex8 = (n: number) => n.toString(16).padStart(8, "0");
 
+/** The kind a segment's key is written with: a change of floor is keyed the way the survey first recorded one. */
+function keyKind(kind: IndoorEdgeKind): string {
+  return kind === "ELEVATOR" || kind === "RAMP" || kind === "OTHER_VERTICAL" ? "STAIRS" : kind;
+}
+
 /** The human-readable canonical form, e.g. "TUNNEL|43.4715,-80.5440@MC/1|43.4718,-80.5444@C2/1". */
 export function edgeKey(net: IndoorNetwork, edge: IndoorEdge): string {
   const at = (id: number) => {
@@ -37,7 +47,7 @@ export function edgeKey(net: IndoorNetwork, edge: IndoorEdge): string {
   const a = at(edge.a);
   const b = at(edge.b);
   const [first, second] = a <= b ? [a, b] : [b, a];
-  return `${edge.kind}|${first}|${second}`;
+  return `${keyKind(edge.kind)}|${first}|${second}`;
 }
 
 /** 16 hex characters derived from the canonical form. This is what the database stores. */
@@ -92,6 +102,12 @@ export function edgeLabel(net: IndoorNetwork, edge: IndoorEdge): string {
     }
     case "STAIRS":
       return named(a.building) ? `Stairs in ${a.building}` : "Stairs";
+    case "ELEVATOR":
+      return named(a.building) ? `Elevator in ${a.building}` : "Elevator";
+    case "RAMP":
+      return named(a.building) ? `Ramp in ${a.building}` : "Ramp";
+    case "OTHER_VERTICAL":
+      return named(a.building) ? `Change of floor in ${a.building}` : "Change of floor";
     case "HALLWAY":
       return named(a.building) ? `Hallway in ${a.building}` : "Hallway";
     case "OUTDOOR":

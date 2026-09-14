@@ -354,6 +354,7 @@ export function TripMode({ trip, onEnd }: { trip: Trip; onEnd: () => void }) {
         </div>
 
         {resolved.note && <p className="mt-1 pl-10 text-sm text-amber-200">{resolved.note}</p>}
+        {!resolved.note && route.campus && <p className="mt-1 pl-10 text-sm text-white/70">{route.campus.summary}</p>}
 
         {showDetails && (
           <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 pl-10 text-sm text-white/70">

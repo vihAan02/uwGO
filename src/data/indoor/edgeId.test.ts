@@ -42,4 +42,13 @@ describe("canonical segment ids", () => {
     const outdoor = NET.edges.find((e) => e.kind === "OUTDOOR")!;
     expect(edgeLabel(NET, outdoor)).toBe("Path outside");
   });
+
+  it("keeps a change of floor's id when it turns out to be an elevator or a ramp, and names it for what it is", () => {
+    const stairs = NET.edges.find((e) => e.kind === "STAIRS" && e.floors !== 0)!;
+    for (const kind of ["ELEVATOR", "RAMP", "OTHER_VERTICAL"] as const) expect(edgeId(NET, { ...stairs, kind })).toBe(edgeId(NET, stairs));
+    expect(edgeLabel(NET, { ...stairs, kind: "ELEVATOR" })).toMatch(/^Elevator in [A-Z0-9]+$/);
+    expect(edgeLabel(NET, { ...stairs, kind: "RAMP" })).toMatch(/^Ramp in [A-Z0-9]+$/);
+    // Anything that is not a change of floor keeps its kind in the id.
+    expect(edgeId(NET, { ...stairs, kind: "DOOR" })).not.toBe(edgeId(NET, stairs));
+  });
 });

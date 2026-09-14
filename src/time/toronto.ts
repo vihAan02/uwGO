@@ -57,6 +57,12 @@ export function minutesOfDay(date: Date): MinutesOfDay {
   return t.getHours() * 60 + t.getMinutes();
 }
 
+/** Day of the week (Sunday = 0, as `getDay` numbers it), minutes past midnight and ISO date, on the Toronto wall clock. */
+export function torontoClock(date: Date): { weekday: number; minutes: MinutesOfDay; dateISO: string } {
+  const t = inToronto(date);
+  return { weekday: t.getDay(), minutes: t.getHours() * 60 + t.getMinutes(), dateISO: format(t, "yyyy-MM-dd") };
+}
+
 export function formatMinutesOfDay(minutes: MinutesOfDay): string {
   const h24 = Math.floor(minutes / 60) % 24;
   const m = minutes % 60;

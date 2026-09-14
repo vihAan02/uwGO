@@ -129,6 +129,15 @@ export interface CampusLocation {
   longitude: number;
   kind: "BUILDING" | "HOME";
   buildingCode?: string;
+  /**
+   * The floor inside the building, in the campus network's own labels ("1", "B"), when the room
+   * is known and the network has that floor. Routing over the campus network starts or ends there
+   * instead of on whichever floor happens to be most convenient, and a walk that starts at the
+   * building's map point is charged the way down from that floor.
+   */
+  floor?: string;
+  /** The room, as the schedule names it ("2065"), when there is one. Kept for routing that can use it. */
+  room?: string;
 }
 
 export interface UserHome {
@@ -188,6 +197,11 @@ export interface RouteStep {
 export interface RouteOption {
   mode: TravelMode;
   durationMinutes: number;
+  /**
+   * The same duration to the second, when the source has it. Google's walking time is kept here
+   * because `durationMinutes` rounds it up, which is too coarse to compare two walks by.
+   */
+  durationSeconds?: number;
   distanceMeters?: number;
   departureTime?: Date;
   arrivalTime?: Date;
@@ -216,10 +230,133 @@ export interface RouteOption {
    * route uses something reported shut rather than pretend it does not.
    */
   blockedBy?: string[];
+  /** Set on a walk UW Go built from its campus knowledge: which doors and links it relies on, and why it was chosen. */
+  campus?: CampusRouteInfo;
+  /**
+   * Seconds between the trip's floors and the map points of its buildings, at the start and at the end. A route
+   * priced between those map points, as a bus is, adds them to be timed floor to floor like the walk.
+   */
+  buildingSeconds?: { origin: number; destination: number };
   provider: string;
   computedAt: string;
   /** True only for the straight-line fallback used when no routing API is configured. */
   isEstimate: boolean;
+}
+
+/** How well-evidenced a door, link or route is. See src/data/campus/types.ts. */
+export type CampusEvidence = "OFFICIAL" | "FIELD_VERIFIED" | "CORROBORATED" | "SURVEYED" | "ANECDOTAL" | "INFERRED" | "UNRESOLVED";
+
+/**
+ * What a campus-aware walk decided about one trip.
+ *
+ * - CORRECTED: Google's walk arrives by a way in that may not be used (PAC's exit-only corner
+ *   doors), so a route through an allowed entrance was taken, whatever it costs.
+ * - SHORTCUT: walking through a building beats Google's walk by at least the configured margin.
+ * - BETTER_ENTRANCE: a different door of the destination beats Google's walk by that margin.
+ * - KEPT_GOOGLE: Google's walk stands; the best campus way was not enough better.
+ * - NO_USABLE_ROUTE: Google's walk relies on a way in that may not be used, and no allowed one
+ *   could be routed. The walk is kept, with a warning, rather than inventing a way in.
+ */
+export type CampusOutcome = "CORRECTED" | "SHORTCUT" | "BETTER_ENTRANCE" | "KEPT_GOOGLE" | "NO_USABLE_ROUTE";
+
+/**
+ * A kind of source behind something a route relies on. A fact can rest on several: a door the research
+ * describes officially, UW Go matched to the survey, and someone then checked on the ground rests on four.
+ */
+export type CampusProvenanceKind = "OFFICIAL_RESEARCH" | "FIELD" | "UW_GO_REVIEW" | "COMMUNITY_RESEARCH" | "WATISGRASS" | "CLOSURE_REPORTS";
+
+/** Where one thing a route relies on comes from. */
+export interface CampusProvenance {
+  /** A segment's canonical id, "building:CODE" for a building's rule, or "closures". */
+  subject: string;
+  label: string;
+  /** The evidence routing relied on. Absent for students' closure reports, which have their own rule. */
+  evidence?: CampusEvidence;
+  /** The evidence behind its access claims, when it has any. Routing relies on them only when this is strong enough. */
+  accessEvidence?: CampusEvidence;
+  /** Every kind of source behind it, strongest first. */
+  from: CampusProvenanceKind[];
+  sourceIds: string[];
+  /** The field promotions it rests on, when any. */
+  field?: { promotionId: string; observedOn: string; verifiedBy: string[] }[];
+}
+
+export interface CampusChoice {
+  /** The doors and links used, in order, named for a person. */
+  via: string[];
+  /** Floor to floor: what the leg shows and plans with, compared with Google's walk timed the same way. */
+  seconds: number;
+  /** `seconds` plus the penalties for uncertain crossings: what the choice minimised, never what is shown. */
+  cost: number;
+  evidence: CampusEvidence;
+  edgeIds: string[];
+  /** Where each part of the time comes from. */
+  timing: ("GOOGLE" | "SURVEY_GEOMETRY" | "ESTIMATED")[];
+  /** Where each door, link and reviewed segment it uses comes from. */
+  provenance: CampusProvenance[];
+  /** Corridors and paths it uses that nothing but the WATIsGrass survey describes. */
+  surveyedSegments: number;
+}
+
+export interface CampusRejection {
+  label: string;
+  because: string;
+  seconds?: number;
+  sourceIds?: string[];
+}
+
+/**
+ * How Google's walk meets the buildings at its ends, floor to floor. Where a usable door lies on its line,
+ * from the trip's floor over the network to that door and across to the line (`originJoined`), the line
+ * before that point not walked; otherwise from the floor to the surveyed door nearest where the line starts,
+ * the walk taken from its own start. The same at the destination. Nothing when the end is off the network,
+ * or the building has no surveyed door near Google's line.
+ */
+export interface CampusInside {
+  originSeconds: number;
+  destinationSeconds: number;
+  /** The doors Google's walk is taken to use, by reviewed label or description. */
+  originDoor?: string;
+  destinationDoor?: string;
+  /** The walk is joined to its line at that door. */
+  originJoined?: boolean;
+  destinationJoined?: boolean;
+}
+
+export interface CampusDecision {
+  outcome: CampusOutcome;
+  /** One sentence a student can read. */
+  summary: string;
+  /** The saving the chosen (or best) campus route had to show over Google's walk, by what it asks of the student. */
+  marginSeconds: number;
+  /** Google's own walk, as Google timed it between the map points. */
+  googleSeconds?: number;
+  /** Google's walk floor to floor, joined to its buildings: what it is shown as, and what campus routes are compared with. */
+  googleTotalSeconds?: number;
+  /** Door walks a search that only weighed an option left unasked: a full search asks for them, and may find a quicker way. */
+  skippedDoorWalks?: number;
+  inside: CampusInside;
+  /** Whether Google's own walk could be used as it is. */
+  googleUsable: boolean;
+  /**
+   * On whose word UW Go left Google's walk: the building's rule or students' closure reports that made the walk
+   * unusable (also when nothing allowed could be routed and the walk is kept with a warning, NO_USABLE_ROUTE),
+   * or the doors and links of a shortcut. Empty when Google's walk was usable and kept (KEPT_GOOGLE).
+   */
+  activatedBy: CampusProvenance[];
+  chosen?: CampusChoice;
+  /** Other routable ways, cheapest first. */
+  alternatives: CampusChoice[];
+  rejected: CampusRejection[];
+  /** Said to the student whatever the outcome, e.g. how to get into PAC when nothing else could be routed. */
+  warnings: string[];
+}
+
+export interface CampusRouteInfo {
+  summary: string;
+  via: string[];
+  evidence: CampusEvidence;
+  decision: CampusDecision;
 }
 
 export type Feasibility = "COMFORTABLE" | "TIGHT" | "LIKELY_LATE" | "UNKNOWN";
@@ -341,6 +478,10 @@ export interface ClassTransition {
   transitRoute?: RouteOption;
   /** A route over UW's verified tunnels/bridges, when both ends are on that graph. */
   indoorRoute?: RouteOption;
+  /** What the campus-aware walk decided for this leg, including when it kept Google's walk. */
+  campus?: CampusDecision;
+  /** The campus-aware walk, when it corrected or beat Google's: the walk to take even when a bus was recommended. */
+  campusWalk?: RouteOption;
   recommendedRoute?: RouteOption;
   recommendedDeparture?: Date;
   expectedArrival?: Date;
