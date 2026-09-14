@@ -19,6 +19,8 @@ import { isVertical, type IndoorNode } from "@/data/indoor/network";
 /** Something that can price an outdoor walk between two points; the planner's route memo does. */
 export interface ConnectorFetcher {
   walk(from: LatLng, to: LatLng): Promise<RouteOption | undefined>;
+  /** Whether a walk has been priced already, so asking for it again costs no call. Without it, every walk is taken to cost one. */
+  priced?(from: LatLng, to: LatLng): boolean;
 }
 
 /** A place further than this from any network door gets no winter route: it would be mostly outdoors anyway. */

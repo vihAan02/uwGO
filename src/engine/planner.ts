@@ -89,6 +89,11 @@ class RouteMemo implements RouteFetcher {
     return p;
   }
 
+  /** Whether a walk has been asked for already in this plan, so asking for it again costs nothing. */
+  priced(from: LatLng, to: LatLng): boolean {
+    return this.walks.has(pairKey(from, to));
+  }
+
   transit(from: LatLng, to: LatLng, opts: TransitOptions): Promise<RouteOption | undefined> {
     const minute = opts.arrivalTime ? `A${Math.floor(opts.arrivalTime.getTime() / 60_000)}` : `D${Math.floor((opts.departureTime?.getTime() ?? 0) / 60_000)}`;
     const key = `${pairKey(from, to)}|${minute}`;
@@ -115,13 +120,37 @@ class LegResolver {
     // Two classes in one building on different floors are two trips: the campus route starts on the
     // floor. Google's walk between the buildings' map points is still fetched once, by the memo.
     const key = `${pairKey(req.from, req.to)}|${req.from.floor ?? ""}>${req.to.floor ?? ""}|${req.departAfter.getTime()}|${req.arriveBy?.getTime() ?? "open"}`;
+    const optionKey = `${key}|option`;
+    const price = () => resolveBestRoute({ ...req, ...this.context }, this.memo, this.cfg);
+    // An option priced only for weighing takes the full answer when the trip has already been planned in full.
+    if (req.speculative) return this.cache.get(key) ?? this.memoise(optionKey, price);
+    return this.memoise(key, async () => {
+      const option = this.cache.get(optionKey);
+      if (!option) return price();
+      // The trip was weighed as an option first. When that search left no door walk unasked, or the full search
+      // finds the same walk, the plan keeps the very answer the option was weighed on.
+      const weighed = await option;
+      if (!weighed.campus?.skippedDoorWalks) return weighed;
+      const full = await price();
+      return sameAnswer(weighed, full) ? weighed : full;
+    });
+  }
+
+  private memoise(key: string, price: () => Promise<BestRoute>): Promise<BestRoute> {
     let p = this.cache.get(key);
     if (!p) {
-      p = resolveBestRoute({ ...req, ...this.context }, this.memo, this.cfg);
+      p = price();
       this.cache.set(key, p);
     }
     return p;
   }
+}
+
+/** Two resolutions of one trip that recommend the same way, taking the same time, leaving at the same moment. */
+function sameAnswer(a: BestRoute, b: BestRoute): boolean {
+  const x = a.recommended;
+  const y = b.recommended;
+  return x?.mode === y?.mode && x?.durationSeconds === y?.durationSeconds && x?.durationMinutes === y?.durationMinutes && x?.polyline === y?.polyline && a.departure?.getTime() === b.departure?.getTime();
 }
 
 function requestFor(t: ClassTransition): RouteRequest {
@@ -192,16 +221,18 @@ async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledC
   const resolver = new LegResolver(memo, cfg, context);
   const cross = (a: CampusLocation, b: CampusLocation) => Boolean(a.university && b.university && a.university !== b.university);
 
-  // One adapter for every engine that needs a route: the gym windows, the gap options and the
-  // itinerary all go through this resolver, so they can never disagree about a trip.
-  const resolveLeg = async (a: CampusLocation, b: CampusLocation, departAfter: Date, arriveBy?: Date): Promise<ResolvedLeg | undefined> => {
-    const r = await resolver.resolve({ from: a, to: b, departAfter, arriveBy, crossCampus: cross(a, b) });
+  // One adapter for the engines that price options: the gym windows and the gap options go through the
+  // itinerary's resolver, so they time a trip floor to floor exactly as the itinerary does. What they price
+  // is only an option until the student picks it, so it asks Google for no new door walks (bar a couple to
+  // correct a walk into PAC), and takes the full answer wherever the itinerary has planned the same trip.
+  const resolveOption = async (a: CampusLocation, b: CampusLocation, departAfter: Date, arriveBy?: Date): Promise<ResolvedLeg | undefined> => {
+    const r = await resolver.resolve({ from: a, to: b, departAfter, arriveBy, crossCampus: cross(a, b), speculative: true });
     return r.recommended && r.departure && r.arrival ? { route: r.recommended, departure: r.departure, arrival: r.arrival } : undefined;
   };
 
   // 1. Price every way to spend each gap, and say which one we would pick. The same resolver
-  //    and the same clock as the itinerary, so an option the student picks costs no extra call
-  //    and the numbers on the card stay the numbers on the timeline.
+  //    and the same clock as the itinerary; a picked option is then searched in full, so its walk on
+  //    the timeline can come out a little quicker than on the card, never slower.
   const gapOptions = new Map<number, GapOption[]>();
   const gapAdvice = new Map<number, GapRecommendation>();
   for (let i = 0; i < classes.length - 1; i++) {
@@ -210,7 +241,7 @@ async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledC
     if (minutesBetween(a.end, b.start) < cfg.minGapForHomeAnalysisMinutes) continue;
     const options = await priceGapOptions({
       from: a, to: b, home, pac: PAC_LOCATION, studySpots: STUDY_SPOTS, dateISO,
-      gym: extras.gym, cfg, resolve: resolveLeg,
+      gym: extras.gym, cfg, resolve: resolveOption,
     });
     gapAdvice.set(i, recommendGapOption(options, cfg));
     gapOptions.set(i, options);
@@ -237,7 +268,7 @@ async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledC
     if (extras.endOfDay === "GYM") {
       endDestination = PAC_LOCATION ?? home;
     } else if (extras.endOfDay === "LIBRARY") {
-      const spot = await nearestSpot(STUDY_SPOTS, last.location, last.end, dateISO, resolveLeg);
+      const spot = await nearestSpot(STUDY_SPOTS, last.location, last.end, dateISO, resolveOption);
       endDestination = spot?.spot.at ?? home;
     }
   }
@@ -280,7 +311,7 @@ async function buildDayPlan(day: DayOfWeek, dateISO: string, classes: ScheduledC
       // A workout in the building you are already in is not a trip anywhere; the gap options
       // deliberately do allow a same-place stay, because a class inside the library is the best
       // case there rather than a degenerate one.
-      resolve: async (from, to, departAfter, arriveBy) => (from.id === to.id ? undefined : resolveLeg(from, to, departAfter, arriveBy)),
+      resolve: async (from, to, departAfter, arriveBy) => (from.id === to.id ? undefined : resolveOption(from, to, departAfter, arriveBy)),
     });
   }
 

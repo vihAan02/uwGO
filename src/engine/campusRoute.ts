@@ -194,9 +194,14 @@ export interface CampusWalk {
   drawn?: DrawnPiece[];
 }
 
-/** How hard to look. `exhaustive` asks Google for every door walk that could change the answer, for benchmarks, never for students. */
+/**
+ * How hard to look. `exhaustive` asks Google for every door walk that could change the answer, for
+ * benchmarks, never for students. `speculative` prices a trip only to weigh an option the student has not
+ * chosen: it uses door walks already priced, and asks for new ones only to correct a walk that may not be used.
+ */
 export interface CampusSearchOptions {
   exhaustive?: boolean;
+  speculative?: boolean;
 }
 
 type Point = [number, number];
@@ -921,11 +926,15 @@ export async function campusWalk(req: CampusWalkRequest, google: RouteOption | u
     }
     return w;
   };
-  // The door walks a candidate still needs.
-  const toAsk = (p: Pending) => (["lead", "tail"] as const).filter((side) => {
+  // The door walks a candidate still needs, and whether each was priced before, for this trip or another.
+  const toAsk = (p: Pending) => (["lead", "tail"] as const).flatMap((side) => {
     const leg = side === "lead" ? p.lead : p.tail;
-    return Boolean(leg && !leg.known && !walks.has(walkKey(leg, side)));
+    if (!leg || leg.known || walks.has(walkKey(leg, side))) return [];
+    const door = nodeLatLng(g.net.nodes[leg.door.inside]);
+    return [{ side, priced: Boolean(side === "lead" ? fetcher.priced?.(O.loc, door) : fetcher.priced?.(door, D.loc)) }];
   });
+  let unpricedAsked = 0;
+  let skipped = 0;
   const readOff = (x: Pending) => (!x.lead || Boolean(x.lead.known)) && (!x.tail || Boolean(x.tail.known));
   pending.sort((x, y) => x.cost + x.guess - (y.cost + y.guess) || x.startNode - y.startNode || x.endNode - y.endNode);
   for (const p of pending.filter(readOff)) {
@@ -938,7 +947,16 @@ export async function campusWalk(req: CampusWalkRequest, google: RouteOption | u
       const under = Math.min(googleUsable ? googleTotal : Infinity, cheapestTaken);
       if (p.seconds + p.floor > need || p.cost + p.floor >= under) continue;
       const calls = toAsk(p);
-      if (!search.exhaustive) {
+      if (search.speculative) {
+        // An option the student has not chosen: a door walk priced before costs nothing, and a new one is asked
+        // for only to correct a walk that may not be used, a couple at most.
+        const unpriced = calls.filter((x) => !x.priced).length;
+        if (unpriced && (googleUsable || unpricedAsked + unpriced > CAMPUS_LOOKUPS.calls)) {
+          skipped += unpriced;
+          continue;
+        }
+        unpricedAsked += unpriced;
+      } else if (!search.exhaustive) {
         const room = Math.min(need - (p.seconds + p.guess), under - (p.cost + p.guess));
         if (googleUsable && room < -p.slack) continue;
         const allowed = googleUsable ? CAMPUS_LOOKUPS.calls + (room >= CAMPUS_LOOKUPS.highValueSeconds ? CAMPUS_LOOKUPS.highValueCalls : 0) : CAMPUS_LOOKUPS.correctionCalls;
@@ -1084,6 +1102,7 @@ export async function campusWalk(req: CampusWalkRequest, google: RouteOption | u
     marginSeconds,
     googleSeconds: Math.round(googleSeconds),
     googleTotalSeconds: Math.round(googleTotal),
+    ...(skipped ? { skippedDoorWalks: skipped } : {}),
     inside,
     googleUsable,
     activatedBy,

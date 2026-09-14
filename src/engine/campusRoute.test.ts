@@ -472,6 +472,25 @@ describe("one trip: what is chosen, what is shown, and what is drawn", () => {
     expect(f.walk.mock.calls.some(([from]) => from === M3)).toBe(false);
   });
 
+  it("weighing an option asks for no new door walk unless the walk has to be corrected, and uses walks already priced", async () => {
+    const M3 = loc("M3");
+    const lineless = () => google({}, { polyline: undefined });
+    const decide = async (from: CampusLocation, to: CampusLocation, f: ConnectorFetcher, search: { speculative?: boolean; exhaustive?: boolean }) =>
+      (await campusWalk({ from, to, at: NOON }, await f.walk(from, to), f, CFG, NOON, campusGraph(), search))!.decision;
+    const fresh = lineless();
+    const weighed = await decide(MC, M3, fresh, { speculative: true });
+    expect(fresh.walk).toHaveBeenCalledTimes(1); // Google's own walk only
+    expect(weighed.skippedDoorWalks).toBeGreaterThan(0);
+    // With every door walk already priced, weighing an option finds what asking for all of them finds.
+    const priced = { ...lineless(), priced: () => true };
+    expect((await decide(MC, M3, priced, { speculative: true })).chosen?.edgeIds).toEqual((await decide(MC, M3, lineless(), { exhaustive: true })).chosen?.edgeIds);
+    // Into PAC Google's walk may not be used, so a couple of door walks are asked for to correct it.
+    const pac = lineless();
+    const corrected = await decide(HOME, PAC, pac, { speculative: true });
+    expect(corrected.googleUsable).toBe(false);
+    expect(pac.walk.mock.calls.length - 1).toBeLessThanOrEqual(CAMPUS_LOOKUPS.calls);
+  });
+
   it("corrects a walk into PAC to the best allowed way in that asking for every door walk finds, from every side of campus", async () => {
     for (const from of [MC, DC, QNC, loc("STC"), loc("EXP"), loc("V1"), loc("E2"), loc("REV"), loc("MHR"), HOME]) {
       const usual = (await walk(from, PAC))!.decision;

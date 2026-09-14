@@ -34,6 +34,11 @@ export interface RouteRequest {
   experimentalCampus?: boolean;
   /** False prices Google's walk exactly as it comes, without the campus knowledge. */
   campus?: boolean;
+  /**
+   * Priced only to weigh an option the student has not chosen, such as a way to spend a gap: the campus-aware
+   * walk uses door walks already priced, and asks for new ones only to correct a walk that may not be used.
+   */
+  speculative?: boolean;
 }
 
 export interface BestRoute extends RouteChoice {
@@ -69,7 +74,7 @@ export async function resolveBestRoute(req: RouteRequest, fetcher: RouteFetcher,
   const walking = await fetcher.walk(req.from, req.to);
   const campus = req.campus === false
     ? undefined
-    : await campusWalk({ from: req.from, to: req.to, at: walkingAt(req, walking, cfg), closedEdgeIds: req.closedEdgeIds, access: req.access, experimental: req.experimentalCampus }, walking, fetcher, cfg);
+    : await campusWalk({ from: req.from, to: req.to, at: walkingAt(req, walking, cfg), closedEdgeIds: req.closedEdgeIds, access: req.access, experimental: req.experimentalCampus }, walking, fetcher, cfg, undefined, undefined, { speculative: req.speculative });
   // Floor to floor: the campus route, or Google's walk joined to its buildings.
   const walk = campus?.route ?? walking;
   const consideredModes: TravelMode[] = ["WALK"];

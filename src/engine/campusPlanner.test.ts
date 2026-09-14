@@ -7,6 +7,8 @@ import type { RoutingProvider } from "@/routing/RoutingProvider";
 import { haversineMeters } from "@/routing/EstimateRoutingProvider";
 import { findBuilding } from "@/data/buildings";
 import { minutesBetween } from "@/time/toronto";
+import { CAMPUS_LOOKUPS } from "./campusRoute";
+import { campusGraph } from "./indoorGraph";
 
 /**
  * Campus knowledge in a planned week: a leg to PAC goes in through SLC wherever the plan routes it,
@@ -127,4 +129,18 @@ describe("campus knowledge in the weekly plan", () => {
     expect(repeats).toEqual([]);
   });
 
+  it("prices the ways to spend a gap without asking Google for door walks, bar a couple to correct a walk into PAC", async () => {
+    const home = { name: "UW Place", latitude: 43.4708351, longitude: -80.53525, preset: { university: "UW" as const, buildingCode: "UWP" } };
+    const meetings = [meeting("mc", "MC", "2065", 9 * 60, 9 * 60 + 50), meeting("dc", "DC", "1350", 13 * 60, 13 * 60 + 50)];
+    const g = campusGraph();
+    const doors = new Set(g.exteriorDoors.map((d) => `${g.net.nodes[d.inside].lat.toFixed(5)},${g.net.nodes[d.inside].lng.toFixed(5)}`));
+    const doorWalks = (asked: string[]) => asked.filter((k) => k.split("->").some((p) => doors.has(p))).length;
+    const withOptions = new GoogleLike();
+    await buildWeekPlan({ meetings, home, mondayISO: MONDAY, config: CFG, days: ["T"], gym: { enabled: true, durationMinutes: 60, preferredTime: "NONE" } }, withOptions);
+    const withoutOptions = new GoogleLike();
+    await buildWeekPlan({ meetings, home, mondayISO: MONDAY, config: { ...CFG, minGapForHomeAnalysisMinutes: 24 * 60 }, days: ["T"] }, withoutOptions);
+    const extra = doorWalks(withOptions.asked) - doorWalks(withoutOptions.asked);
+    // Into PAC and out again for a workout between the classes, and for one after them: each correction a couple at most.
+    expect(extra).toBeLessThanOrEqual(3 * CAMPUS_LOOKUPS.calls);
+  });
 });

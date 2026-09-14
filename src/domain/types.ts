@@ -333,6 +333,8 @@ export interface CampusDecision {
   googleSeconds?: number;
   /** Google's walk floor to floor, joined to its buildings: what it is shown as, and what campus routes are compared with. */
   googleTotalSeconds?: number;
+  /** Door walks a search that only weighed an option left unasked: a full search asks for them, and may find a quicker way. */
+  skippedDoorWalks?: number;
   inside: CampusInside;
   /** Whether Google's own walk could be used as it is. */
   googleUsable: boolean;
