@@ -1,21 +1,26 @@
 /**
  * The campus-aware walk decided for every pair of places, summarised so two versions of the engine, the
  * network or the knowledge can be compared decision by decision: how many walks are corrected because of
- * a door that may not be used, how many go through a building or over a bridge, what they save, and how
- * many door walks Google is asked for. Run by hand through campusBenchmark.tool.ts; a change that moves
- * these numbers should be read before it is accepted.
+ * a door that may not be used, how many go through a building or over a bridge, what they save, how
+ * many door walks Google is asked for, and whether the line drawn for each route passes through the
+ * doors and links it names. Run by hand through campusBenchmark.tool.ts; a change that moves these
+ * numbers should be read before it is accepted.
  *
  * Without real Google walks the benchmark stands Google in with a straight line, 30% longer, at 1.33 m/s,
  * for the trip and for every door walk alike. That shows what the engine does, not what Google's real
- * timing would make of it; a file of real walks can be given instead.
+ * timing would make of it. A table of real walks can be given instead, and filled from Google as the
+ * engine asks; a walk kept in one direction is served reversed for the other, as the engine already
+ * treats door walks.
  */
-import { encode } from "@googlemaps/polyline-codec";
+import { decode, encode } from "@googlemaps/polyline-codec";
 import type { CampusLocation, CampusOutcome, LatLng, RouteOption } from "@/domain/types";
 import type { PlannerConfig } from "@/domain/config";
 import { buildingLocation, findBuilding, residencePresets } from "@/data/buildings";
+import { edgeLabel } from "@/data/indoor/edgeId";
 import { haversineMeters } from "@/routing/EstimateRoutingProvider";
 import { pairKey } from "@/routing/RoutingProvider";
-import { campusWalk } from "./campusRoute";
+import { deserializeRoute, serializeRoute, type RouteOptionJSON } from "@/routing/serialize";
+import { campusWalk, type CampusSearchOptions } from "./campusRoute";
 import { campusGraph, type IndoorGraph } from "./indoorGraph";
 import type { ConnectorFetcher } from "./indoorRoute";
 
@@ -31,19 +36,102 @@ export function standInWalk(from: LatLng, to: LatLng): RouteOption {
   };
 }
 
-/** Walks from a table of real ones (keyed by `pairKey`), or the stand-in where the table has none; counts what was asked. */
+/** One of Google's walks as a table keeps it: the route (null when Google had none) and when it was fetched. */
+export interface StoredWalk {
+  route: RouteOptionJSON | null;
+  fetchedAt: string;
+}
+
+/** Where a walk the engine asked for came from. */
+export type WalkSource = "STAND_IN" | "TABLE" | "REVERSED" | "FETCHED" | "MISSING";
+
+export type WalkFetch = (from: LatLng, to: LatLng) => Promise<RouteOption | undefined>;
+
+/** A walk served for the opposite direction: the same time and distance, the line drawn the other way. */
+export function reversedWalk(r: RouteOption): RouteOption {
+  return { ...r, polyline: r.polyline ? encode(decode(r.polyline).reverse()) : undefined, steps: undefined };
+}
+
+const latLngOf = (p: LatLng): LatLng => ({ latitude: p.latitude, longitude: p.longitude });
+
+/**
+ * The walks the benchmark gives the engine: the stand-in, or a table of real ones keyed by `pairKey`.
+ * The table serves a walk reversed when it only keeps the other direction, and asks `fetch` for the rest
+ * when one is given, keeping what comes back. Every walk asked for is counted and logged.
+ */
 export class BenchmarkWalks implements ConnectorFetcher {
   asked = 0;
-  /** Pairs the table did not have, when there is a table. */
+  /** Walks fetched, in all. */
+  fetched = 0;
+  /** Pairs neither the table nor a fetch could give. */
   readonly missing = new Set<string>();
-  constructor(private readonly table?: Readonly<Record<string, RouteOption>>) {}
+  /** Every walk asked for, in order, and where it came from. */
+  readonly log: { key: string; source: WalkSource }[] = [];
+  private readonly inflight = new Map<string, Promise<RouteOption | undefined>>();
+
+  constructor(
+    readonly table?: Record<string, StoredWalk>,
+    private readonly fetch?: WalkFetch,
+    /** `serveReversed` false fetches each direction rather than reversing the other: Google's two directions can differ by several seconds. */
+    private readonly options: { onFetched?: () => void; serveReversed?: boolean } = {},
+  ) {}
+
   async walk(from: LatLng, to: LatLng): Promise<RouteOption | undefined> {
     this.asked++;
-    if (!this.table) return standInWalk(from, to);
-    const hit = this.table[pairKey(from, to)];
-    if (!hit) this.missing.add(pairKey(from, to));
-    return hit;
+    const { route, source } = await this.lookup(from, to, this.options.serveReversed ?? true);
+    this.log.push({ key: pairKey(from, to), source });
+    return route;
   }
+
+  /** Makes sure the table has a walk, without counting it as asked; `reversible` false insists on this very direction. */
+  async ensure(from: LatLng, to: LatLng, reversible = true): Promise<WalkSource> {
+    return (await this.lookup(from, to, reversible)).source;
+  }
+
+  private async lookup(from: LatLng, to: LatLng, reversible: boolean): Promise<{ route: RouteOption | undefined; source: WalkSource }> {
+    if (!this.table) return { route: standInWalk(from, to), source: "STAND_IN" };
+    const key = pairKey(from, to);
+    const hit = this.table[key];
+    if (hit) return { route: hit.route ? deserializeRoute(hit.route) : undefined, source: "TABLE" };
+    const back = reversible ? this.table[pairKey(to, from)] : undefined;
+    if (back) return { route: back.route ? reversedWalk(deserializeRoute(back.route)) : undefined, source: "REVERSED" };
+    if (!this.fetch) {
+      this.missing.add(key);
+      return { route: undefined, source: "MISSING" };
+    }
+    let pending = this.inflight.get(key);
+    if (!pending) {
+      pending = this.fetch(latLngOf(from), latLngOf(to))
+        .then((route) => {
+          this.table![key] = { route: route ? serializeRoute(route) : null, fetchedAt: new Date().toISOString() };
+          this.fetched++;
+          this.options.onFetched?.();
+          return route;
+        })
+        .finally(() => this.inflight.delete(key));
+      this.inflight.set(key, pending);
+    }
+    try {
+      return { route: await pending, source: "FETCHED" };
+    } catch {
+      this.missing.add(key);
+      return { route: undefined, source: "MISSING" };
+    }
+  }
+}
+
+/** How a chosen route uses Google's walks: to a door first, from a door last, both, or neither. */
+export type RouteShape = "NETWORK" | "ENTRY" | "EXIT" | "THROUGH";
+
+/** The line drawn for a chosen route, checked against what the route says it uses. */
+export interface LineCheck {
+  /** Surveyed segments (doors, links, corridors) whose ends are not on the line, or not in the order walked. */
+  offLine: string[];
+  /** Metres drawn straight from where a Google-priced walk's line ends to the door it was priced to. */
+  joins: number[];
+  /** Metres drawn straight from the building's map point to where the network starts, and from where it ends to the map point. */
+  startStub: number;
+  endStub: number;
 }
 
 export interface PairDecision {
@@ -63,6 +151,27 @@ export interface PairDecision {
   links: number;
   /** Google door walks priced for this pair, beyond Google's own walk. */
   lookups: number;
+  /** What the leg shows and plans with: the chosen route's own seconds, or Google's when its walk stands. */
+  shown?: number;
+  cost?: number;
+  shape?: RouteShape;
+  googleUsable?: boolean;
+  /** What Google's walk is charged for the inside of the buildings at its ends, and by which doors. */
+  inside?: { origin: number; destination: number; originDoor?: string; destinationDoor?: string };
+  margin?: number;
+  summary?: string;
+  /** The door the chosen route last goes in by, and the door it last leaves by. */
+  entrance?: string;
+  exit?: string;
+  bridges?: string[];
+  tunnels?: string[];
+  evidence?: string;
+  provenance?: { label: string; evidence?: string; from: string[] }[];
+  surveyedSegments?: number;
+  rejected?: { label: string; because: string; seconds?: number }[];
+  /** The walks asked for this pair, in order: Google's own first, then door walks. */
+  asked?: { key: string; source: WalkSource }[];
+  line?: LineCheck;
 }
 
 export interface CampusSnapshot {
@@ -79,30 +188,131 @@ export function benchmarkPlaces(g: IndoorGraph = campusGraph()): CampusLocation[
   return [...network, ...residences].map((code) => buildingLocation(findBuilding("UW", code)!)).filter((l): l is CampusLocation => Boolean(l));
 }
 
+type Point = [number, number];
+const metres = (a: Point, b: Point) => haversineMeters({ latitude: a[0], longitude: a[1] }, { latitude: b[0], longitude: b[1] });
+
+export function shapeOf(timing: readonly string[] | undefined): RouteShape {
+  const lead = timing?.[0] === "GOOGLE";
+  const tail = (timing?.length ?? 0) > 1 && timing?.[timing.length - 1] === "GOOGLE";
+  return lead && tail ? "THROUGH" : lead ? "ENTRY" : tail ? "EXIT" : "NETWORK";
+}
+
+/** The last door a route goes in by from outside, and the last it leaves by, as its `via` names them. */
+export function doorsOf(via: readonly string[]): { entrance?: string; exit?: string } {
+  let entrance: string | undefined;
+  let exit: string | undefined;
+  via.forEach((v, i) => {
+    if (v === "outside" || v.startsWith("through ")) return;
+    if (via[i - 1] === "outside" && via[i + 1] !== "outside") entrance = v;
+    if (via[i + 1] === "outside" && via[i - 1] !== "outside") exit = v;
+  });
+  return { entrance, exit };
+}
+
+/**
+ * Whether the drawn line passes through every surveyed segment the route names, in order, and how far it
+ * is drawn straight where it is not: between a Google-priced walk and its door, and between a building's
+ * map point and the network.
+ */
+export function checkLine(g: IndoorGraph, route: RouteOption, shape: RouteShape, edgeIds: readonly string[]): LineCheck {
+  const line = route.polyline ? (decode(route.polyline) as Point[]) : [];
+  const ON_LINE_METRES = 1.5;
+  const find = (p: Point, from: number) => {
+    for (let i = from; i < line.length; i++) if (metres(line[i], p) <= ON_LINE_METRES) return i;
+    return -1;
+  };
+  const findLast = (p: Point) => {
+    for (let i = line.length - 1; i >= 0; i--) if (metres(line[i], p) <= ON_LINE_METRES) return i;
+    return -1;
+  };
+  const lead = shape === "ENTRY" || shape === "THROUGH";
+  const tail = shape === "EXIT" || shape === "THROUGH";
+  const network = edgeIds.slice(lead ? 1 : 0, tail ? edgeIds.length - 1 : edgeIds.length);
+  const offLine: string[] = [];
+  let cursor = 0;
+  for (const id of network) {
+    const index = g.indexById.get(id);
+    if (index === undefined) { offLine.push(id); continue; }
+    const e = g.net.edges[index];
+    const a = find([g.net.nodes[e.a].lat, g.net.nodes[e.a].lng], cursor);
+    const b = find([g.net.nodes[e.b].lat, g.net.nodes[e.b].lng], cursor);
+    if (a < 0 || b < 0) { offLine.push(id); continue; }
+    cursor = Math.min(a, b);
+  }
+  const doorPoint = (id: string): Point | undefined => {
+    const door = g.exteriorDoors.find((d) => g.ids[d.index] === id);
+    const n = door ? g.net.nodes[door.inside] : undefined;
+    return n ? [n.lat, n.lng] : undefined;
+  };
+  const joins: number[] = [];
+  if (lead) {
+    const p = doorPoint(edgeIds[0]);
+    const i = p ? find(p, 0) : -1;
+    joins.push(i > 0 ? Math.round(metres(line[i - 1], line[i])) : i === 0 ? 0 : -1);
+  }
+  if (tail) {
+    const p = doorPoint(edgeIds[edgeIds.length - 1]);
+    const i = p ? findLast(p) : -1;
+    joins.push(i >= 0 && i < line.length - 1 ? Math.round(metres(line[i], line[i + 1])) : i === line.length - 1 ? 0 : -1);
+  }
+  const stub = (x?: Point, y?: Point) => (x && y ? Math.round(metres(x, y)) : 0);
+  return {
+    offLine,
+    joins,
+    startStub: lead ? 0 : stub(line[0], line[1]),
+    endStub: tail ? 0 : stub(line[line.length - 2], line[line.length - 1]),
+  };
+}
+
 /** Every ordered pair of places decided. */
-export async function campusSnapshot(g: IndoorGraph, cfg: PlannerConfig, at: Date, walks: BenchmarkWalks | undefined = undefined, places: CampusLocation[] = benchmarkPlaces(g)): Promise<CampusSnapshot> {
+export async function campusSnapshot(g: IndoorGraph, cfg: PlannerConfig, at: Date, walks: BenchmarkWalks | undefined = undefined, places: CampusLocation[] = benchmarkPlaces(g), search: CampusSearchOptions = {}): Promise<CampusSnapshot> {
   const started = Date.now();
   const pairs: Record<string, PairDecision> = {};
-  const isLink = new Set(g.net.edges.map((e, i) => [e.kind, i] as const).filter(([k]) => k === "BRIDGE" || k === "TUNNEL").map(([, i]) => g.ids[i]));
+  const kindById = new Map(g.net.edges.map((e, i) => [g.ids[i], e.kind] as const));
+  const labelOf = (id: string) => {
+    const i = g.indexById.get(id)!;
+    return g.facts[i]?.label ?? edgeLabel(g.net, g.net.edges[i]);
+  };
   for (const from of places) {
     for (const to of places) {
       if (from.id === to.id) continue;
       const fetcher = walks ?? new BenchmarkWalks();
       const before = fetcher.asked;
+      const logged = fetcher.log.length;
       const google = await fetcher.walk(from, to);
-      const r = google ? await campusWalk({ from, to, at }, google, fetcher, cfg, at, g) : undefined;
-      const d = r?.decision;
+      const r = google ? await campusWalk({ from, to, at }, google, fetcher, cfg, at, g, search) : undefined;
+      // Read loosely: an older engine's decision has no inside charge, margin or floor-to-floor total.
+      const d = r?.decision as (NonNullable<typeof r>["decision"] & { thresholdSeconds?: number }) | undefined;
       const chosen = d?.chosen;
+      const googleSeconds = google ? (google.durationSeconds ?? google.durationMinutes * 60) : 0;
       const ends = [from.buildingCode, to.buildingCode];
       const through = chosen ? [...new Set((r?.route?.indoorPath ?? chosen.via.filter((v) => v.startsWith("through ")).map((v) => v.slice("through ".length))))].filter((b) => !ends.includes(b)) : [];
+      const ofKind = (kind: string) => (chosen ? [...new Set(chosen.edgeIds.filter((id) => kindById.get(id) === kind).map(labelOf))] : []);
+      const shape = chosen ? shapeOf(chosen.timing) : undefined;
+      const inside = d?.inside;
       pairs[`${from.buildingCode}>${to.buildingCode}`] = {
         outcome: d?.outcome ?? "NONE",
-        google: Math.round(google ? (google.durationSeconds ?? google.durationMinutes * 60) : 0),
-        googleTotal: Math.round((d?.googleSeconds ?? 0) + (d?.inside?.originSeconds ?? 0) + (d?.inside?.destinationSeconds ?? 0)),
-        ...(chosen ? { seconds: chosen.seconds, total: chosen.totalSeconds ?? chosen.seconds, via: chosen.via, edgeIds: chosen.edgeIds } : {}),
+        google: Math.round(googleSeconds),
+        googleTotal: Math.round((d?.googleSeconds ?? googleSeconds) + (inside?.originSeconds ?? 0) + (inside?.destinationSeconds ?? 0)),
+        ...(chosen ? { seconds: chosen.seconds, total: chosen.totalSeconds ?? chosen.seconds, cost: chosen.cost, via: chosen.via, edgeIds: chosen.edgeIds } : {}),
         through,
-        links: chosen ? chosen.edgeIds.filter((id) => isLink.has(id)).length : 0,
+        links: ofKind("BRIDGE").length + ofKind("TUNNEL").length,
         lookups: Math.max(0, fetcher.asked - before - 1),
+        shown: Math.round(chosen ? chosen.seconds : googleSeconds),
+        ...(shape ? { shape } : {}),
+        ...(d ? { googleUsable: d.googleUsable, margin: d.marginSeconds ?? d.thresholdSeconds, summary: d.summary } : {}),
+        ...(inside ? { inside: { origin: inside.originSeconds, destination: inside.destinationSeconds, originDoor: inside.originDoor, destinationDoor: inside.destinationDoor } } : {}),
+        ...(chosen ? {
+          ...doorsOf(chosen.via),
+          bridges: ofKind("BRIDGE"),
+          tunnels: ofKind("TUNNEL"),
+          evidence: chosen.evidence,
+          provenance: chosen.provenance.map((p) => ({ label: p.label, evidence: p.evidence, from: [...p.from] })),
+          surveyedSegments: chosen.surveyedSegments,
+        } : {}),
+        ...(d?.rejected.length ? { rejected: d.rejected.slice(0, 4).map((x) => ({ label: x.label, because: x.because, seconds: x.seconds })) } : {}),
+        asked: fetcher.log.slice(logged),
+        ...(r?.route?.polyline && chosen && shape ? { line: checkLine(g, r.route, shape, chosen.edgeIds) } : {}),
       };
     }
   }

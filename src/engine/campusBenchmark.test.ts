@@ -3,7 +3,7 @@ import { DEFAULT_PLANNER_CONFIG as CFG } from "@/domain/config";
 import { networkBuildingLocation } from "./indoorRoute";
 import { campusGraph } from "./indoorGraph";
 import { REGRESSION_AT } from "./networkRegression";
-import { BenchmarkWalks, campusMetrics, campusSnapshot, compareCampusSnapshots, renderCampusComparison, renderCampusMetrics } from "./campusBenchmark";
+import { BenchmarkWalks, campusMetrics, campusSnapshot, compareCampusSnapshots, renderCampusComparison, renderCampusMetrics, type CampusSnapshot } from "./campusBenchmark";
 
 /** The benchmark reads the engine's decisions faithfully, and a comparison with itself finds nothing. */
 
@@ -24,6 +24,19 @@ describe("the campus-aware walk benchmark", () => {
     expect(m.corrected).toBe(3);
     expect(m.lookups.total).toBe(Object.values(s.pairs).reduce((n, d) => n + d.lookups, 0));
     expect(renderCampusMetrics(m, "Now").join("\n")).toMatch(/corrected because it relied on a way that may not be used: 3/);
+    for (const [pair, d] of Object.entries(s.pairs)) expect(d.line?.offLine ?? [], `${pair}: segments off the drawn line`).toEqual([]);
+  });
+
+  it("finds, asking for every door walk that could matter, a route at least as cheap wherever the usual search took one", async () => {
+    const usual = await campusSnapshot(campusGraph(), CFG, REGRESSION_AT, undefined, places);
+    const every = await campusSnapshot(campusGraph(), CFG, REGRESSION_AT, undefined, places, { exhaustive: true });
+    const lookups = (s: CampusSnapshot) => Object.values(s.pairs).reduce((n, d) => n + d.lookups, 0);
+    expect(lookups(every)).toBeGreaterThanOrEqual(lookups(usual));
+    for (const [pair, d] of Object.entries(usual.pairs)) {
+      if (d.total === undefined) continue;
+      expect(every.pairs[pair].cost, pair).toBeDefined();
+      expect(every.pairs[pair].cost!, pair).toBeLessThanOrEqual(d.cost!);
+    }
   });
 
   it("finds no change between a snapshot and itself, and names the kind of every change", async () => {
