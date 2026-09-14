@@ -345,8 +345,21 @@ export function buildingAvailability(g: Graph, building: string, experimental = 
   return fact && claimsUsable(fact.evidence, experimental) ? fact.value : undefined;
 }
 
+/** Toronto clocks by the minute. A search asks about the same few minutes for thousands of arcs. */
+const clocks = new Map<number, ReturnType<typeof torontoClock>>();
+function clockAt(ms: number): ReturnType<typeof torontoClock> {
+  const minute = Math.floor(ms / 60_000);
+  let clock = clocks.get(minute);
+  if (!clock) {
+    if (clocks.size >= 4096) clocks.clear();
+    clock = torontoClock(new Date(minute * 60_000));
+    clocks.set(minute, clock);
+  }
+  return clock;
+}
+
 function hoursRefusal(g: Graph, buildings: readonly string[], c: CampusConstraints, atMs: number): Refusal | undefined {
-  const clock = torontoClock(new Date(atMs));
+  const clock = clockAt(atMs);
   for (const b of buildings) {
     if (b === OUTSIDE || c.endpoints?.includes(b)) continue;
     const state = openState(buildingAvailability(g, b, Boolean(c.experimental)) ?? { kind: "UNKNOWN" }, clock);
@@ -575,6 +588,16 @@ export function routeOf(arcs: readonly Arc[], opts: RouteOptions = {}, g: Graph 
     buildings,
     cost: arcs.reduce((n, arc) => n + arcCost(g, arc, opts, pace, penalty).cost, 0),
   };
+}
+
+/** The cheapest of `nodes` a search reached. Ties go to the lower node id, as they do inside the search. */
+export function cheapestReached(nodes: readonly number[], cost: ReadonlyMap<number, number>): number | undefined {
+  let best: number | undefined;
+  for (const n of [...nodes].sort((a, b) => a - b)) {
+    const c = cost.get(n);
+    if (c !== undefined && (best === undefined || c < cost.get(best)!)) best = n;
+  }
+  return best;
 }
 
 /**

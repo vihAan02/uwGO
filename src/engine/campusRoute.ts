@@ -154,7 +154,7 @@ function exteriorRestriction(g: IndoorGraph, building: string | undefined, direc
 const SIDES = ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"];
 
 /** Which side of its building a door is on, from the building's campus-map point. */
-function sideOf(node: IndoorNode): string | undefined {
+export function sideOf(node: IndoorNode): string | undefined {
   const b = findBuilding("UW", node.building);
   if (b?.latitude === undefined || b.longitude === undefined) return undefined;
   const dy = node.lat - b.latitude;
@@ -165,7 +165,7 @@ function sideOf(node: IndoorNode): string | undefined {
 }
 
 /** What to call a crossing: the reviewed label when there is one, otherwise what and where it is. */
-function crossingLabel(g: IndoorGraph, arc: Arc): string {
+export function crossingLabel(g: IndoorGraph, arc: Arc): string {
   const fact = g.facts[arc.index];
   if (fact) return fact.label;
   const a = g.net.nodes[arc.edge.a];
