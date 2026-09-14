@@ -72,6 +72,42 @@ export function projectOntoPath(p: LatLngTuple, path: readonly LatLngTuple[]): P
   return { ...best, metres: run };
 }
 
+/** Metres from either end of a straight step within which it may cross a surveyed segment: a door and the paths beside it are drawn only so precisely. */
+export const STEP_END_METRES = 3;
+
+/**
+ * The edges of the network a straight step cuts away from its ends: a path it crosses, a corridor, a link. A
+ * step drawn between one of Google's lines and a door must cut none, or it is drawn through a wall or across a
+ * path nobody walks it by. Edges in `except`, such as the door the step reaches, are not counted.
+ */
+export function edgesCut(net: IndoorNetwork, from: LatLngTuple, to: LatLngTuple, except: ReadonlySet<number> = new Set(), endMetres = STEP_END_METRES): number[] {
+  const mPerLat = 111_320;
+  const mPerLng = mPerLat * Math.cos((from[0] * Math.PI) / 180);
+  const dx = (to[1] - from[1]) * mPerLng, dy = (to[0] - from[0]) * mPerLat;
+  const length = Math.hypot(dx, dy);
+  if (length <= 2 * endMetres) return [];
+  const minLat = Math.min(from[0], to[0]), maxLat = Math.max(from[0], to[0]);
+  const minLng = Math.min(from[1], to[1]), maxLng = Math.max(from[1], to[1]);
+  const cut: number[] = [];
+  net.edges.forEach((e, i) => {
+    if (except.has(i)) return;
+    for (let s = 1; s < e.path.length; s++) {
+      const a = e.path[s - 1], b = e.path[s];
+      if (Math.max(a[0], b[0]) < minLat || Math.min(a[0], b[0]) > maxLat || Math.max(a[1], b[1]) < minLng || Math.min(a[1], b[1]) > maxLng) continue;
+      const cx = (a[1] - from[1]) * mPerLng, cy = (a[0] - from[0]) * mPerLat;
+      const fx = (b[1] - a[1]) * mPerLng, fy = (b[0] - a[0]) * mPerLat;
+      const den = dx * fy - dy * fx;
+      if (den === 0) continue;
+      const t = (cx * fy - cy * fx) / den;
+      const u = (cx * dy - cy * dx) / den;
+      if (u < 0 || u > 1 || t * length <= endMetres || (1 - t) * length <= endMetres) continue;
+      cut.push(i);
+      return;
+    }
+  });
+  return cut;
+}
+
 /** Metres from a point to the nearest part of a polyline. */
 export function distanceToPath(p: LatLngTuple, path: readonly LatLngTuple[]): number {
   if (path.length === 0) return Infinity;
