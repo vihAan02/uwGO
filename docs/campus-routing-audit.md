@@ -225,7 +225,7 @@ Treatment: Step-free routing never changes floor by stairs, and uses an elevator
 
 ## Field verification backlog
 
-Things to walk out and check, as reviewers wrote them down. Priority 1 blocks a production decision; 2 would improve routing; 3 completes the inventory. The list to walk, ranked from what UW Go actually routes and with exactly what to check at each place, is `docs/campus-field-verification.md`; record findings at `/dev/campus-audit` (see `src/data/campus/field/README.md`).
+Things to walk out and check, as reviewers wrote them down. Priority 1 blocks a production decision; 2 would improve routing; 3 completes the inventory. The list to walk, ranked from what UW Go actually routes and with exactly what to check at each place, is `docs/campus-field-verification.md`; record findings as observation files (see `src/data/campus/field/README.md`).
 
 Promoted field observations: 0.
 

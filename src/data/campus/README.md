@@ -13,7 +13,7 @@ is worth it).
 | `normalize.ts` | Reads the research into UW Go's shapes without adding anything, and reports whatever it cannot map. |
 | `types.ts` | The model: evidence, activation, passage per direction, access, availability, and the shapes of the reviewed decisions. |
 | `overlay.ts` | UW Go's reviewed decisions: which surveyed segment each research record is about, whether routing may use it, and why. The conflict register and the reviewers' field checks are here too. |
-| `field/` | Field verification: observations imported from `/dev/campus-audit`, kept apart from routing, and the promotions that deliberately turn what they saw into facts. See `field/README.md`. |
+| `field/` | Field verification: observations recorded on the ground and imported as files, kept apart from routing, and the promotions that deliberately turn what they saw into facts. See `field/README.md`. |
 | `knowledge.ts` | Indexes research, decisions and promotions for routing, and checks every reference against the surveyed network. |
 | `report.ts` | Renders `docs/campus-routing-audit.md`. |
 
@@ -83,6 +83,6 @@ reported, not silently dropped.
 
 ## After someone walks a check
 
-Record it at `/dev/campus-audit`, import the export, review it and promote only what was observed,
+Record it as an observation file, import it, review it and promote only what was observed,
 only for the direction and time it was observed (`field/README.md`). A door seen locked inwards at
 9 pm is a restriction; a door seen open at noon is not evidence that it is open at 11 pm.

@@ -16,20 +16,19 @@ The targets and their ranking are computed in `src/engine/fieldTargets.ts` and
 
 ## On campus
 
-1. Open `/dev/campus-audit` on your phone. In a development build any signed-in account may use it;
-   in production only the emails listed in `UWGO_FIELD_AUDITORS` (comma-separated), and everyone else
-   gets a 404.
-2. The list is in the ranking's order, with "Near me" to sort by distance. Each target shows where UW Go
-   puts it (a surveyed position, or only the building's map point when there is none), what UW Go
-   believes and on whose word, why it needs checking, exactly what to check, and the campus graph
-   around it on a map.
-3. Tap what you find: Entry works, Exit works, Both, Locked / restricted, Automatic door, Stairs, Ramp,
-   Elevator, Accessible, Not accessible, Wrong location, Doesn't exist. "Locked" means the way (or
-   ways) not marked as working; on a change of floor it means it needs a key or help. Add a note, a
-   corrected location (from GPS, or by tapping the map), a photo reference, and save.
-4. Saved observations stay in the phone's browser and change nothing. Export them the same day: the
-   export is a JSON file you share or download. Safari can clear a site's storage after a week without
-   a visit, so do not leave observations sitting on the phone.
+Walk the list in `docs/campus-field-verification.md`, P0 first. Each target says where UW Go puts it
+(a surveyed position, or only the building's map point when there is none), what UW Go believes and
+on whose word, why it needs checking, and exactly what to check.
+
+Record each visit as a `FieldObservation` (`types.ts`): the target as the doc names it (`targetRef`
+in `src/engine/fieldTargets.ts` gives the exact shape), the time with the phone's own UTC offset,
+the verifier, and the marks that were true: `ENTRY_WORKS`, `EXIT_WORKS`, `BOTH_WAYS`, `LOCKED`,
+`AUTOMATIC_DOOR`, `STAIRS`, `RAMP`, `ELEVATOR`, `ACCESSIBLE`, `NOT_ACCESSIBLE`, `WRONG_LOCATION`,
+`DOES_NOT_EXIST`. "Locked" means the way (or ways) not marked as working; on a change of floor it
+means it needs a key or help. A note, a corrected location and a photo reference are optional.
+Put the visits in a `FieldObservationFile` (schema `uwgo.field-observations/1`). A phone page that
+writes these files is deferred; `rules.ts` is what it will have to satisfy, and `observationProblems`
+says exactly what is wrong with a record.
 
 ## Into the repo
 

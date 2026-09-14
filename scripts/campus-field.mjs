@@ -3,7 +3,7 @@
 //
 // Usage:
 //   node scripts/campus-field.mjs import EXPORT.json
-//       Checks every observation in an export from /dev/campus-audit and adds the new ones to
+//       Checks every observation in an export (schema uwgo.field-observations/1) and adds the new ones to
 //       src/data/campus/field/observations/, one file per verifier and day. Changes nothing that routes.
 //   node scripts/campus-field.mjs list
 //       Every imported observation, grouped by what it was about.

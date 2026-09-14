@@ -5,7 +5,6 @@ import type { CampusLocation, ClassTransition, DayPlan, DayPlanItem, EndOfDayDes
 import { formatClock, formatDuration, minutesBetween } from "@/time/toronto";
 import { googleMapsDirectionsUrl, travelModeFor } from "@/lib/mapsLinks";
 import { indoorPathLabel } from "@/engine/indoorRoute";
-import { explainCampusDecision } from "@/engine/campusRoute";
 import { findRoomPosition } from "@/data/floorplans";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -140,26 +139,16 @@ export function pressable(select: () => void) {
 }
 
 /**
- * Why a walk uses the doors it does: shown when campus knowledge changed the route, or could not
- * and the student needs telling how to get in. The full reasoning is a developer aid only.
+ * One line on why a walk uses the doors it does: only when campus knowledge changed the route, or
+ * could not and the student needs telling how to get in. The full reasoning is a developer aid,
+ * reached from the console (`window.uwgoCampus.legs()`), never rendered.
  */
 function CampusNote({ t }: { t: ClassTransition }) {
   const decision = t.campus;
   if (!decision) return null;
   const shown = t.recommendedRoute?.campus?.summary ?? (decision.outcome === "NO_USABLE_ROUTE" ? decision.warnings[0] : undefined);
-  const dev = process.env.NODE_ENV !== "production" && (decision.outcome !== "KEPT_GOOGLE" || decision.rejected.length > 0);
-  if (!shown && !dev) return null;
-  return (
-    <>
-      {shown && <p className={cn("mt-1.5 text-xs", decision.outcome === "NO_USABLE_ROUTE" ? "text-warn" : "text-ink-muted")}>{shown}</p>}
-      {dev && (
-        <details className="mt-1" onClick={(e) => e.stopPropagation()}>
-          <summary className="cursor-pointer list-none text-[11px] text-ink-muted [&::-webkit-details-marker]:hidden">Route reasoning (dev)</summary>
-          <pre className="mt-1 overflow-x-auto whitespace-pre-wrap rounded-md bg-surface p-2 text-[11px] leading-snug text-ink-muted">{explainCampusDecision(decision)}</pre>
-        </details>
-      )}
-    </>
-  );
+  if (!shown) return null;
+  return <p className={cn("mt-1.5 text-xs", decision.outcome === "NO_USABLE_ROUTE" ? "text-warn" : "text-ink-muted")}>{shown}</p>;
 }
 
 function LeaveRow({ t, id, sel, label, day }: { t: ClassTransition; id: string; sel: Selectable; label: string; day: DayPlan }) {

@@ -2,8 +2,9 @@
  * Field verification: what someone checked on the ground, kept apart from the knowledge routing uses.
  *
  * An observation records one visit: which door, link or place, what was found, when and by whom. It
- * never changes a route. Observations are captured on a phone at /dev/campus-audit, exported from
- * there, and imported into `observations/` by scripts/campus-field.mjs. A promotion (`promotions.ts`)
+ * never changes a route. Observations arrive as a `FieldObservationFile` export (a phone page for
+ * recording them is deferred; see README.md) and are imported into `observations/` by
+ * scripts/campus-field.mjs. A promotion (`promotions.ts`)
  * is the deliberate, reviewed step that turns what observations support into routing facts with
  * FIELD_VERIFIED evidence, naming the observations, so a route can say what it rests on.
  *

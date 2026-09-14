@@ -1,6 +1,6 @@
 # Field observations
 
-Observations imported from `/dev/campus-audit` exports, one JSON file per import
+Observations imported from `FieldObservationFile` exports, one JSON file per import
 (`YYYY-MM-DD-<verifier>.json`, schema `uwgo.field-observations/1`). Add them with
 `node scripts/campus-field.mjs import EXPORT.json`; never edit them by hand.
 
