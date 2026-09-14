@@ -124,7 +124,7 @@ describe("going to PAC", () => {
     const asked = f.walk.mock.calls.map(([, to]) => to);
     expect(asked[0]).toBe(PAC); // Google's own walk, which the caller priced
     // A few entrances: never an unbounded search, and no walk from PAC's map point, which may not be arrived at.
-    expect(asked.length - 1).toBeLessThanOrEqual(CAMPUS_LOOKUPS.entries);
+    expect(asked.length - 1).toBeLessThanOrEqual(CAMPUS_LOOKUPS.calls + CAMPUS_LOOKUPS.highValueCalls);
     for (const to of asked.slice(1)) expect(isDoorPoint(to)).toBe(true);
     expect(r.route!.steps![0].instruction).toMatch(/^Walk to the /);
   });
@@ -229,23 +229,25 @@ describe("a better door, a bridge, and walking through a building", () => {
   });
 
   it("asks a way through a building to save more than a nearer door does, and takes it only from that margin", async () => {
+    // With no line to read a door walk off, each door walk is priced on its own, so only Google's time moves the saving.
+    const lineless = (times: Record<string, number>) => google(times, { polyline: undefined });
     const north = nearDoor(SLC_NORTH, 30, 0);
     const west = nearDoor(SLC_WEST, 0, -30);
-    const through = (await walk(north, west, google({ [key(north, west)]: 600 })))!.decision.chosen!;
+    const through = (await walk(north, west, lineless({ [key(north, west)]: 600 })))!.decision.chosen!;
     const margin = googleAtMargin(through.totalSeconds, 1);
-    const under = (await walk(north, west, google({ [key(north, west)]: margin - 2 })))!.decision;
+    const under = (await walk(north, west, lineless({ [key(north, west)]: margin - 2 })))!.decision;
     expect(under.outcome).toBe("KEPT_GOOGLE");
     expect(under.rejected.some((x) => /saves only .*, under the .* it has to save/.test(x.because))).toBe(true);
-    const over = (await walk(north, west, google({ [key(north, west)]: margin + 2 })))!.decision;
+    const over = (await walk(north, west, lineless({ [key(north, west)]: margin + 2 })))!.decision;
     expect(over.outcome).toBe("SHORTCUT");
     expect(over.marginSeconds).toBeGreaterThan(CFG.campusShortcutMargin.baseSeconds + CFG.campusShortcutMargin.perBuildingSeconds);
 
     const outside = westOf(DC_WEST, 25);
-    const door = (await walk(outside, DC, google({ [key(outside, DC)]: 240 })))!.decision;
+    const door = (await walk(outside, DC, lineless({ [key(outside, DC)]: 240 })))!.decision;
     const need = googleAtMargin(door.chosen!.totalSeconds - door.inside.destinationSeconds, 0);
-    const doorUnder = (await walk(outside, DC, google({ [key(outside, DC)]: need - 2 })))!.decision;
+    const doorUnder = (await walk(outside, DC, lineless({ [key(outside, DC)]: need - 2 })))!.decision;
     expect(doorUnder.outcome).toBe("KEPT_GOOGLE");
-    const doorOver = (await walk(outside, DC, google({ [key(outside, DC)]: need + 2 })))!.decision;
+    const doorOver = (await walk(outside, DC, lineless({ [key(outside, DC)]: need + 2 })))!.decision;
     expect(doorOver.outcome).toBe("BETTER_ENTRANCE");
     expect(doorOver.marginSeconds).toBeLessThan(over.marginSeconds);
   });
@@ -255,7 +257,7 @@ describe("a better door, a bridge, and walking through a building", () => {
     const r = (await walk(HOME, DC, f))!;
     expect(r.decision.outcome).toBe("KEPT_GOOGLE");
     expect(r.route).toBeUndefined();
-    expect(f.walk.mock.calls.length).toBeLessThanOrEqual(1 + CAMPUS_LOOKUPS.entries + 2 * CAMPUS_LOOKUPS.through);
+    expect(f.walk.mock.calls.length).toBeLessThanOrEqual(1 + CAMPUS_LOOKUPS.calls + CAMPUS_LOOKUPS.highValueCalls);
     const g = campusGraph();
     for (const [, to] of f.walk.mock.calls.slice(1)) {
       const door = g.exteriorDoors.find((d) => g.net.nodes[d.inside].lat === to.latitude && g.net.nodes[d.inside].lng === to.longitude)!;
@@ -351,10 +353,21 @@ describe("falling back to Google's walk", () => {
   });
 
   it("keeps Google's walk and warns when the only walks to an allowed entrance cannot be priced", async () => {
-    const f = { walk: vi.fn(async (from: LatLng, to: LatLng) => (to === PAC ? (await google().walk(from, to)) : undefined)) };
+    // No line to read a door walk off either: every way in needs a walk of its own, and none comes back.
+    const f = { walk: vi.fn(async (from: LatLng, to: LatLng) => (to === PAC ? { ...(await google().walk(from, to))!, polyline: undefined } : undefined)) };
     const r = (await walk(HOME, PAC, f))!;
     expect(r.decision.outcome).toBe("NO_USABLE_ROUTE");
     expect(r.decision.warnings).toHaveLength(1);
+  });
+
+  it("reads the walk to a door off Google's own line when the line passes it, with no walk of its own", async () => {
+    const f = { walk: vi.fn(async (from: LatLng, to: LatLng) => (to === PAC ? google().walk(from, to) : undefined)) };
+    const r = (await walk(HOME, PAC, f))!;
+    expect(r.decision.outcome).toBe("CORRECTED");
+    expect(r.decision.chosen!.timing[0]).toBe("GOOGLE");
+    // The way to the door is Google's own line as far as the door.
+    const baseline = decode((await f.walk(HOME, PAC))!.polyline!);
+    expect(decode(r.route!.polyline!)[0]).toEqual(baseline[0]);
   });
 
   it("asks Google for each door walk once: a cached provider serves a repeat trip without a call", async () => {

@@ -31,7 +31,7 @@ import { STUDY_SPOTS } from "@/data/study";
 import { haversineMeters } from "@/routing/EstimateRoutingProvider";
 import { torontoDate } from "@/time/toronto";
 import { OUTSIDE, INDOOR_PACE, OUTDOOR_PENALTY, UNKNOWN_HOURS_PASS_THROUGH, arcsOf, campusGraph, cheapestReached, graphOver, searchFrom, usableAccess, type IndoorGraph, type RouteOptions } from "./indoorGraph";
-import { CAMPUS_LOOKUPS, CAMPUS_PACE, CAMPUS_UNCERTAINTY_SECONDS, GOOGLE_DOOR_METRES, UNKNOWN_ACCESS_SECONDS, campusWalk, secondsOf } from "./campusRoute";
+import { ALONG_GOOGLE_METRES, CAMPUS_LOOKUPS, CAMPUS_PACE, CAMPUS_UNCERTAINTY_SECONDS, DOOR_WALK_GUESS, GOOGLE_DOOR_METRES, GOOGLE_WALK_METRES_PER_SECOND, UNKNOWN_ACCESS_SECONDS, campusWalk, secondsOf } from "./campusRoute";
 import { CONNECTOR_CANDIDATES, CONNECTOR_MAX_METRES } from "./indoorRoute";
 import type { FieldTarget } from "./fieldTargets";
 
@@ -327,6 +327,7 @@ export function fieldFingerprint(targets: readonly FieldTarget[], g: IndoorGraph
     constants: {
       LOST_SECONDS, GAINED_SECONDS, STAND_IN_WALK, RANKING_AT: RANKING_AT.toISOString(), EVIDENCE_UNCERTAINTY, RANKING,
       INDOOR_PACE, OUTDOOR_PENALTY, UNKNOWN_HOURS_PASS_THROUGH, CAMPUS_PACE, CAMPUS_UNCERTAINTY_SECONDS, UNKNOWN_ACCESS_SECONDS, CAMPUS_LOOKUPS, GOOGLE_DOOR_METRES, CONNECTOR_CANDIDATES, CONNECTOR_MAX_METRES,
+      ALONG_GOOGLE_METRES, DOOR_WALK_GUESS, GOOGLE_WALK_METRES_PER_SECOND,
       margin: cfg.campusShortcutMargin,
     },
   }));

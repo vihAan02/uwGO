@@ -116,7 +116,7 @@ describe("routing from where the student actually is", () => {
     const s = await select(outside, DC, "FASTEST", f, { indoorAlternative: false });
     // The outdoor walk, and the few door walks the campus-aware walk itself considers; no joins for a winter route that could not be recommended.
     expect(s.indoor).toBeUndefined();
-    expect(f.walk.mock.calls.length).toBeLessThanOrEqual(1 + CAMPUS_LOOKUPS.entries + 2 * CAMPUS_LOOKUPS.through);
+    expect(f.walk.mock.calls.length).toBeLessThanOrEqual(1 + CAMPUS_LOOKUPS.calls + CAMPUS_LOOKUPS.highValueCalls);
     const withWinter = makeFetcher();
     await select(outside, DC, "FASTEST", withWinter, { indoorAlternative: true });
     expect(withWinter.walk.mock.calls.length).toBeGreaterThanOrEqual(f.walk.mock.calls.length);

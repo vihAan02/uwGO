@@ -21,8 +21,10 @@
  * - a Google-priced walk to a door, through the network, and a Google-priced walk on from another
  *   door: the cut through a building that Google never sees.
  *
- * Google is asked only for door walks that a straight-line estimate says could still win, a few per
- * trip, and the memo caches every one for thirty days. When Google's own walk relies on a way in or
+ * A door on Google's own line needs no walk of its own: the way to it is Google's walk as far as the
+ * door. The other door walks are asked for most promising first, a couple per trip and a few more only
+ * while one still looks well worth it, and never when nothing Google could say would change the
+ * answer; the memo caches every one for thirty days. When Google's own walk relies on a way in or
  * out that may not be used, or on a door or path reported closed, the best allowed route is taken
  * whatever it costs; if none can be routed, Google's walk stays, with a warning, rather than an
  * invented way in. Otherwise a campus route replaces Google's only when it saves the margin its
@@ -43,7 +45,7 @@ import type { IndoorNode } from "@/data/indoor/network";
 import { edgeId, edgeLabel } from "@/data/indoor/edgeId";
 import { findBuilding } from "@/data/buildings";
 import { haversineMeters } from "@/routing/EstimateRoutingProvider";
-import { closuresOnRoute, type LatLngTuple } from "./closureGeometry";
+import { closuresOnRoute, projectOntoPath, type LatLngTuple, type PathProjection } from "./closureGeometry";
 import {
   INDOOR_PACE,
   OUTSIDE,
@@ -88,11 +90,40 @@ export const CAMPUS_UNCERTAINTY_SECONDS: Record<Evidence, number> = {
 export const UNKNOWN_ACCESS_SECONDS = 60;
 
 /**
- * Google-priced walks per trip beyond Google's own: to doors the network is entered by, from doors it is
- * left by, and pairs of doors for a way through a building. Each is one cached lookup; the memo means a
- * door walk is priced once for a whole week, however many legs consider it.
+ * Door walks Google is asked for per trip, beyond its own walk. A door on Google's own line needs none
+ * (`ALONG_GOOGLE_METRES`). The rest are asked for most promising first: `calls` of them, and up to
+ * `highValueCalls` more while one still looks at least `highValueSeconds` better than anything found, or
+ * while correcting a walk that may not be used, which is taken whatever it costs. Each is one cached
+ * lookup, priced once for a whole week however many legs consider it.
  */
-export const CAMPUS_LOOKUPS = { entries: 3, exits: 3, through: 1 } as const;
+export const CAMPUS_LOOKUPS = { calls: 2, highValueCalls: 2, highValueSeconds: 60 } as const;
+
+/**
+ * A door this near Google's line is on Google's way, and the walk to it is Google's walk as far as the
+ * nearest point, then across. Read that way, 2,429 of Google's own door walks came out within 9 s in half
+ * the cases and 19 s in nine of ten (September 2026): as close as Google's two directions of a walk agree.
+ */
+export const ALONG_GOOGLE_METRES = 15;
+
+/**
+ * Guessing a door walk before asking Google for it. Within `lineMetres` of Google's line the guess is read
+ * off the line, as a walk along it would be (within 25 s in nine of ten cases up to 30 m off); further away
+ * it is the straight line `detour` times longer at Google's pace, the median over 2,021 real door walks and
+ * far less sure. `slack` is how far a guess may miss what a candidate needs and still be worth a call: set
+ * against a search that asks for every door walk that could matter, these keep 93% of the seconds it saves
+ * for 1.3 door walks a trip, where a slack of 30 s off the line kept 90%. No door walk came in under the
+ * straight line less `floor.metres` (Google's line can stop short of a door) at `floor.metresPerSecond`:
+ * what a door walk is sure never to beat.
+ */
+export const DOOR_WALK_GUESS = {
+  lineMetres: 60,
+  detour: 1.3,
+  slack: { line: 60, far: 90 },
+  floor: { metres: 60, metresPerSecond: 1.4 },
+} as const;
+
+/** Google's walking pace on campus, the median over 2,021 of its door walks: for the few metres between its line and a door. */
+export const GOOGLE_WALK_METRES_PER_SECOND = 1.22;
 
 /** A surveyed door of the building this near where Google's line starts or ends is the door that walk uses. */
 export const GOOGLE_DOOR_METRES = 80;
@@ -120,17 +151,6 @@ const GOOGLE_DOOR_REFUSALS: ReadonlySet<Refusal> = new Set<Refusal>(["CLOSED", "
  */
 export const CAMPUS_PACE: Pace = { ...INDOOR_PACE, outdoorMetresPerSecond: 1.05 };
 
-/**
- * What a Google walk between two points is likely to take, for deciding which door walks are worth
- * pricing: the straight line at Google's own walking pace, lengthened by the detour Google's walk for
- * this trip showed (its time against its straight line), held between a shade optimistic and a long way
- * round. A door walk is then priced whenever it could plausibly win and no more: a bound at straight-line
- * speed would send every long trip to Google for door walks that cannot save the margin, and a fixed
- * detour would miss the trips where Google goes round a building that a door walk does not.
- */
-const LIKELY_METRES_PER_SECOND = 1.4;
-const LIKELY_DETOUR = { least: 1.15, most: 1.5 } as const;
-
 export interface CampusWalkRequest {
   from: CampusLocation;
   to: CampusLocation;
@@ -150,6 +170,11 @@ export interface CampusWalk {
   decision: CampusDecision;
 }
 
+/** How hard to look. `exhaustive` asks Google for every door walk that could change the answer: for benchmarks, never for students. */
+export interface CampusSearchOptions {
+  exhaustive?: boolean;
+}
+
 type Point = [number, number];
 
 export const secondsOf = (r: RouteOption): number => r.durationSeconds ?? r.durationMinutes * 60;
@@ -157,10 +182,6 @@ const pointOf = (p: { latitude: number; longitude: number }): Point => [p.latitu
 const nodePoint = (n: IndoorNode): Point => [n.lat, n.lng];
 const nodeLatLng = (n: IndoorNode): LatLng => ({ latitude: n.lat, longitude: n.lng });
 const metresBetween = (a: Point, b: Point) => haversineMeters({ latitude: a[0], longitude: a[1] }, { latitude: b[0], longitude: b[1] });
-const likelyDetour = (googleSeconds: number, from: Point, to: Point) => {
-  const straight = metresBetween(from, to) / LIKELY_METRES_PER_SECOND;
-  return straight > 0 ? Math.min(LIKELY_DETOUR.most, Math.max(LIKELY_DETOUR.least, googleSeconds / straight)) : LIKELY_DETOUR.least;
-};
 
 export function formatSeconds(seconds: number): string {
   const s = Math.round(seconds);
@@ -268,9 +289,8 @@ interface Candidate {
 }
 
 /** Totals for one way of making the trip. */
-function candidate(g: IndoorGraph, opts: RouteOptions, inside: { origin: number; destination: number }, parts: Omit<Candidate, "route" | "seconds" | "total" | "cost">): Candidate {
+function candidate(g: IndoorGraph, opts: RouteOptions, inside: { origin: number; destination: number }, parts: Omit<Candidate, "route" | "seconds" | "total" | "cost">, route: IndoorGraphRoute = routeOf(parts.arcs, opts, g, parts.startNode)): Candidate {
   const pace = opts.pace ?? INDOOR_PACE;
-  const route = routeOf(parts.arcs, opts, g, parts.startNode);
   const doors = [parts.lead, parts.tail].filter((c): c is Connector => Boolean(c));
   const outside = doors.reduce((n, c) => n + c.seconds, 0);
   const fixed = outside + doors.length * pace.secondsPerDoor;
@@ -292,12 +312,12 @@ function edgeIdsOf(g: IndoorGraph, c: Candidate): string[] {
 }
 
 /**
- * Buildings a candidate walks through on the way, other than the ones it starts and ends in: it has a
+ * Buildings a route walks through on the way, other than the ones it starts and ends in: it has a
  * corridor, stairwell or open join inside them, not merely a door touched on the way past.
  */
-function passesThrough(c: Candidate, ends: readonly (string | undefined)[]): string[] {
+function passesThrough(route: IndoorGraphRoute, ends: readonly (string | undefined)[]): string[] {
   const inside: string[] = [];
-  for (const seg of c.route.segments) {
+  for (const seg of route.segments) {
     const b = seg.from.building;
     if (b === OUTSIDE || b !== seg.to.building || ends.includes(b)) continue;
     if (inside[inside.length - 1] !== b) inside.push(b);
@@ -439,6 +459,29 @@ async function connector(g: IndoorGraph, fetcher: ConnectorFetcher, place: Campu
   return { route, seconds: secondsOf(route), door: node, doorIndex: door.index, doorLabel: label, line };
 }
 
+/**
+ * A walk to a door on Google's own line, read off Google's walk for the trip rather than asked for: its
+ * line as far as the point nearest the door, then across to the door, timed as that share of Google's
+ * walk and the metres across at Google's pace. From the place to the door, as every connector runs: a
+ * lead is the start of Google's line, a tail the rest of it walked back from the destination.
+ */
+function alongGoogle(g: IndoorGraph, google: RouteOption, line: Point[], at: PathProjection, door: ExteriorDoor, side: "lead" | "tail"): Connector {
+  const node = g.net.nodes[door.inside];
+  const share = at.metres > 0 ? at.along / at.metres : 0;
+  const seconds = secondsOf(google) * (side === "lead" ? share : 1 - share) + at.off / GOOGLE_WALK_METRES_PER_SECOND;
+  const way: Point[] = side === "lead" ? [...line.slice(0, at.segment + 1), at.point] : [...line.slice(at.segment + 1).reverse(), at.point];
+  way.push(nodePoint(node));
+  const metres = (side === "lead" ? at.along : at.metres - at.along) + at.off;
+  return {
+    route: { mode: "WALK", durationMinutes: Math.max(1, Math.ceil(seconds / 60)), durationSeconds: Math.round(seconds), distanceMeters: Math.round(metres), polyline: encode(way), provider: google.provider, computedAt: google.computedAt, isEstimate: false },
+    seconds,
+    door: node,
+    doorIndex: door.index,
+    doorLabel: doorLabel(g, door),
+    line: way,
+  };
+}
+
 /** Seconds from a trip end's floor to a door of its building (or from the door to the floor), over the network. */
 function insideSeconds(search: Search | undefined, door: ExteriorDoor | undefined, pace: Pace): number {
   if (!search || !door) return 0;
@@ -446,12 +489,41 @@ function insideSeconds(search: Search | undefined, door: ExteriorDoor | undefine
   return s === undefined ? 0 : s + pace.secondsPerDoor;
 }
 
+/** One door walk of a candidate: known when read off Google's line, otherwise a guess, a floor it cannot beat, and how far the guess may be out. */
+interface Leg {
+  door: ExteriorDoor;
+  known?: Connector;
+  guess: number;
+  floor: number;
+  slack: number;
+}
+
+/** A way of making the trip whose door walks may still have to be asked for. */
+interface Pending {
+  kind: CandidateKind;
+  startNode: number;
+  endNode: number;
+  arcs: Arc[];
+  route: IndoorGraphRoute;
+  lead?: Leg;
+  tail?: Leg;
+  through: number;
+  eligible: boolean;
+  /** Seconds and cost without the door walks still to be asked for. */
+  seconds: number;
+  cost: number;
+  /** Those door walks: guessed, at least, and how far the guess may be out. */
+  guess: number;
+  floor: number;
+  slack: number;
+}
+
 /**
  * The campus-aware answer to one walking trip, given Google's walk for it. Undefined when the campus
  * network has nothing to say (the same place or building, or no Google walk to compare with, in which
  * case there is honestly no route to improve on).
  */
-export async function campusWalk(req: CampusWalkRequest, google: RouteOption | undefined, fetcher: ConnectorFetcher, cfg: PlannerConfig, now: Date = new Date(), g: IndoorGraph = campusGraph()): Promise<CampusWalk | undefined> {
+export async function campusWalk(req: CampusWalkRequest, google: RouteOption | undefined, fetcher: ConnectorFetcher, cfg: PlannerConfig, now: Date = new Date(), g: IndoorGraph = campusGraph(), search: CampusSearchOptions = {}): Promise<CampusWalk | undefined> {
   if (!google || req.from.id === req.to.id) return undefined;
   const googleLine = google.polyline ? (decode(google.polyline) as Point[]) : undefined;
   const O = tripEnd(req.from, g, googleLine?.[0]);
@@ -475,8 +547,7 @@ export async function campusWalk(req: CampusWalkRequest, google: RouteOption | u
   const rejected: CampusRejection[] = [];
   const start = O.point;
   const end = D.point;
-  const detour = likelyDetour(googleSeconds, start, end);
-  const likelySeconds = (a: Point, b: Point) => (metresBetween(a, b) * detour) / LIKELY_METRES_PER_SECOND;
+  const ends = [O.building, D.building];
 
   const fromO = O.building ? searchFrom(O.nodes, opts, g) : undefined;
   const toD = D.building ? searchTo(D.nodes, opts, g) : undefined;
@@ -513,38 +584,86 @@ export async function campusWalk(req: CampusWalkRequest, google: RouteOption | u
   const bound = googleUsable ? (google.isEstimate ? -Infinity : googleTotal - marginFor(0)) : Infinity;
 
   const candidates: Candidate[] = [];
-  const make = (kind: CandidateKind, parts: Omit<Candidate, "kind" | "start" | "end" | "route" | "seconds" | "total" | "cost">) =>
-    candidates.push(candidate(g, opts, insideOf, { kind, start, end, ...parts }));
+  const make = (kind: CandidateKind, parts: Omit<Candidate, "kind" | "start" | "end" | "route" | "seconds" | "total" | "cost">, route?: IndoorGraphRoute) => {
+    const c = candidate(g, opts, insideOf, { kind, start, end, ...parts }, route);
+    candidates.push(c);
+    return c;
+  };
+  const eligibleRoute = (route: IndoorGraphRoute, arcs: readonly Arc[]) => passesThrough(route, ends).length > 0 || !arcs.some((a) => a.edge.kind === "OUTDOOR");
+  // What would be taken, and the cheapest of it so far: nothing a door walk could add has to beat more than that.
+  const takeable = (c: Candidate, through: number, eligible: boolean) => !googleUsable || (eligible && googleTotal - c.total >= marginFor(through) && c.cost < googleTotal);
+  let cheapestTaken = Infinity;
+  const consider = (c: Candidate) => {
+    if (takeable(c, passesThrough(c.route, ends).length, eligibleRoute(c.route, c.arcs))) cheapestTaken = Math.min(cheapestTaken, c.cost);
+  };
 
   // Over the network from floor to floor.
   if (fromO && D.building) {
     const target = cheapestReached(D.nodes, fromO.cost);
     if (target !== undefined) {
       const arcs = arcsOf(fromO, target);
-      make("NETWORK", { startNode: arcs.length ? arcs[0].from : target, endNode: target, arcs });
+      consider(make("NETWORK", { startNode: arcs.length ? arcs[0].from : target, endNode: target, arcs }));
     }
   }
 
   const usableIn = (d: ExteriorDoor) => !refusalFor(g, arcInto(g, d), joins, at);
   const usableOut = (d: ExteriorDoor) => !refusalFor(g, arcOutOf(g, d), joins, at);
   const doorPoint = (d: ExteriorDoor) => nodePoint(g.net.nodes[d.inside]);
-  const byLikely = <T extends { likely: number; d: ExteriorDoor }>(xs: T[]) => xs.sort((x, y) => x.likely - y.likely || x.d.inside - y.d.inside);
+
+  // Where doors lie against Google's line, when the line can be walked as Google priced it: a real walk, not along a closure.
+  const readable = googleLine && googleLine.length >= 2 && !google.isEstimate && closedAlong.length === 0 ? googleLine : undefined;
+  const projections = new Map<number, PathProjection>();
+  const projection = (d: ExteriorDoor) => {
+    if (!readable) return undefined;
+    let p = projections.get(d.index);
+    if (!p) projections.set(d.index, (p = projectOntoPath(doorPoint(d), readable as LatLngTuple[])));
+    return p;
+  };
+  const legFor = (d: ExteriorDoor, side: "lead" | "tail"): Leg => {
+    const straight = metresBetween(side === "lead" ? start : end, doorPoint(d));
+    const floor = Math.max(0, straight - DOOR_WALK_GUESS.floor.metres) / DOOR_WALK_GUESS.floor.metresPerSecond;
+    const p = projection(d);
+    if (p && p.metres > 0 && p.off <= DOOR_WALK_GUESS.lineMetres) {
+      if (p.off <= ALONG_GOOGLE_METRES) {
+        const known = alongGoogle(g, google, readable!, p, d, side);
+        return { door: d, known, guess: known.seconds, floor: known.seconds, slack: 0 };
+      }
+      const share = side === "lead" ? p.along / p.metres : 1 - p.along / p.metres;
+      return { door: d, guess: googleSeconds * share + p.off / GOOGLE_WALK_METRES_PER_SECOND, floor, slack: DOOR_WALK_GUESS.slack.line };
+    }
+    return { door: d, guess: (straight * DOOR_WALK_GUESS.detour) / GOOGLE_WALK_METRES_PER_SECOND, floor, slack: DOOR_WALK_GUESS.slack.far };
+  };
+
+  const pending: Pending[] = [];
+  const pend = (kind: CandidateKind, parts: { startNode: number; endNode: number; arcs: Arc[]; lead?: Leg; tail?: Leg }) => {
+    const route = routeOf(parts.arcs, opts, g, parts.startNode);
+    const legs = [parts.lead, parts.tail].filter((l): l is Leg => Boolean(l));
+    const unknown = legs.filter((l) => !l.known);
+    const fixed = legs.length * pace.secondsPerDoor + (parts.lead ? insideOf.origin : 0) + (parts.tail ? insideOf.destination : 0) + legs.reduce((n, l) => n + (l.known?.seconds ?? 0), 0);
+    pending.push({
+      kind,
+      ...parts,
+      route,
+      through: passesThrough(route, ends).length,
+      eligible: eligibleRoute(route, parts.arcs),
+      seconds: fixed + route.seconds,
+      cost: fixed + route.cost + legs.reduce((n, l) => n + crossingCost(g, l.door.index, opts), 0),
+      guess: unknown.reduce((n, l) => n + l.guess, 0),
+      floor: unknown.reduce((n, l) => n + l.floor, 0),
+      slack: unknown.reduce((n, l) => n + l.slack, 0),
+    });
+  };
 
   // A Google-priced walk from the origin to a door, then the network to the destination's floor: a nearer
   // door of the destination (Google's walk to the map point may go round the building to reach it), or a
   // way in through a neighbouring building. Doors of the origin's own building are not walked to from
   // outside it. Never when leaving by the origin's map point is what may not be done.
   if (toD && !noExit && !exitDoorWhy) {
-    const entries = g.exteriorDoors
-      .filter((d) => d.building !== O.building && toD.seconds.has(d.inside) && usableIn(d))
-      .map((d) => ({ d, likely: insideOf.origin + likelySeconds(start, doorPoint(d)) + pace.secondsPerDoor + toD.seconds.get(d.inside)! }))
-      .filter((x) => x.likely < bound);
-    for (const { d } of byLikely(entries).slice(0, CAMPUS_LOOKUPS.entries)) {
+    for (const d of g.exteriorDoors) {
+      if (d.building === O.building || !toD.seconds.has(d.inside) || !usableIn(d)) continue;
       const arcs = arcsOf(toD, d.inside, true);
       if (arcs[0]?.index === d.index) continue; // in by the door and straight back out: Google's walk with a detour
-      const lead = await connector(g, fetcher, O.loc, d, req.closedEdgeIds, rejected);
-      if (!lead) continue;
-      make("ENTRY", { startNode: d.inside, endNode: arcs.length ? arcs[arcs.length - 1].to : d.inside, lead, arcs });
+      pend("ENTRY", { startNode: d.inside, endNode: arcs.length ? arcs[arcs.length - 1].to : d.inside, arcs, lead: legFor(d, "lead") });
     }
   }
 
@@ -552,48 +671,72 @@ export async function campusWalk(req: CampusWalkRequest, google: RouteOption | u
   // when arriving at the destination's map point is what may not be done: that walk ends at the very
   // doors Google's does.
   if (fromO && !noEntry && !entryDoorWhy) {
-    const exits = g.exteriorDoors
-      .filter((d) => d.building !== D.building && fromO.seconds.has(d.inside) && usableOut(d))
-      .map((d) => ({ d, likely: fromO.seconds.get(d.inside)! + pace.secondsPerDoor + likelySeconds(doorPoint(d), end) + insideOf.destination }))
-      .filter((x) => x.likely < bound);
-    for (const { d } of byLikely(exits).slice(0, CAMPUS_LOOKUPS.exits)) {
-      const arcs = arcsOf(fromO, d.inside);
-      if (arcs[arcs.length - 1]?.index === d.index) continue; // in by the door only to leave by it
-      const tail = await connector(g, fetcher, D.loc, d, req.closedEdgeIds, rejected);
-      if (!tail) continue;
-      make("EXIT", { startNode: arcs.length ? arcs[0].from : d.inside, endNode: d.inside, arcs, tail });
+    for (const e of g.exteriorDoors) {
+      if (e.building === D.building || !fromO.seconds.has(e.inside) || !usableOut(e)) continue;
+      const arcs = arcsOf(fromO, e.inside);
+      if (arcs[arcs.length - 1]?.index === e.index) continue; // in by the door only to leave by it
+      pend("EXIT", { startNode: arcs.length ? arcs[0].from : e.inside, endNode: e.inside, arcs, tail: legFor(e, "tail") });
     }
   }
 
   // A Google-priced walk to a door, through the network, and a Google-priced walk on from another door:
-  // the cut through a building. Only pairs a straight-line bound leaves in the running are looked at,
-  // and only the likeliest few are priced.
+  // the cut through a building. A pair of doors is searched between only if its door walks, at their
+  // floors, could still come in under Google's walk.
   if (!noExit && !exitDoorWhy && !noEntry && !entryDoorWhy && bound > -Infinity) {
-    const throughs: { d: ExteriorDoor; e: ExteriorDoor; search: Search; likely: number }[] = [];
-    const ins = g.exteriorDoors.filter((d) => d.building !== O.building && d.building !== D.building && usableIn(d));
-    const outs = g.exteriorDoors.filter((d) => d.building !== O.building && d.building !== D.building && usableOut(d));
-    for (const d of ins) {
-      const leadLikely = insideOf.origin + likelySeconds(start, doorPoint(d)) + pace.secondsPerDoor;
-      if (leadLikely >= bound) continue;
-      const search = searchFrom([d.inside], opts, g);
-      for (const e of outs) {
-        if (e.inside === d.inside) continue;
-        const net = search.seconds.get(e.inside);
-        if (net === undefined) continue;
-        const likely = leadLikely + net + pace.secondsPerDoor + likelySeconds(doorPoint(e), end) + insideOf.destination;
-        if (likely >= bound) continue;
-        throughs.push({ d, e, search, likely });
+    const ins = g.exteriorDoors.filter((d) => d.building !== O.building && d.building !== D.building && usableIn(d)).map((d) => legFor(d, "lead"));
+    const outs = g.exteriorDoors.filter((e) => e.building !== O.building && e.building !== D.building && usableOut(e)).map((e) => legFor(e, "tail"));
+    const least = (l: Leg) => l.known?.seconds ?? l.floor;
+    const leastOut = Math.min(Infinity, ...outs.map(least));
+    for (const lead of ins) {
+      const before = insideOf.origin + pace.secondsPerDoor + least(lead);
+      if (before + pace.secondsPerDoor + leastOut + insideOf.destination > bound) continue;
+      const net = searchFrom([lead.door.inside], opts, g);
+      for (const tail of outs) {
+        if (tail.door.inside === lead.door.inside) continue;
+        const through = net.seconds.get(tail.door.inside);
+        if (through === undefined || before + through + pace.secondsPerDoor + least(tail) + insideOf.destination > bound) continue;
+        const arcs = arcsOf(net, tail.door.inside);
+        if (arcs[0]?.index === lead.door.index || arcs[arcs.length - 1]?.index === tail.door.index) continue; // touches a door without going through
+        pend("THROUGH", { startNode: lead.door.inside, endNode: tail.door.inside, arcs, lead, tail });
       }
     }
-    throughs.sort((x, y) => x.likely - y.likely || x.d.inside - y.d.inside || x.e.inside - y.e.inside);
-    for (const { d, e, search } of throughs.slice(0, CAMPUS_LOOKUPS.through)) {
-      const arcs = arcsOf(search, e.inside);
-      if (arcs[0]?.index === d.index || arcs[arcs.length - 1]?.index === e.index) continue; // touches a door without going through
-      const lead = await connector(g, fetcher, O.loc, d, req.closedEdgeIds, rejected);
-      if (!lead) continue;
-      const tail = await connector(g, fetcher, D.loc, e, req.closedEdgeIds, rejected);
-      if (!tail) continue;
-      make("THROUGH", { startNode: d.inside, endNode: e.inside, lead, arcs, tail });
+  }
+
+  // Door walks read off Google's line cost nothing: those ways are priced first. The rest are asked for
+  // most promising first, and only while one could still be taken: never when even its door walks'
+  // floors could not beat what it has to, not when its guesses miss by more than they could be out, and
+  // not beyond the calls a trip is allowed unless one still looks well worth it.
+  const walks = new Map<string, Promise<Connector | undefined>>();
+  const walk = (leg: Leg, side: "lead" | "tail") => {
+    const key = `${side}:${leg.door.index}`;
+    let w = walks.get(key);
+    if (!w) walks.set(key, (w = connector(g, fetcher, side === "lead" ? O.loc : D.loc, leg.door, req.closedEdgeIds, rejected)));
+    return w;
+  };
+  const toAsk = (p: Pending) => [p.lead && !p.lead.known ? `lead:${p.lead.door.index}` : undefined, p.tail && !p.tail.known ? `tail:${p.tail.door.index}` : undefined].filter((k): k is string => Boolean(k) && !walks.has(k!));
+  const readOff = (x: Pending) => (!x.lead || Boolean(x.lead.known)) && (!x.tail || Boolean(x.tail.known));
+  pending.sort((x, y) => x.cost + x.guess - (y.cost + y.guess) || x.startNode - y.startNode || x.endNode - y.endNode);
+  for (const p of pending.filter(readOff)) {
+    consider(make(p.kind, { startNode: p.startNode, endNode: p.endNode, arcs: p.arcs, lead: p.lead?.known, tail: p.tail?.known }, p.route));
+  }
+  if (bound > -Infinity) {
+    for (const p of pending.filter((x) => !readOff(x))) {
+      if (googleUsable && !p.eligible) continue;
+      const need = googleUsable ? googleTotal - marginFor(p.through) : Infinity;
+      const under = Math.min(googleUsable ? googleTotal : Infinity, cheapestTaken);
+      if (p.seconds + p.floor > need || p.cost + p.floor >= under) continue;
+      const calls = toAsk(p);
+      if (!search.exhaustive) {
+        const room = Math.min(need - (p.seconds + p.guess), under - (p.cost + p.guess));
+        if (room < -p.slack) continue;
+        // A walk that has to be corrected is taken whatever it costs, so the best allowed way is always worth the extra calls.
+        const allowed = CAMPUS_LOOKUPS.calls + (!googleUsable || room >= CAMPUS_LOOKUPS.highValueSeconds ? CAMPUS_LOOKUPS.highValueCalls : 0);
+        if (walks.size + calls.length > allowed) continue;
+      }
+      const lead = p.lead ? (p.lead.known ?? (await walk(p.lead, "lead"))) : undefined;
+      const tail = p.tail ? (p.tail.known ?? (await walk(p.tail, "tail"))) : undefined;
+      if ((p.lead && !lead) || (p.tail && !tail)) continue;
+      consider(make(p.kind, { startNode: p.startNode, endNode: p.endNode, arcs: p.arcs, lead, tail }, p.route));
     }
   }
 
@@ -623,11 +766,10 @@ export async function campusWalk(req: CampusWalkRequest, google: RouteOption | u
     }
   }
 
-  const ends = [O.building, D.building];
   // A shortcut Google cannot see passes through a building, or stays under cover (a bridge or tunnel
   // between the two buildings, a door walk Google priced and the survey only inside); a route that
   // follows the survey's outdoor walkways without passing through anything is Google's walk redrawn.
-  const eligible = (c: Candidate) => passesThrough(c, ends).length > 0 || !c.arcs.some((a) => a.edge.kind === "OUTDOOR");
+  const eligible = (c: Candidate) => eligibleRoute(c.route, c.arcs);
   const ranked = candidates
     .map((c) => ({ c, choice: choiceOf(g, c, experimental) }))
     .sort((x, y) => x.c.cost - y.c.cost || x.c.total - y.c.total || x.choice.via.join("|").localeCompare(y.choice.via.join("|")));
@@ -666,7 +808,7 @@ export async function campusWalk(req: CampusWalkRequest, google: RouteOption | u
     if (!google.isEstimate) {
       for (const x of ranked) {
         if (!eligible(x.c)) continue;
-        const through = passesThrough(x.c, ends);
+        const through = passesThrough(x.c.route, ends);
         const margin = marginFor(through.length);
         const benefit = googleTotal - x.c.total;
         best ??= x;
@@ -687,7 +829,7 @@ export async function campusWalk(req: CampusWalkRequest, google: RouteOption | u
       }
     }
     if (!pick && best) {
-      const margin = marginFor(passesThrough(best.c, ends).length);
+      const margin = marginFor(passesThrough(best.c.route, ends).length);
       const benefit = googleTotal - best.c.total;
       marginSeconds = Math.round(margin);
       rejected.push({

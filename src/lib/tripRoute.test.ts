@@ -147,7 +147,7 @@ describe("rerouteFrom", () => {
     expect(calls[0].mode).toBe("WALK");
     expect(calls[0].to.latitude).toBeCloseTo(DC.latitude, 6);
     expect(calls[0].to.longitude).toBeCloseTo(DC.longitude, 6);
-    expect(calls.length).toBeLessThanOrEqual(1 + CAMPUS_LOOKUPS.entries + 2 * CAMPUS_LOOKUPS.through);
+    expect(calls.length).toBeLessThanOrEqual(1 + CAMPUS_LOOKUPS.calls + CAMPUS_LOOKUPS.highValueCalls);
     for (const c of calls) {
       expect(c.mode).toBe("WALK");
       expect(c.from.latitude).toBeCloseTo(outside.latitude, 6);
