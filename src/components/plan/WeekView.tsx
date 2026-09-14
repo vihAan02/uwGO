@@ -27,6 +27,7 @@ import { Wordmark } from "@/components/ui/wordmark";
 import { AppTabs } from "@/components/nav/AppTabs";
 import { DayTimeline } from "./DayTimeline";
 import { NextClassCard } from "./NextClassCard";
+import { QuickRoute } from "./QuickRoute";
 import { SettingsSheet } from "./SettingsSheet";
 import type { MapSelection } from "../map/MapPanel";
 import type { Trip } from "../map/TripMode";
@@ -39,7 +40,7 @@ const TripMode = dynamic(() => import("../map/TripMode").then((m) => m.TripMode)
 
 export function WeekView() {
   const router = useRouter();
-  const { state, hydrated, setGapChoice, setEndOfDay } = useStore();
+  const { state, hydrated, setGapChoice } = useStore();
   const account = useUserState();
   // The device's copy is only trusted once the account has answered (or there is no account).
   const accountSettled = account.status === "ready" || account.status === "local" || account.status === "offline";
@@ -57,7 +58,7 @@ export function WeekView() {
   const monday = useMemo(() => weekOverride ?? (meetings ? defaultWeekStart(meetings) : mondayOfWeek(todayISO())), [weekOverride, meetings]);
   const pac = usePacLive(Boolean(hydrated && state.gym?.enabled));
   const closures = useClosures();
-  const { plan, loading, error } = usePlan(hydrated && account.status !== "loading" ? meetings : undefined, state.home, state.config, monday, { gym: state.gym, routePreference: state.routePreference, gapChoices: state.gapChoices, endOfDay: state.endOfDay, closedEdgeIds: closures.closed, pacLive: pac.reading, pacSamples: pac.samples });
+  const { plan, loading, error } = usePlan(hydrated && account.status !== "loading" ? meetings : undefined, state.home, state.config, monday, { gym: state.gym, routePreference: state.routePreference, gapChoices: state.gapChoices, closedEdgeIds: closures.closed, pacLive: pac.reading, pacSamples: pac.samples });
 
   // Developer inspection of campus routing, from the browser console: the graph as GeoJSON, each
   // planned leg's reasoning with what activated it and what it rests on, and where any segment's
@@ -203,7 +204,8 @@ export function WeekView() {
           )}
           {error && <div className="rounded-xl bg-bad-soft p-3 text-sm text-bad">{error}</div>}
           {loading && !dayPlan && <p className="py-12 text-center text-ink-muted">Building your routes&hellip;</p>}
-          {dayPlan && <DayTimeline plan={dayPlan} home={state.home} busy={loading} sel={{ selectedId: picked?.id, onSelect: (id, sl) => setPicked({ id, selection: sl }) }} focusClassId={focusClassId} onChooseGap={setGapChoice} endOfDay={state.endOfDay ?? "HOME"} onChooseEndOfDay={setEndOfDay} />}
+          {dayPlan && <DayTimeline plan={dayPlan} home={state.home} busy={loading} sel={{ selectedId: picked?.id, onSelect: (id, sl) => setPicked({ id, selection: sl }) }} focusClassId={focusClassId} onChooseGap={setGapChoice} />}
+          {hydrated && <QuickRoute home={state.home} preference={state.routePreference ?? "FASTEST"} closedEdgeIds={closures.closed} selectedId={picked?.id} onRoute={(id, selection) => setPicked({ id, selection })} onSetHome={() => setSettingsOpen(true)} />}
           {plan && plan.skipped.length > 0 && (
             <details className="group px-1 pt-2 text-sm text-ink-muted">
               <summary className="flex min-h-9 cursor-pointer list-none items-center gap-1.5 [&::-webkit-details-marker]:hidden">
