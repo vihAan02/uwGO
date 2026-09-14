@@ -86,7 +86,8 @@ export function IndoorComparison({ t, id, label, sel }: { t: ClassTransition; id
   const winterShown = sel.selectedId === `${id}-winter` || (sel.selectedId !== `${id}-fastest` && Boolean(rec.indoorPath));
   const show = (which: "fastest" | "winter", route: RouteOption) =>
     sel.onSelect(`${id}-${which}`, { kind: "LEG", label, from: t.from, to: t.to, route, walkFallback: fastest });
-  const through = fastest.campus?.via.filter((v) => v.startsWith("through ")).map((v) => v.slice("through ".length)) ?? [];
+  // The buildings the walk cuts through, not the ones it starts and ends in.
+  const through = (fastest.campus?.via.filter((v) => v.startsWith("through ")).map((v) => v.slice("through ".length)) ?? []).filter((b) => b !== t.from.buildingCode && b !== t.to.buildingCode);
   return (
     <div className="mt-2 space-y-1 text-sm">
       <WalkChoiceRow label="Fastest" r={fastest} chosen={!winterShown} note={through.length ? `via ${through.join(", ")}` : "mostly outdoors"} onSelect={() => show("fastest", fastest)} />

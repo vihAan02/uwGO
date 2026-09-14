@@ -347,11 +347,15 @@ function choiceOf(g: IndoorGraph, c: Candidate, experimental: boolean): CampusCh
   return { via: viaOf(g, c), seconds: Math.round(c.seconds), totalSeconds: Math.round(c.total), cost: Math.round(c.cost), evidence, edgeIds: edgeIdsOf(g, c), timing, provenance, surveyedSegments };
 }
 
-/** The door a candidate first goes in by, for telling the student. */
+/**
+ * The way in to tell the student: the last door the route goes in by from outside (the one on the
+ * final approach, whatever buildings it cut through on the way), or the link it enters the destination
+ * by when it never comes outside; the Google-priced door when that is the only door.
+ */
 function entryLabel(g: IndoorGraph, c: Candidate, building: string | undefined): string | undefined {
-  if (c.lead) return c.lead.doorLabel;
-  const door = c.arcs.find((a) => g.net.nodes[a.from].building === OUTSIDE && g.net.nodes[a.to].building !== OUTSIDE);
+  const door = [...c.arcs].reverse().find((a) => g.net.nodes[a.from].building === OUTSIDE && g.net.nodes[a.to].building !== OUTSIDE);
   if (door) return crossingLabel(g, door);
+  if (c.lead) return c.lead.doorLabel;
   const link = [...c.arcs].reverse().find((a) => isCrossing(g, a.edge) && g.net.nodes[a.to].building === building);
   return link ? crossingLabel(g, link) : undefined;
 }
