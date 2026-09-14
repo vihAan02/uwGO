@@ -13,10 +13,11 @@ export type IdOf = (net: IndoorNetwork, edge: IndoorEdge) => string;
 export interface EdgeSummary {
   id: string;
   kind: IndoorEdgeKind;
-  /** "BUILDING/floor" at each end, in the order the file lists them. */
+  /** "BUILDING/floor" at each end, in the segment's canonical order (the order its id is built in). */
   ends: [string, string];
   metres: number;
-  floors: number;
+  /** Floors climbed going from the first end to the second: negative going down. */
+  climb: number;
 }
 
 export interface NetworkDiff {
@@ -40,10 +41,23 @@ export interface NetworkDiff {
 
 const KINDS: readonly IndoorEdgeKind[] = ["HALLWAY", "BRIDGE", "TUNNEL", "OUTDOOR", "DOOR", "OPEN", "STAIRS", "ELEVATOR", "RAMP", "OTHER_VERTICAL"];
 
+/**
+ * A segment described the same way whichever end the file lists first: its ends in the order its id uses, and
+ * its climb along that order. A climb that changes sign between two versions is then a real reversal, not a
+ * swap of which end came first.
+ */
 function summarise(net: IndoorNetwork, edge: IndoorEdge, idOf: IdOf): EdgeSummary {
-  const at = (i: number) => `${net.nodes[i].building}/${net.nodes[i].floor}`;
-  return { id: idOf(net, edge), kind: edge.kind, ends: [at(edge.a), at(edge.b)], metres: edge.metres, floors: edge.floors };
+  const end = (i: number) => {
+    const n = net.nodes[i];
+    return { key: `${n.lat},${n.lng}@${n.building}/${n.floor}`, text: `${n.building}/${n.floor}` };
+  };
+  const a = end(edge.a);
+  const b = end(edge.b);
+  const forward = a.key <= b.key;
+  return { id: idOf(net, edge), kind: edge.kind, ends: forward ? [a.text, b.text] : [b.text, a.text], metres: edge.metres, climb: forward ? edge.floors : -edge.floors };
 }
+
+const climbWords = (n: number) => (n === 0 ? "level" : `${n > 0 ? "up" : "down"} ${Math.abs(n)}`);
 
 const anchorKeys = (net: IndoorNetwork) => new Set(net.anchors.map((a) => `${a.building} floor ${a.floor} @ ${net.nodes[a.node].lat},${net.nodes[a.node].lng}`));
 const anchorBuildings = (net: IndoorNetwork) => new Set(net.anchors.map((a) => a.building));
@@ -66,8 +80,7 @@ export function diffNetworks(before: IndoorNetwork, after: IndoorNetwork, idOf: 
     const changes: string[] = [];
     if (b.kind !== a.kind) changes.push(`kind ${b.kind} -> ${a.kind}`);
     if (Math.abs(b.metres - a.metres) > 0.05) changes.push(`length ${b.metres} m -> ${a.metres} m`);
-    // The sign of a climb follows which end the file lists first, which is not part of the segment.
-    if (Math.abs(b.floors) !== Math.abs(a.floors)) changes.push(`climb ${Math.abs(b.floors)} -> ${Math.abs(a.floors)} floors`);
+    if (b.climb !== a.climb) changes.push(`climb ${climbWords(b.climb)} -> ${climbWords(a.climb)}`);
     if (changes.length) changedEdges.push({ before: b, after: a, changes });
   }
 
@@ -102,7 +115,7 @@ export function isUnchanged(d: NetworkDiff): boolean {
     && !d.removedAnchors.length && !d.addedAnchors.length && !d.duplicateIds.length;
 }
 
-const edgeLine = (s: EdgeSummary) => `  ${s.id} ${s.kind} ${s.ends[0]} - ${s.ends[1]}${s.metres ? ` ${s.metres} m` : ""}${s.floors ? ` climb ${Math.abs(s.floors)}` : ""}`;
+const edgeLine = (s: EdgeSummary) => `  ${s.id} ${s.kind} ${s.ends[0]} - ${s.ends[1]}${s.metres ? ` ${s.metres} m` : ""}${s.climb ? ` climb ${climbWords(s.climb)}` : ""}`;
 
 export function renderNetworkDiff(d: NetworkDiff): string {
   const pair = ([b, a]: readonly [number, number]) => (b === a ? `${a}` : `${b} -> ${a}`);

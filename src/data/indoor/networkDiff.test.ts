@@ -33,6 +33,20 @@ describe("comparing two versions of the network", () => {
     expect(renderNetworkDiff(d)).toContain("segments changed (1):");
   });
 
+  it("reports a climb that reverses, and not a segment merely written from its other end", () => {
+    const i = NET.edges.findIndex((e) => e.kind === "STAIRS" && e.floors > 0);
+    const e = NET.edges[i];
+    const reversed: IndoorNetwork = { ...NET, edges: NET.edges.map((x, j): IndoorEdge => (j === i ? { ...x, floors: -x.floors } : x)) };
+    const d = diffNetworks(NET, reversed, edgeId);
+    expect(isUnchanged(d)).toBe(false);
+    expect(d.changedEdges).toHaveLength(1);
+    expect(d.changedEdges[0].changes).toEqual([expect.stringMatching(/^climb (up|down) \d+(\.5)? -> (up|down) \d+(\.5)?$/)]);
+    expect(d.changedEdges[0].before.climb).toBe(-d.changedEdges[0].after.climb);
+
+    const rewritten: IndoorNetwork = { ...NET, edges: NET.edges.map((x, j): IndoorEdge => (j === i ? { ...x, a: e.b, b: e.a, floors: -e.floors, path: [...e.path].reverse() } : x)) };
+    expect(isUnchanged(diffNetworks(NET, rewritten, edgeId))).toBe(true);
+  });
+
   it("flags two segments that would share an id", () => {
     const next: IndoorNetwork = { ...NET, edges: [...NET.edges, NET.edges[0]] };
     expect(diffNetworks(NET, next, edgeId).duplicateIds).toEqual([edgeId(NET, NET.edges[0])]);
