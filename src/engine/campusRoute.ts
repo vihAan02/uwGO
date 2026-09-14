@@ -19,14 +19,18 @@
  * Google is only asked for walks the winter route already prices (so a cached one costs nothing),
  * and, when Google's own walk cannot be used, for a few walks to allowed entrances. Neither is asked
  * for unless a straight-line lower bound says the answer could matter.
+ *
+ * Every decision says what activated it and where each door and link it uses comes from (official
+ * research, UW Go's review, the WATIsGrass survey, a visit on the ground), so a route can be traced to
+ * the evidence it turned on.
  */
 import { decode, encode } from "@googlemaps/polyline-codec";
-import type { CampusChoice, CampusDecision, CampusLocation, CampusOutcome, CampusRejection, LatLng, RouteOption, RouteStep } from "@/domain/types";
+import type { CampusChoice, CampusDecision, CampusLocation, CampusOutcome, CampusProvenance, CampusRejection, LatLng, RouteOption, RouteStep } from "@/domain/types";
 import type { PlannerConfig } from "@/domain/config";
 import type { BuildingFact, Evidence, Passage } from "@/data/campus";
 import { weakerEvidence } from "@/data/campus/types";
 import type { IndoorNode } from "@/data/indoor/network";
-import { edgeLabel } from "@/data/indoor/edgeId";
+import { edgeId, edgeLabel } from "@/data/indoor/edgeId";
 import { findBuilding } from "@/data/buildings";
 import { haversineMeters } from "@/routing/EstimateRoutingProvider";
 import { closuresOnRoute, type LatLngTuple } from "./closureGeometry";
@@ -55,6 +59,7 @@ import {
   type RouteOptions,
 } from "./indoorGraph";
 import { connectorDoors, type ConnectorFetcher } from "./indoorRoute";
+import { PROVENANCE_WORDS, buildingRuleProvenance, closuresProvenance, describeProvenance, provenanceKinds, segmentProvenance } from "./campusProvenance";
 
 /** Seconds charged at each crossing into, out of or between buildings, by how well it is evidenced. */
 export const CAMPUS_UNCERTAINTY_SECONDS: Record<Evidence, number> = {
@@ -257,7 +262,23 @@ function choiceOf(g: IndoorGraph, c: Candidate, experimental: boolean): CampusCh
   if (c.arcs.length) timing.push("SURVEY_GEOMETRY");
   if (!c.lead || !c.tail) timing.push("ESTIMATED");
   if (c.tail) timing.push("GOOGLE");
-  return { via: viaOf(g, c), seconds: Math.round(c.seconds), cost: Math.round(c.cost), evidence, edgeIds: edgeIdsOf(g, c), timing };
+  // Where each door, link and reviewed segment comes from, in the order walked. Everything else it uses
+  // is a corridor or path only the survey describes.
+  const provenance: CampusProvenance[] = [];
+  const named = new Set<string>();
+  const name = (index: number, label?: string) => {
+    if (named.has(g.ids[index])) return;
+    named.add(g.ids[index]);
+    provenance.push(segmentProvenance(g, index, experimental, label));
+  };
+  if (c.lead) name(c.lead.doorIndex, c.lead.doorLabel);
+  for (const arc of c.arcs) {
+    if (isCrossing(g, arc.edge)) name(arc.index, crossingLabel(g, arc));
+    else if (g.facts[arc.index]) name(arc.index);
+  }
+  if (c.tail) name(c.tail.doorIndex, c.tail.doorLabel);
+  const surveyedSegments = new Set(c.arcs.map((a) => g.ids[a.index]).filter((id) => !named.has(id))).size;
+  return { via: viaOf(g, c), seconds: Math.round(c.seconds), cost: Math.round(c.cost), evidence, edgeIds: edgeIdsOf(g, c), timing, provenance, surveyedSegments };
 }
 
 /** The door a candidate first goes in by, for telling the student. */
@@ -536,12 +557,25 @@ export async function campusWalk(req: CampusWalkRequest, google: RouteOption | u
     }
   }
 
+  // What made Google's walk unusable (the rule or the closures, also when nothing allowed could be routed and
+  // the walk is kept with a warning), or the doors and links of the shortcut. Nothing when Google's walk was
+  // usable and kept.
+  const activatedBy: CampusProvenance[] = [];
+  if (!googleUsable) {
+    const noEntryRule = noEntry && D.building ? buildingRuleProvenance(g, D.building) : undefined;
+    const noExitRule = noExit && O.building ? buildingRuleProvenance(g, O.building) : undefined;
+    if (noEntryRule) activatedBy.push(noEntryRule);
+    if (noExitRule) activatedBy.push(noExitRule);
+    if (closedAlong.length) activatedBy.push(closuresProvenance(closedAlong.map((e) => edgeId(g.net, e))));
+  } else if (pick) activatedBy.push(...pick.choice.provenance);
+
   const decision: CampusDecision = {
     outcome,
     summary,
     thresholdSeconds: threshold,
     googleSeconds: Math.round(googleSeconds),
     googleUsable,
+    activatedBy,
     chosen: pick?.choice,
     alternatives: ranked.filter((x) => x !== pick).slice(0, 3).map((x) => x.choice),
     rejected,
@@ -550,7 +584,7 @@ export async function campusWalk(req: CampusWalkRequest, google: RouteOption | u
   return { route: pick ? routeFor(g, pick.c, req, decision, pick.choice, opts.pace ?? INDOOR_PACE, now) : undefined, decision };
 }
 
-/** A decision as plain text, for developers: what was taken, what was not, and why. */
+/** A decision as plain text, for developers: what was taken, what activated it, what it rests on, what was not taken and why. */
 export function explainCampusDecision(d: CampusDecision): string {
   const lines: string[] = [];
   const google = d.googleSeconds === undefined ? "" : ` (${formatSeconds(d.googleSeconds)})`;
@@ -561,6 +595,18 @@ export function explainCampusDecision(d: CampusDecision): string {
     lines.push(`Selected: Google's walk${google}`, `because: ${d.summary}`);
   }
   if (d.chosen && d.googleUsable) lines.push(`Instead of: Google's walk${google}`);
+  if (d.activatedBy.length) {
+    // With a route chosen this is what made UW Go take it; with Google's walk kept, why that walk comes with a warning.
+    lines.push("", d.chosen ? "Activated by:" : "Google's walk could not be used because of:", ...d.activatedBy.map((p) => `  ${describeProvenance(p)}`));
+  }
+  if (d.chosen?.provenance.length) {
+    lines.push("", "Resting on:", ...d.chosen.provenance.map((p) => `  ${describeProvenance(p)}`));
+    if (d.chosen.surveyedSegments) lines.push(`  and ${d.chosen.surveyedSegments} corridor and path segment${d.chosen.surveyedSegments === 1 ? "" : "s"} only the WATIsGrass survey describes`);
+  }
+  if (d.chosen) {
+    const kinds = provenanceKinds([...d.activatedBy, ...d.chosen.provenance]);
+    if (kinds.length) lines.push(`Evidence from: ${kinds.map((k) => PROVENANCE_WORDS[k]).join(" + ")}`);
+  }
   for (const r of d.rejected) {
     lines.push("", "Rejected:", `  ${r.label}`, `because: ${r.because}${r.seconds === undefined ? "" : ` (${formatSeconds(r.seconds)})`}${r.sourceIds?.length ? ` [${r.sourceIds.join(", ")}]` : ""}`);
   }

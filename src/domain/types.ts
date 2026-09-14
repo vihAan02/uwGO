@@ -251,6 +251,28 @@ export type CampusEvidence = "OFFICIAL" | "FIELD_VERIFIED" | "CORROBORATED" | "S
  */
 export type CampusOutcome = "CORRECTED" | "SHORTCUT" | "BETTER_ENTRANCE" | "KEPT_GOOGLE" | "NO_USABLE_ROUTE";
 
+/**
+ * A kind of source behind something a route relies on. A fact can rest on several: a door the research
+ * describes officially, UW Go matched to the survey, and someone then checked on the ground rests on four.
+ */
+export type CampusProvenanceKind = "OFFICIAL_RESEARCH" | "FIELD" | "UW_GO_REVIEW" | "COMMUNITY_RESEARCH" | "WATISGRASS" | "CLOSURE_REPORTS";
+
+/** Where one thing a route relies on comes from. */
+export interface CampusProvenance {
+  /** A segment's canonical id, "building:CODE" for a building's rule, or "closures". */
+  subject: string;
+  label: string;
+  /** The evidence routing relied on. Absent for students' closure reports, which have their own rule. */
+  evidence?: CampusEvidence;
+  /** The evidence behind its access claims, when it has any. Routing relies on them only when this is strong enough. */
+  accessEvidence?: CampusEvidence;
+  /** Every kind of source behind it, strongest first. */
+  from: CampusProvenanceKind[];
+  sourceIds: string[];
+  /** The field promotions it rests on, when any. */
+  field?: { promotionId: string; observedOn: string; verifiedBy: string[] }[];
+}
+
 export interface CampusChoice {
   /** The doors and links used, in order, named for a person. */
   via: string[];
@@ -261,6 +283,10 @@ export interface CampusChoice {
   edgeIds: string[];
   /** Where each part of the time comes from. */
   timing: ("GOOGLE" | "SURVEY_GEOMETRY" | "ESTIMATED")[];
+  /** Where each door, link and reviewed segment it uses comes from. */
+  provenance: CampusProvenance[];
+  /** Corridors and paths it uses that nothing but the WATIsGrass survey describes. */
+  surveyedSegments: number;
 }
 
 export interface CampusRejection {
@@ -278,6 +304,12 @@ export interface CampusDecision {
   googleSeconds?: number;
   /** Whether Google's own walk could be used as it is. */
   googleUsable: boolean;
+  /**
+   * On whose word UW Go left Google's walk: the building's rule or students' closure reports that made the walk
+   * unusable (also when nothing allowed could be routed and the walk is kept with a warning, NO_USABLE_ROUTE),
+   * or the doors and links of a shortcut. Empty when Google's walk was usable and kept (KEPT_GOOGLE).
+   */
+  activatedBy: CampusProvenance[];
   chosen?: CampusChoice;
   /** Other routable ways, cheapest first. */
   alternatives: CampusChoice[];

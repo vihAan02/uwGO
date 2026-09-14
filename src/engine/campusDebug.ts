@@ -1,13 +1,14 @@
 /**
  * Developer inspection of the campus graph as routing sees it: every segment with its evidence, its
- * activation, and whether each direction may be used right now, and every door with its rules. As
- * GeoJSON, so it can be dropped on geojson.io or a map's data layer; nothing here is shown to
- * students.
+ * activation, where what is known about it comes from, and whether each direction may be used right now,
+ * and every door with its rules. As GeoJSON, so it can be dropped on geojson.io or a map's data layer;
+ * nothing here is shown to students.
  */
 import { CAMPUS_KNOWLEDGE } from "@/data/campus";
 import { findBuilding } from "@/data/buildings";
 import { edgeLabel } from "@/data/indoor/edgeId";
 import { REFUSAL_TEXT, campusGraph, evidenceFor, refusalFor, type AccessNeeds, type IndoorGraph, type RouteOptions } from "./indoorGraph";
+import { buildingRuleProvenance, segmentProvenance } from "./campusProvenance";
 
 export interface GraphInspection {
   /** When to judge opening hours; without it, hours are not judged. */
@@ -33,6 +34,7 @@ const lngLat = ([lat, lng]: [number, number]): [number, number] => [lng, lat];
 export function campusGraphGeoJSON(inspect: GraphInspection = {}, g: IndoorGraph = campusGraph()): FeatureCollection {
   const opts: RouteOptions = { closedEdgeIds: inspect.closedEdgeIds, constraints: { at: inspect.at, access: inspect.access, experimental: inspect.experimental } };
   const atMs = inspect.at?.getTime();
+  const experimental = Boolean(inspect.experimental);
   const features: Feature[] = [];
   g.net.edges.forEach((edge, index) => {
     const a = g.net.nodes[edge.a];
@@ -43,6 +45,7 @@ export function campusGraphGeoJSON(inspect: GraphInspection = {}, g: IndoorGraph
     const refusedForward = refusalFor(g, forward, opts, atMs);
     const refusedBackward = refusalFor(g, backward, opts, atMs);
     const path = edge.path.length > 1 ? edge.path : [edge.path[0], edge.path[0]];
+    const provenance = segmentProvenance(g, index, experimental);
     features.push({
       type: "Feature",
       geometry: { type: "LineString", coordinates: path.map(lngLat) },
@@ -52,12 +55,15 @@ export function campusGraphGeoJSON(inspect: GraphInspection = {}, g: IndoorGraph
         label: fact?.label ?? edgeLabel(g.net, edge),
         from: `${a.building}/${a.floor}`,
         to: `${b.building}/${b.floor}`,
-        evidence: evidenceFor(g, index, Boolean(inspect.experimental)),
+        evidence: evidenceFor(g, index, experimental),
         activation: g.historical[index] ? "HISTORICAL" : fact?.activation ?? "ACTIVE",
+        provenance: provenance.from,
+        field: provenance.field ?? [],
         forward: refusedForward ? REFUSAL_TEXT[refusedForward] : "usable",
         backward: refusedBackward ? REFUSAL_TEXT[refusedBackward] : "usable",
         disabled: Boolean(refusedForward && refusedBackward),
         access: fact?.access ?? null,
+        vertical: fact?.vertical ?? null,
         research: fact?.research ?? null,
         sources: fact?.sourceIds ?? [],
         basis: fact?.basis ?? null,
@@ -85,14 +91,15 @@ export function campusGraphGeoJSON(inspect: GraphInspection = {}, g: IndoorGraph
         in: refusedIn ? REFUSAL_TEXT[refusedIn] : "usable",
         out: refusedOut ? REFUSAL_TEXT[refusedOut] : "usable",
         direction: refusedIn && !refusedOut ? "exit only" : refusedOut && !refusedIn ? "entrance only" : refusedIn && refusedOut ? "unusable" : "both ways",
-        evidence: evidenceFor(g, door.index, Boolean(inspect.experimental)),
+        evidence: evidenceFor(g, door.index, experimental),
+        provenance: segmentProvenance(g, door.index, experimental).from,
         research: fact?.research?.portals ?? [],
         access: fact?.access ?? null,
         "marker-color": refusedIn && refusedOut ? "#9ca3af" : refusedIn || refusedOut ? "#d97706" : "#1d4ed8",
       },
     });
   }
-  for (const fact of CAMPUS_KNOWLEDGE.overlay.buildings) {
+  for (const fact of (g.knowledge ?? CAMPUS_KNOWLEDGE).buildingFacts.values()) {
     const b = findBuilding("UW", fact.code);
     if (!fact.exterior || b?.latitude === undefined || b.longitude === undefined) continue;
     features.push({
@@ -106,6 +113,7 @@ export function campusGraphGeoJSON(inspect: GraphInspection = {}, g: IndoorGraph
         out: fact.exterior.out,
         portals: fact.exterior.portalIds,
         evidence: fact.exterior.evidence,
+        provenance: buildingRuleProvenance(g, fact.code)?.from ?? [],
         advice: fact.exterior.arrivalAdvice,
         "marker-color": "#dc2626",
       },

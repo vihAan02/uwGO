@@ -18,6 +18,8 @@ import { CROWD_LABELS, estimateFromPct, waitLabel } from "@/data/pac/crowd";
 import { formatISODate, mondayOfWeek, todayISO, torontoDate, weekdayOf } from "@/time/toronto";
 import { campusGraphGeoJSON } from "@/engine/campusDebug";
 import { explainCampusDecision } from "@/engine/campusRoute";
+import { PROVENANCE_WORDS, describeProvenance, provenanceKinds, segmentProvenance } from "@/engine/campusProvenance";
+import { campusGraph } from "@/engine/indoorGraph";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -57,14 +59,32 @@ export function WeekView() {
   const closures = useClosures();
   const { plan, loading, error } = usePlan(hydrated && account.status !== "loading" ? meetings : undefined, state.home, state.config, monday, { gym: state.gym, routePreference: state.routePreference, gapChoices: state.gapChoices, endOfDay: state.endOfDay, closedEdgeIds: closures.closed, pacLive: pac.reading, pacSamples: pac.samples });
 
-  // Developer inspection of campus routing, from the browser console: the graph as GeoJSON, and
-  // each planned leg's reasoning. Never in a production build.
+  // Developer inspection of campus routing, from the browser console: the graph as GeoJSON, each
+  // planned leg's reasoning with what activated it and what it rests on, and where any segment's
+  // facts come from. Never in a production build.
   useEffect(() => {
     if (process.env.NODE_ENV === "production") return;
     (window as unknown as { uwgoCampus?: unknown }).uwgoCampus = {
       geojson: campusGraphGeoJSON,
       explain: explainCampusDecision,
-      legs: () => Object.values(plan?.days ?? {}).flatMap((d) => d?.transitions ?? []).filter((t) => t.campus).map((t) => ({ from: t.from.name, to: t.to.name, outcome: t.campus!.outcome, reasoning: explainCampusDecision(t.campus!) })),
+      legs: () => Object.values(plan?.days ?? {}).flatMap((d) => d?.transitions ?? []).filter((t) => t.campus).map((t) => {
+        const decision = t.campus!;
+        const used = [...decision.activatedBy, ...(decision.chosen?.provenance ?? [])];
+        return {
+          from: t.from.name,
+          to: t.to.name,
+          outcome: decision.outcome,
+          evidenceFrom: provenanceKinds(used).map((k) => PROVENANCE_WORDS[k]),
+          activatedBy: decision.activatedBy.map(describeProvenance),
+          restingOn: (decision.chosen?.provenance ?? []).map(describeProvenance),
+          reasoning: explainCampusDecision(decision),
+        };
+      }),
+      provenance: (edgeId: string) => {
+        const g = campusGraph();
+        const index = g.indexById.get(edgeId);
+        return index === undefined ? undefined : segmentProvenance(g, index);
+      },
     };
   }, [plan]);
   const pacNow = pac.reading ? estimateFromPct(pac.reading.occupancyPct, "LIVE") : undefined;
