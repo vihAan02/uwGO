@@ -11,8 +11,8 @@ import { edgeById, edgeId } from "@/data/indoor/edgeId";
 import { isVertical } from "@/data/indoor/network";
 import { CAMPUS_KNOWLEDGE, claimsUsable } from "@/data/campus";
 import { torontoDate } from "@/time/toronto";
-import { campusWalk, explainCampusDecision, type CampusWalkRequest } from "./campusRoute";
-import { graphOver } from "./indoorGraph";
+import { CAMPUS_LOOKUPS, campusWalk, explainCampusDecision, type CampusWalkRequest } from "./campusRoute";
+import { campusGraph, graphOver, refusalFor } from "./indoorGraph";
 import { networkBuildingLocation, type ConnectorFetcher } from "./indoorRoute";
 import { livePosition } from "./selectRoute";
 
@@ -26,13 +26,16 @@ const loc = (code: string) => networkBuildingLocation(code)!;
 const MC = loc("MC");
 const PAC = loc("PAC");
 const DC = loc("DC");
+const QNC = loc("QNC");
 const uwp = findBuilding("UW", "UWP")!;
 const HOME: CampusLocation = { id: "home", name: "UW Place", latitude: uwp.latitude!, longitude: uwp.longitude!, kind: "HOME", university: "UW", buildingCode: "UWP" };
 
 const SLC_PAC = "c34ea719b8b9dee5";
 const SLC_EAST = "5ba0e3d2964bf706";
+const SLC_NORTH = "b97df0c640324bea";
+const SLC_WEST = "07284470cb96f524";
 const DC_WEST = "df658713a18c09af";
-const SLC_DOORS = ["5ba0e3d2964bf706", "b97df0c640324bea", "07284470cb96f524", "dc942af2f1e25066"];
+const MC_QNC_BRIDGE = "ff30b07ec3446542";
 
 const key = (a: LatLng, b: LatLng) => `${a.latitude.toFixed(5)},${a.longitude.toFixed(5)}->${b.latitude.toFixed(5)},${b.longitude.toFixed(5)}`;
 
@@ -55,14 +58,24 @@ async function walk(from: CampusLocation, to: CampusLocation, f: ConnectorFetche
   return campusWalk({ from, to, at: NOON, ...extra }, baseline, f, CFG, NOON);
 }
 
-/** A point `metres` west of a surveyed door, outdoors. */
-function westOf(doorEdgeId: string, metres: number): CampusLocation {
+/** A point outdoors, `north` metres north and `east` metres east of a surveyed door, with an id of its own so two of them are two places. */
+function nearDoor(doorEdgeId: string, north: number, east: number): CampusLocation {
   const e = edgeById(NET, doorEdgeId)!;
   const inside = NET.nodes[e.a].building === "OUT" ? NET.nodes[e.b] : NET.nodes[e.a];
-  return livePosition({ latitude: inside.lat, longitude: inside.lng - metres / (111_320 * Math.cos((inside.lat * Math.PI) / 180)) });
+  const at = livePosition({ latitude: inside.lat + north / 111_320, longitude: inside.lng + east / (111_320 * Math.cos((inside.lat * Math.PI) / 180)) });
+  return { ...at, id: `${doorEdgeId}+${north}+${east}`, name: `${north} m north, ${east} m east of ${doorEdgeId}` };
 }
+const westOf = (doorEdgeId: string, metres: number) => nearDoor(doorEdgeId, 0, -metres);
 
-const near = ([lat, lng]: number[], p: LatLng) => haversineMeters({ latitude: lat, longitude: lng }, p) < 2;
+const near = ([lat, lng]: number[], p: LatLng, metres = 2) => haversineMeters({ latitude: lat, longitude: lng }, p) < metres;
+const doorPoints = NET.edges.filter((e) => e.kind === "DOOR").flatMap((e) => [NET.nodes[e.a], NET.nodes[e.b]]).filter((n) => n.building !== "OUT");
+const isDoorPoint = (p: LatLng) => doorPoints.some((n) => n.lat === p.latitude && n.lng === p.longitude);
+
+/** Google's time that leaves a candidate exactly at the margin it has to save, given the margin's share of Google's time. */
+const googleAtMargin = (totalSeconds: number, buildingsThrough: number) => {
+  const m = CFG.campusShortcutMargin;
+  return (totalSeconds + m.baseSeconds + m.perBuildingSeconds * buildingsThrough) / (1 - m.shareOfGoogle);
+};
 
 describe("going to PAC", () => {
   it("rejects Google's walk to PAC's map point, which ends at its exit-only corner doors, and goes in through SLC", async () => {
@@ -77,11 +90,23 @@ describe("going to PAC", () => {
     // Whatever way it takes, the last thing it crosses is the SLC–PAC link at the front desk.
     expect(route.indoorEdgeIds!.at(-1)).toBe(SLC_PAC);
     expect(route.campus!.via).toContain("SLC–PAC link at the PAC front desk");
-    expect(route.campus!.via.some((v) => v.includes("SLC"))).toBe(true);
+    expect(route.campus!.via).toContain("through SLC");
     expect(r.decision.summary).toMatch(/exit-only\. This way goes in through the /);
     const line = decode(route.polyline!);
     expect(near(line[0], MC)).toBe(true);
     expect(near(line[line.length - 1], PAC)).toBe(true);
+  });
+
+  it("from every side of campus, and from a residence, ends at the front desk and never arrives by PAC's own doors", async () => {
+    for (const from of [DC, QNC, loc("STC"), loc("EXP"), loc("V1"), loc("E2"), HOME]) {
+      const r = (await walk(from, PAC))!;
+      expect(r.decision.outcome, from.name).toBe("CORRECTED");
+      const route = r.route!;
+      expect(route.indoorEdgeIds!.at(-1), from.name).toBe(SLC_PAC);
+      expect(route.campus!.via, from.name).toContain("through SLC");
+      // Google prices the way to the door only from the trip's own start.
+      for (const step of route.steps ?? []) expect(step.instruction, from.name).not.toMatch(/^Walk from the/);
+    }
   });
 
   it("leaves PAC through those same doors without complaint: going out of them is what they are for", async () => {
@@ -98,10 +123,9 @@ describe("going to PAC", () => {
     expect(r.route!.indoorEdgeIds!.at(-1)).toBe(SLC_PAC);
     const asked = f.walk.mock.calls.map(([, to]) => to);
     expect(asked[0]).toBe(PAC); // Google's own walk, which the caller priced
-    // Two joins at most, the winter route's own, and a few entrances: never an unbounded search.
-    expect(asked.length - 1).toBeLessThanOrEqual(2 + 3);
-    const doorPoints = NET.edges.filter((e) => e.kind === "DOOR").flatMap((e) => [NET.nodes[e.a], NET.nodes[e.b]]).filter((n) => n.building !== "OUT");
-    for (const to of asked.slice(1)) expect(doorPoints.some((n) => n.lat === to.latitude && n.lng === to.longitude)).toBe(true);
+    // A few entrances: never an unbounded search, and no walk from PAC's map point, which may not be arrived at.
+    expect(asked.length - 1).toBeLessThanOrEqual(CAMPUS_LOOKUPS.entries);
+    for (const to of asked.slice(1)) expect(isDoorPoint(to)).toBe(true);
     expect(r.route!.steps![0].instruction).toMatch(/^Walk to the /);
   });
 
@@ -135,54 +159,108 @@ describe("going to PAC", () => {
   });
 });
 
-describe("where in the building a trip starts", () => {
-  it("starts the campus network on the trip's floor when the location knows it, and on any floor when it does not", async () => {
-    const through = (d: NonNullable<Awaited<ReturnType<typeof walk>>>["decision"]) =>
-      [d.chosen, ...d.alternatives].filter((c) => c && c.via[0] === "through MC").map((c) => c!.seconds);
-    const top = (await walk({ ...MC, floor: "6" }, PAC))!.decision;
-    const ground = (await walk({ ...MC, floor: "1" }, PAC))!.decision;
-    const anywhere = (await walk(MC, PAC))!.decision;
-    expect(through(top).length).toBeGreaterThan(0);
-    // Five flights down from the sixth floor cost time that starting on the ground floor does not.
-    expect(Math.min(...through(top))).toBeGreaterThan(Math.min(...through(ground)));
-    expect(Math.min(...through(anywhere))).toBeLessThanOrEqual(Math.min(...through(ground)));
+describe("floor to floor", () => {
+  it("charges Google's walk the way from the floor to the door it starts from, and a campus route its own stairs", async () => {
+    const decision = async (floor?: string) => (await walk(floor ? { ...MC, floor } : MC, PAC))!.decision;
+    const third = await decision("3");
+    const sixth = await decision("6");
+    const any = await decision();
+    // MC's north-west doors are on floor 2: three flights down from the sixth floor cost more than one from the third.
+    expect(third.inside.originDoor).toMatch(/^MC /);
+    expect(sixth.inside.originSeconds).toBeGreaterThan(third.inside.originSeconds);
+    expect(sixth.chosen!.totalSeconds).toBeGreaterThan(third.chosen!.totalSeconds);
+    // With no floor known the route starts on whichever floor is most convenient, never a worse one.
+    expect(any.chosen!.totalSeconds).toBeLessThanOrEqual(third.chosen!.totalSeconds);
+    // The way in to PAC has no surveyed door of its own to charge for.
+    expect(third.inside.destinationSeconds).toBe(0);
+  });
+
+  it("names the doors Google's walk is taken to use, at both ends", async () => {
+    const d = (await walk(MC, DC, google({ [key(MC, DC)]: 60 })))!.decision;
+    expect(d.inside.originDoor).toMatch(/^MC /);
+    expect(d.inside.destinationDoor).toBe("DC west doors (toward MC)");
+    expect(d.inside.originSeconds).toBeGreaterThan(0);
+    expect(d.inside.destinationSeconds).toBeGreaterThan(0);
   });
 });
 
-describe("a better door, and walking through a building", () => {
+describe("a better door, a bridge, and walking through a building", () => {
   it("takes a nearer door of the destination when it beats Google's walk to the building's map point", async () => {
     const outside = westOf(DC_WEST, 25);
     const f = google({ [key(outside, DC)]: 240 });
     const r = (await walk(outside, DC, f))!;
     expect(r.decision.outcome).toBe("BETTER_ENTRANCE");
     expect(r.route!.indoorEdgeIds![0]).toBe(DC_WEST);
-    expect(r.route!.durationSeconds!).toBeLessThan(240 - CFG.campusShortcutMinBenefitSeconds);
+    expect(r.decision.googleSeconds! + r.decision.inside.destinationSeconds - r.decision.chosen!.totalSeconds).toBeGreaterThanOrEqual(r.decision.marginSeconds);
   });
 
-  it("walks through SLC when that saves a real amount of time over walking round", async () => {
-    const outside = westOf("07284470cb96f524", 25);
-    const r = (await walk(outside, MC, google({ [key(outside, MC)]: 600 })))!;
+  it("takes the bridge between two adjacent buildings when walking outside is slower", async () => {
+    const r = (await walk(MC, QNC))!;
+    expect(r.decision.outcome).toBe("SHORTCUT");
+    expect(r.decision.summary).toMatch(/^By the MC–QNC bridge: .* quicker than walking outside\.$/);
+    expect(r.route!.indoorEdgeIds).toContain(MC_QNC_BRIDGE);
+    expect(r.route!.indoorShare).toBe(1);
+  });
+
+  it("leaves a building by the door that suits the trip, not the one at its map point", async () => {
+    const r = (await walk(MC, loc("M3")))!;
+    expect(r.decision.outcome).toBe("BETTER_ENTRANCE");
+    expect(r.decision.summary).toMatch(/^By the MC north doors: /);
+    expect(r.route!.steps!.at(-1)!.instruction).toMatch(/^Walk from the MC north doors to /);
+    expect(r.route!.campus!.via.slice(0, 3)).toEqual(["through MC", "MC north doors", "outside"]);
+  });
+
+  it("walks through a building between two points outside it when Google walks round: priced to a door, through, and on from another", async () => {
+    const north = nearDoor(SLC_NORTH, 30, 0);
+    const west = nearDoor(SLC_WEST, 0, -30);
+    const f = google({ [key(north, west)]: 600 });
+    const r = (await walk(north, west, f))!;
     expect(r.decision.outcome).toBe("SHORTCUT");
     expect(r.decision.summary).toMatch(/^Through SLC: /);
-    expect(SLC_DOORS).toContain(r.route!.indoorEdgeIds![0]);
+    const steps = r.route!.steps!;
+    expect(steps[0].instruction).toBe("Walk to the SLC north doors");
+    expect(steps.at(-1)!.instruction).toMatch(/^Walk from the SLC west doors to /);
+    expect(r.route!.indoorEdgeIds![0]).toBe(SLC_NORTH);
+    expect(r.route!.indoorEdgeIds!.at(-1)).toBe(SLC_WEST);
+    // Two Google-priced legs, and the survey in between: the line runs from the start, in at one door and out at the other.
+    const line = decode(r.route!.polyline!);
+    expect(near(line[0], north)).toBe(true);
+    expect(near(line[line.length - 1], west)).toBe(true);
   });
 
-  it("does not send anyone through a building to save less than the margin", async () => {
-    const outside = westOf("07284470cb96f524", 25);
-    const best = (await walk(outside, MC, google({ [key(outside, MC)]: 600 })))!.decision.chosen!.seconds;
-    const small = (await walk(outside, MC, google({ [key(outside, MC)]: best + 30 })))!;
-    expect(small.decision.outcome).toBe("KEPT_GOOGLE");
-    expect(small.route).toBeUndefined();
-    const enough = (await walk(outside, MC, google({ [key(outside, MC)]: best + CFG.campusShortcutMinBenefitSeconds + 1 })))!;
-    expect(enough.decision.outcome).toBe("SHORTCUT");
+  it("asks a way through a building to save more than a nearer door does, and takes it only from that margin", async () => {
+    const north = nearDoor(SLC_NORTH, 30, 0);
+    const west = nearDoor(SLC_WEST, 0, -30);
+    const through = (await walk(north, west, google({ [key(north, west)]: 600 })))!.decision.chosen!;
+    const margin = googleAtMargin(through.totalSeconds, 1);
+    const under = (await walk(north, west, google({ [key(north, west)]: margin - 2 })))!.decision;
+    expect(under.outcome).toBe("KEPT_GOOGLE");
+    expect(under.rejected.some((x) => /saves only .*, under the .* it has to save/.test(x.because))).toBe(true);
+    const over = (await walk(north, west, google({ [key(north, west)]: margin + 2 })))!.decision;
+    expect(over.outcome).toBe("SHORTCUT");
+    expect(over.marginSeconds).toBeGreaterThan(CFG.campusShortcutMargin.baseSeconds + CFG.campusShortcutMargin.perBuildingSeconds);
+
+    const outside = westOf(DC_WEST, 25);
+    const door = (await walk(outside, DC, google({ [key(outside, DC)]: 240 })))!.decision;
+    const need = googleAtMargin(door.chosen!.totalSeconds - door.inside.destinationSeconds, 0);
+    const doorUnder = (await walk(outside, DC, google({ [key(outside, DC)]: need - 2 })))!.decision;
+    expect(doorUnder.outcome).toBe("KEPT_GOOGLE");
+    const doorOver = (await walk(outside, DC, google({ [key(outside, DC)]: need + 2 })))!.decision;
+    expect(doorOver.outcome).toBe("BETTER_ENTRANCE");
+    expect(doorOver.marginSeconds).toBeLessThan(over.marginSeconds);
   });
 
-  it("leaves Google's walk alone when the campus has nothing better, without pricing doors it could not use", async () => {
-    const f = google();
+  it("leaves Google's walk alone when the campus has nothing better, pricing only a few doors and none it could not use", async () => {
+    const f = google({ [key(HOME, DC)]: 200 });
     const r = (await walk(HOME, DC, f))!;
     expect(r.decision.outcome).toBe("KEPT_GOOGLE");
     expect(r.route).toBeUndefined();
-    expect(f.walk.mock.calls.length).toBeLessThanOrEqual(1 + 2);
+    expect(f.walk.mock.calls.length).toBeLessThanOrEqual(1 + CAMPUS_LOOKUPS.entries + 2 * CAMPUS_LOOKUPS.through);
+    const g = campusGraph();
+    for (const [, to] of f.walk.mock.calls.slice(1)) {
+      const door = g.exteriorDoors.find((d) => g.net.nodes[d.inside].lat === to.latitude && g.net.nodes[d.inside].lng === to.longitude)!;
+      expect(refusalFor(g, g.adj[door.outside].find((a) => a.index === door.index)!, { constraints: { at: NOON, endpoints: ["DC"] } }, NOON.getTime())).toBeUndefined();
+    }
   });
 });
 
@@ -194,6 +272,16 @@ describe("closures, access and what may not be used", () => {
     expect(r.decision.googleUsable).toBe(false);
     expect(r.decision.outcome).toBe("CORRECTED");
     expect(r.route!.indoorEdgeIds).not.toContain(edgeId(NET, outdoor));
+  });
+
+  it("a door reported closed at the end of Google's walk makes that walk unusable, and the way in is by another door", async () => {
+    const r = (await walk(MC, DC, google({ [key(MC, DC)]: 60 }), { closedEdgeIds: new Set([DC_WEST]) }))!;
+    expect(r.decision.googleUsable).toBe(false);
+    expect(r.decision.rejected[0]).toMatchObject({ label: "Google's walk to DC", because: expect.stringMatching(/arrives by the DC west doors \(toward MC\), reported closed/) });
+    expect(r.decision.outcome).toBe("CORRECTED");
+    expect(r.decision.summary).toMatch(/^The DC west doors \(toward MC\) are reported closed\./);
+    expect(r.route!.indoorEdgeIds).not.toContain(DC_WEST);
+    expect(r.decision.activatedBy.some((p) => p.subject === "closures")).toBe(true);
   });
 
   it("a step-free trip to PAC never changes floor by stairs, or by an elevator or ramp nobody has confirmed step-free", async () => {
@@ -224,16 +312,42 @@ describe("closures, access and what may not be used", () => {
   });
 });
 
+describe("the line on the map is the route that was chosen", () => {
+  it("passes through every door and link the decision names, in order, from the start to the end", async () => {
+    for (const [from, to] of [[MC, PAC], [MC, QNC], [HOME, PAC], [nearDoor(SLC_NORTH, 30, 0), nearDoor(SLC_WEST, 0, -30)]] as const) {
+      const f = google({ [key(from, to)]: 600 });
+      const r = (await walk(from, to, f))!;
+      if (!r.route) continue;
+      const line = decode(r.route.polyline!);
+      expect(near(line[0], from), `${from.name} start`).toBe(true);
+      expect(near(line[line.length - 1], to), `${to.name} end`).toBe(true);
+      let at = 0;
+      for (const id of r.route.indoorEdgeIds!) {
+        const e = edgeById(NET, id)!;
+        if (e.kind !== "DOOR" && e.kind !== "OPEN" && e.kind !== "BRIDGE" && e.kind !== "TUNNEL") continue;
+        const point = e.path[0];
+        const found = line.findIndex((p, i) => i >= at && near(p, { latitude: point[0], longitude: point[1] }, 1));
+        expect(found, `${from.name} → ${to.name}: ${id} on the line after point ${at}`).toBeGreaterThanOrEqual(at);
+        at = found;
+      }
+    }
+  });
+});
+
 describe("falling back to Google's walk", () => {
-  it("has nothing to say when neither end is on the campus network, for the same building, or with no Google walk", async () => {
+  it("has nothing to say for the same building or with no Google walk, and only Google's walk for two places off the network", async () => {
     const lh = findBuilding("WLU", "LH")!;
     const laurier: CampusLocation = { id: "WLU:LH", name: lh.name, university: "WLU", latitude: lh.latitude!, longitude: lh.longitude!, kind: "BUILDING", buildingCode: "LH" };
-    expect(await walk(HOME, laurier)).toBeUndefined();
+    const f = google();
+    const r = (await walk(HOME, laurier, f))!;
+    expect(r.decision.outcome).toBe("KEPT_GOOGLE");
+    expect(r.decision.alternatives).toEqual([]);
+    expect(f.walk).toHaveBeenCalledTimes(1); // no building lies on the way, so no door walk is worth pricing
     expect(await walk(MC, MC)).toBeUndefined();
     expect(await campusWalk({ from: MC, to: PAC, at: NOON }, undefined, google(), CFG, NOON)).toBeUndefined();
     const noData = graphOver({ ...NET, anchors: [] });
-    const f = google();
-    expect(await campusWalk({ from: MC, to: PAC, at: NOON }, await f.walk(MC, PAC), f, CFG, NOON, noData)).toBeUndefined();
+    const g = google();
+    expect((await campusWalk({ from: MC, to: PAC, at: NOON }, await g.walk(MC, PAC), g, CFG, NOON, noData))!.decision.outcome).toBe("KEPT_GOOGLE");
   });
 
   it("keeps Google's walk and warns when the only walks to an allowed entrance cannot be priced", async () => {
@@ -257,5 +371,13 @@ describe("falling back to Google's walk", () => {
     expect(first).toBeGreaterThan(1);
     await walk(HOME, PAC, f);
     expect(calls).toBe(first);
+  });
+
+  it("does not ask Google for door walks that could not save the margin", async () => {
+    const f = google({ [key(loc("EV1"), loc("STC"))]: 60 });
+    const r = (await walk(loc("EV1"), loc("STC"), f))!;
+    // Against a one-minute walk nothing through a building or by another door can win, so nothing is priced.
+    expect(r.decision.outcome).toBe("KEPT_GOOGLE");
+    expect(f.walk).toHaveBeenCalledTimes(1);
   });
 });

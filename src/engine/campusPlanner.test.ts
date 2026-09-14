@@ -5,6 +5,7 @@ import { DEFAULT_PLANNER_CONFIG as CFG } from "@/domain/config";
 import type { CourseMeeting, LatLng, RouteOption } from "@/domain/types";
 import type { RoutingProvider } from "@/routing/RoutingProvider";
 import { haversineMeters } from "@/routing/EstimateRoutingProvider";
+import { findBuilding } from "@/data/buildings";
 import { minutesBetween } from "@/time/toronto";
 
 /**
@@ -19,10 +20,13 @@ const SLC_PAC = "c34ea719b8b9dee5";
 class GoogleLike implements RoutingProvider {
   readonly id = "google-routes";
   readonly asked: string[] = [];
+  /** Seconds for a pair, keyed as `asked` records it, where the distance should not decide. */
+  constructor(private readonly times: Record<string, number> = {}) {}
   async getWalkingRoute(from: LatLng, to: LatLng): Promise<RouteOption> {
-    this.asked.push(`${from.latitude.toFixed(5)},${from.longitude.toFixed(5)}->${to.latitude.toFixed(5)},${to.longitude.toFixed(5)}`);
+    const key = `${from.latitude.toFixed(5)},${from.longitude.toFixed(5)}->${to.latitude.toFixed(5)},${to.longitude.toFixed(5)}`;
+    this.asked.push(key);
     const metres = haversineMeters(from, to) * 1.3;
-    const seconds = metres / 1.33;
+    const seconds = this.times[key] ?? metres / 1.33;
     return { mode: "WALK", durationMinutes: Math.max(1, Math.ceil(seconds / 60)), durationSeconds: Math.round(seconds), distanceMeters: Math.round(metres), polyline: encode([[from.latitude, from.longitude], [to.latitude, to.longitude]]), provider: "google-routes", computedAt: "", isEstimate: false };
   }
   async getTransitRoute(): Promise<RouteOption | undefined> {
@@ -54,10 +58,14 @@ describe("campus knowledge in the weekly plan", () => {
   });
 
   it("leaves an MC to DC leg on Google's walk when that is fastest, and records that it looked", async () => {
+    const mc = findBuilding("UW", "MC")!;
+    const dc = findBuilding("UW", "DC")!;
+    // A one-minute walk between the map points: nothing through a building or by another door can beat it.
+    const google = new GoogleLike({ [`${mc.latitude!.toFixed(5)},${mc.longitude!.toFixed(5)}->${dc.latitude!.toFixed(5)},${dc.longitude!.toFixed(5)}`]: 60 });
     const plan = await buildWeekPlan({
       meetings: [meeting("mc", "MC", "2065", 9 * 60, 9 * 60 + 50), meeting("dc", "DC", "1350", 10 * 60, 10 * 60 + 50)],
       mondayISO: MONDAY, config: CFG, days: ["T"],
-    }, new GoogleLike());
+    }, google);
     const leg = plan.days.T!.transitions.find((t) => t.from.buildingCode === "MC" && t.to.buildingCode === "DC")!;
     expect(leg.recommendedRoute).toBe(leg.walkingRoute);
     expect(leg.campus?.outcome).toBe("KEPT_GOOGLE");

@@ -109,7 +109,8 @@ describe("where a campus decision's evidence comes from", () => {
 
   it("leaves nothing activated when Google's walk stands", async () => {
     const DC = networkBuildingLocation("DC")!;
-    const d = (await campusWalk({ from: MC, to: DC, at: NOON }, await google.walk(MC, DC), google, CFG, NOON))!.decision;
+    const quick = { ...(await google.walk(MC, DC)), durationSeconds: 60, durationMinutes: 1 };
+    const d = (await campusWalk({ from: MC, to: DC, at: NOON }, quick, google, CFG, NOON))!.decision;
     expect(d.outcome).toBe("KEPT_GOOGLE");
     expect(d.activatedBy).toEqual([]);
   });

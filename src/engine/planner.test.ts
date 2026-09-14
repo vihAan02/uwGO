@@ -96,12 +96,13 @@ describe("planner", () => {
       const dep = addMin(arr, -12);
       return { mode: "TRANSIT", durationMinutes: 12, departureTime: dep, arrivalTime: arr, transferCount: 0, provider: "fixture", computedAt: "x", isEstimate: false, steps: [{ mode: "WALK", durationMinutes: 4 }, { mode: "TRANSIT", durationMinutes: 4, transit: { line: "202", vehicle: "Bus", departureStop: "Univ/UW", arrivalStop: "Univ/WLU", departureTime: addMin(dep, 4), arrivalTime: addMin(dep, 8), stopCount: 1 } }, { mode: "WALK", durationMinutes: 4 }] };
     });
+    // Fixture minutes are the inputs, so campus knowledge, which prices door walks the fixture cannot, stays out.
     const plan = await buildWeekPlan({
       meetings: [
         meeting({ start: 13 * 60 + 30, end: 14 * 60 + 20, location: { kind: "ROOM", buildingCode: "DC", roomNumber: "1350" } }),
         meeting({ university: "WLU", courseCode: "BU 111", start: 15 * 60, end: 16 * 60 + 20, location: { kind: "ROOM", buildingCode: "LH", roomNumber: "1001" } }),
       ],
-      mondayISO: MONDAY, config: CFG, days: ["M"],
+      mondayISO: MONDAY, config: CFG, days: ["M"], campus: false,
     }, provider);
     const t = plan.days.M!.transitions[0];
     expect(t.crossCampus).toBe(true);
@@ -143,7 +144,7 @@ describe("planner", () => {
         meeting({ start: 13 * 60, end: 13 * 60 + 50, location: { kind: "ROOM", buildingCode: "DC", roomNumber: "2585" } }),
         meeting({ start: 14 * 60, end: 14 * 60 + 50, location: { kind: "ROOM", buildingCode: "DC", roomNumber: "1351" } }),
       ],
-      home, mondayISO: MONDAY, config: CFG, days: ["M"],
+      home, mondayISO: MONDAY, config: CFG, days: ["M"], campus: false,
     }, provider);
     const day = plan.days.M!;
     const gap = day.items.find((i) => i.kind === "GAP")!;

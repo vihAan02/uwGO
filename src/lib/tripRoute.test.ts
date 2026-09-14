@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import type { CampusLocation, RouteOption } from "@/domain/types";
 import { bearing, rerouteFrom, resolveTripRoute } from "./tripRoute";
+import { CAMPUS_LOOKUPS } from "@/engine/campusRoute";
 import { nearestEntrances } from "@/engine/indoorGraph";
 import { networkBuildingLocation } from "@/engine/indoorRoute";
 import { haversineMeters } from "@/routing/EstimateRoutingProvider";
@@ -142,11 +143,16 @@ describe("rerouteFrom", () => {
     const calls = stubWalks();
     const r = await rerouteFrom(outside, DC, "FASTEST", NOW);
     expect(r!.mode).toBe("WALK");
-    expect(calls.length).toBe(1); // just the outdoor walk: no winter route to price under FASTEST
+    // The outdoor walk first, then only the few door walks the campus-aware walk considers; no winter route to price under FASTEST.
     expect(calls[0].mode).toBe("WALK");
-    expect(calls[0].from.latitude).toBeCloseTo(outside.latitude, 6);
     expect(calls[0].to.latitude).toBeCloseTo(DC.latitude, 6);
     expect(calls[0].to.longitude).toBeCloseTo(DC.longitude, 6);
+    expect(calls.length).toBeLessThanOrEqual(1 + CAMPUS_LOOKUPS.entries + 2 * CAMPUS_LOOKUPS.through);
+    for (const c of calls) {
+      expect(c.mode).toBe("WALK");
+      expect(c.from.latitude).toBeCloseTo(outside.latitude, 6);
+      expect(c.from.longitude).toBeCloseTo(outside.longitude, 6);
+    }
   });
 
   it("with indoors preferred, joins the live position to the network and carries on through it", async () => {

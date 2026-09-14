@@ -132,9 +132,12 @@ export interface CampusLocation {
   /**
    * The floor inside the building, in the campus network's own labels ("1", "B"), when the room
    * is known and the network has that floor. Routing over the campus network starts or ends there
-   * instead of on whichever floor happens to be most convenient.
+   * instead of on whichever floor happens to be most convenient, and a walk that starts at the
+   * building's map point is charged the way down from that floor.
    */
   floor?: string;
+  /** The room, as the schedule names it ("2065"), when there is one. Kept for routing that can use it. */
+  room?: string;
 }
 
 export interface UserHome {
@@ -276,8 +279,11 @@ export interface CampusProvenance {
 export interface CampusChoice {
   /** The doors and links used, in order, named for a person. */
   via: string[];
+  /** From where the route itself starts (the building's map point when Google prices the way to a door, otherwise the floor's own point on the network). */
   seconds: number;
-  /** Seconds plus the penalties for uncertain crossings; what the choice minimised. */
+  /** From floor to floor: `seconds` plus what a start or end at the map point is charged for the inside of the building. Compared with Google's walk timed the same way. */
+  totalSeconds: number;
+  /** `totalSeconds` plus the penalties for uncertain crossings; what the choice minimised. */
   cost: number;
   evidence: CampusEvidence;
   edgeIds: string[];
@@ -296,12 +302,29 @@ export interface CampusRejection {
   sourceIds?: string[];
 }
 
+/**
+ * What Google's walk is charged for the inside of the buildings at its ends, so it is compared with
+ * campus routes from the same place: the way from the trip's floor to the surveyed door nearest where
+ * Google's line starts (and from the door nearest where it ends), timed over the network. Nothing when
+ * the end is off the network, or the building has no surveyed door near Google's line.
+ */
+export interface CampusInside {
+  originSeconds: number;
+  destinationSeconds: number;
+  /** The doors Google's walk is taken to use, by reviewed label or description. */
+  originDoor?: string;
+  destinationDoor?: string;
+}
+
 export interface CampusDecision {
   outcome: CampusOutcome;
   /** One sentence a student can read. */
   summary: string;
-  thresholdSeconds: number;
+  /** The saving the chosen (or best) campus route had to show over Google's walk, by what it asks of the student. */
+  marginSeconds: number;
+  /** Google's own walk, as Google timed it. */
   googleSeconds?: number;
+  inside: CampusInside;
   /** Whether Google's own walk could be used as it is. */
   googleUsable: boolean;
   /**

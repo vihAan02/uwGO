@@ -1,7 +1,8 @@
 /**
  * Route selection as one problem with two candidate answers. Fixture itineraries here are
  * shaped like the provider's real ones: walk to a stop, ride, walk from a stop, with door
- * times, so the comparison is always door to door.
+ * times, so the comparison is always door to door. The walking times are the inputs, so campus
+ * knowledge (which would replace a fixture walk between two network buildings) is switched off.
  */
 import { describe, expect, it } from "vitest";
 import { resolveBestRoute, type RouteFetcher } from "./bestRoute";
@@ -61,13 +62,13 @@ describe("resolveBestRoute: fastest practical door to door", () => {
   it("TEST A — walking wins: 8 min walk vs 13 min transit", async () => {
     // With the default gate an 8 min walk is not even priced for transit: no bus can beat it by 5.
     const f = fetcher(8, (o) => bus(o, { access: 3, ride: 5, egress: 5 }));
-    const r = await resolveBestRoute({ from: MC, to: QNC, departAfter: t(10, 20), arriveBy: t(11) }, f, CFG);
+    const r = await resolveBestRoute({ campus: false, from: MC, to: QNC, departAfter: t(10, 20), arriveBy: t(11) }, f, CFG);
     expect(r.recommended!.mode).toBe("WALK");
     expect(r.consideredModes).toEqual(["WALK"]);
     expect(f.asked).toHaveLength(0);
     // Forced to price it anyway, the comparison still says walk.
     const g = fetcher(8, (o) => bus(o, { access: 3, ride: 5, egress: 5 }));
-    const r2 = await resolveBestRoute({ from: MC, to: QNC, departAfter: t(10, 20), arriveBy: t(11) }, g, { ...CFG, transitConsiderWalkMinutes: 0 });
+    const r2 = await resolveBestRoute({ campus: false, from: MC, to: QNC, departAfter: t(10, 20), arriveBy: t(11) }, g, { ...CFG, transitConsiderWalkMinutes: 0 });
     expect(r2.recommended!.mode).toBe("WALK");
     expect(r2.consideredModes).toEqual(["WALK", "TRANSIT"]);
     expect(r2.reason).toMatch(/faster door to door/);
@@ -75,7 +76,7 @@ describe("resolveBestRoute: fastest practical door to door", () => {
 
   it("TEST B — transit wins: 22 min walk vs 12 min door to door, walking legs included", async () => {
     const f = fetcher(22, (o) => bus(o, { access: 3, ride: 7, egress: 2 }));
-    const r = await resolveBestRoute({ from: UWP, to: QNC, departAfter: t(0), arriveBy: t(14, 30) }, f, CFG);
+    const r = await resolveBestRoute({ campus: false, from: UWP, to: QNC, departAfter: t(0), arriveBy: t(14, 30) }, f, CFG);
     expect(r.recommended!.mode).toBe("TRANSIT");
     expect(r.recommended!.steps!.map((s) => s.mode)).toEqual(["WALK", "TRANSIT", "WALK"]);
     expect(formatClock(r.arrival!)).toBe("2:20 PM"); // lands at the buffer
@@ -86,7 +87,7 @@ describe("resolveBestRoute: fastest practical door to door", () => {
 
   it("TEST C — a 4 min ride is not a 4 min trip: 10 min walk beats 14 min transit", async () => {
     const f = fetcher(10, (o) => bus(o, { access: 5, ride: 4, egress: 5 }));
-    const r = await resolveBestRoute({ from: UWP, to: QNC, departAfter: t(13), arriveBy: t(14, 30) }, f, CFG);
+    const r = await resolveBestRoute({ campus: false, from: UWP, to: QNC, departAfter: t(13), arriveBy: t(14, 30) }, f, CFG);
     expect(r.consideredModes).toEqual(["WALK", "TRANSIT"]);
     expect(r.transit!.steps!.find((s) => s.mode === "TRANSIT")!.durationMinutes).toBe(4);
     expect(r.recommended!.mode).toBe("WALK");
@@ -95,16 +96,16 @@ describe("resolveBestRoute: fastest practical door to door", () => {
 
   it("a transfer costs something: 3 min saved across a transfer is not worth it", async () => {
     const f = fetcher(20, (o) => bus(o, { access: 2, ride: 10, egress: 2, transfers: 1 })); // 14 min, saves 6 raw
-    const r = await resolveBestRoute({ from: UWP, to: QNC, departAfter: t(0), arriveBy: t(14, 30) }, f, CFG);
+    const r = await resolveBestRoute({ campus: false, from: UWP, to: QNC, departAfter: t(0), arriveBy: t(14, 30) }, f, CFG);
     expect(r.recommended!.mode).toBe("WALK");
-    const direct = await resolveBestRoute({ from: UWP, to: QNC, departAfter: t(0), arriveBy: t(14, 30) }, fetcher(20, (o) => bus(o, { access: 2, ride: 10, egress: 2 })), CFG);
+    const direct = await resolveBestRoute({ campus: false, from: UWP, to: QNC, departAfter: t(0), arriveBy: t(14, 30) }, fetcher(20, (o) => bus(o, { access: 2, ride: 10, egress: 2 })), CFG);
     expect(direct.recommended!.mode).toBe("TRANSIT");
   });
 
   it("TEST F — tight connection: walking gets there before class, so no bus for its own sake", async () => {
     // 10:20 -> 10:30, 9 min walk lands 10:29. A bus landing 10:28 exists. Both are inside the buffer; walk.
     const f = fetcher(9, (o) => (o.departureTime ? bus(o, { access: 1, ride: 5, egress: 1, wait: 1 }) : bus(o, { access: 1, ride: 5, egress: 1 })));
-    const r = await resolveBestRoute({ from: MC, to: QNC, departAfter: t(10, 20), arriveBy: t(10, 30) }, f, { ...CFG, transitConsiderWalkMinutes: 0 });
+    const r = await resolveBestRoute({ campus: false, from: MC, to: QNC, departAfter: t(10, 20), arriveBy: t(10, 30) }, f, { ...CFG, transitConsiderWalkMinutes: 0 });
     expect(r.recommended!.mode).toBe("WALK");
     expect(formatClock(r.arrival!)).toBe("10:29 AM");
     expect(r.reason).toMatch(/no bus to miss/);
@@ -118,7 +119,7 @@ describe("resolveBestRoute: fastest practical door to door", () => {
   it("with a deadline, transit is asked for by arrival; a bus that would leave before class ends is replaced by the next one", async () => {
     // Asked to land by 10:50, the fixture offers a trip leaving 10:10, before the 10:20 class end.
     const f = fetcher(25, (o) => (o.arrivalTime ? bus(o, { access: 5, ride: 30, egress: 5 }) : bus(o, { access: 5, ride: 6, egress: 5, wait: 3 })));
-    const r = await resolveBestRoute({ from: MC, to: QNC, departAfter: t(10, 20), arriveBy: t(11) }, f, CFG);
+    const r = await resolveBestRoute({ campus: false, from: MC, to: QNC, departAfter: t(10, 20), arriveBy: t(11) }, f, CFG);
     expect(f.asked.map((o) => (o.arrivalTime ? "arrive" : "depart"))).toEqual(["arrive", "depart"]);
     expect(formatClock(f.asked[0].arrivalTime!)).toBe("10:50 AM");
     expect(formatClock(f.asked[1].departureTime!)).toBe("10:20 AM");
@@ -129,27 +130,27 @@ describe("resolveBestRoute: fastest practical door to door", () => {
 
   it("without a deadline (going home), the first to get home wins, waiting included", async () => {
     // 12 min walk from 11:20 lands 11:32. A 6 min bus that only leaves 11:35 lands 11:41: walk.
-    const late = await resolveBestRoute({ from: MC, to: UWP, departAfter: t(11, 20) }, fetcher(12, (o) => bus(o, { access: 1, ride: 4, egress: 1, wait: 15 })), CFG);
+    const late = await resolveBestRoute({ campus: false, from: MC, to: UWP, departAfter: t(11, 20) }, fetcher(12, (o) => bus(o, { access: 1, ride: 4, egress: 1, wait: 15 })), CFG);
     expect(late.recommended!.mode).toBe("WALK");
     expect(formatClock(late.arrival!)).toBe("11:32 AM");
     // The same bus leaving at 11:21 lands 11:27: transit.
-    const soon = await resolveBestRoute({ from: MC, to: UWP, departAfter: t(11, 20) }, fetcher(12, (o) => bus(o, { access: 1, ride: 4, egress: 1, wait: 1 })), CFG);
+    const soon = await resolveBestRoute({ campus: false, from: MC, to: UWP, departAfter: t(11, 20) }, fetcher(12, (o) => bus(o, { access: 1, ride: 4, egress: 1, wait: 1 })), CFG);
     expect(soon.recommended!.mode).toBe("TRANSIT");
     expect(formatClock(soon.arrival!)).toBe("11:27 AM");
   });
 
   it("TEST G — transit unavailable or failing: walking carries on", async () => {
-    const none = await resolveBestRoute({ from: UWP, to: QNC, departAfter: t(0), arriveBy: t(14, 30) }, fetcher(22, () => undefined), CFG);
+    const none = await resolveBestRoute({ campus: false, from: UWP, to: QNC, departAfter: t(0), arriveBy: t(14, 30) }, fetcher(22, () => undefined), CFG);
     expect(none.recommended!.mode).toBe("WALK");
     expect(none.consideredModes).toEqual(["WALK", "TRANSIT"]);
     expect(none.reason).toMatch(/no transit itinerary was offered/);
   });
 
   it("walking unavailable: transit is used when it is valid; nothing is invented when neither is", async () => {
-    const onlyBus = await resolveBestRoute({ from: UWP, to: QNC, departAfter: t(0), arriveBy: t(14, 30) }, fetcher(undefined, (o) => bus(o, { access: 3, ride: 7, egress: 2 })), CFG);
+    const onlyBus = await resolveBestRoute({ campus: false, from: UWP, to: QNC, departAfter: t(0), arriveBy: t(14, 30) }, fetcher(undefined, (o) => bus(o, { access: 3, ride: 7, egress: 2 })), CFG);
     expect(onlyBus.recommended!.mode).toBe("TRANSIT");
     expect(onlyBus.reason).toBe("Transit is the only option.");
-    const nothing = await resolveBestRoute({ from: UWP, to: QNC, departAfter: t(0), arriveBy: t(14, 30) }, fetcher(undefined, () => undefined), CFG);
+    const nothing = await resolveBestRoute({ campus: false, from: UWP, to: QNC, departAfter: t(0), arriveBy: t(14, 30) }, fetcher(undefined, () => undefined), CFG);
     expect(nothing.recommended).toBeUndefined();
     expect(nothing.departure).toBeUndefined();
   });

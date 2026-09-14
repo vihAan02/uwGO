@@ -36,13 +36,15 @@ export interface PlannerConfig {
   /** ...and it may not be more than this fraction longer either (a 4 min walk should not become 12). */
   indoorMaxExtraRatio: number;
   /**
-   * Seconds a walk through a building, or to a different door, must save over Google's walk before
-   * it is taken. Google's walking time is only as precise as its path, the indoor part is timed from
-   * the survey's geometry, and the timeline shows whole minutes: a shortcut that does not change the
-   * minute a student reads is not worth an extra door. Never applies when Google's walk relies on a
-   * way in that may not be used; then the allowed way is taken whatever it costs.
+   * How much a campus route must save over Google's walk before it is taken, by how much it asks of
+   * the student: `baseSeconds` covers the imprecision of comparing Google's timing with the survey's;
+   * `shareOfGoogle` grows that with the length of the walk; `perBuildingSeconds` is added for every
+   * building the route passes through, since each one is more doors and corridors to find. A nearer
+   * door of the destination on a five-minute walk therefore needs about 16 s; a way through one
+   * building about 31 s. Never applies when Google's walk relies on a way in or out that may not be
+   * used; then the allowed way is taken whatever it costs.
    */
-  campusShortcutMinBenefitSeconds: number;
+  campusShortcutMargin: { baseSeconds: number; shareOfGoogle: number; perBuildingSeconds: number };
 }
 
 export const DEFAULT_PLANNER_CONFIG: PlannerConfig = {
@@ -58,7 +60,7 @@ export const DEFAULT_PLANNER_CONFIG: PlannerConfig = {
   minUsefulStudyMinutes: 20,
   indoorMaxExtraMinutes: 8,
   indoorMaxExtraRatio: 0.75,
-  campusShortcutMinBenefitSeconds: 60,
+  campusShortcutMargin: { baseSeconds: 10, shareOfGoogle: 0.02, perBuildingSeconds: 15 },
 };
 
 /** The only setting the student chooses; everything else is engine tuning that follows the code. */

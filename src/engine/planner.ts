@@ -62,11 +62,12 @@ export function homeLocation(home: UserHome): CampusLocation {
 
 /**
  * Per-plan memo. Walking depends only on the pair, so it is fetched once even when the pair
- * occurs on several days. Transit is schedule-bound and is never memoised here by pair; the
- * provider's own cache keys it by requested minute.
+ * occurs on several days. Transit is schedule-bound, so it is memoised by the pair and the minute
+ * asked for: a class and a study spot in the same building ask for the same bus, and get it once.
  */
 class RouteMemo implements RouteFetcher {
   private readonly walks = new Map<string, Promise<RouteOption | undefined>>();
+  private readonly transits = new Map<string, Promise<RouteOption | undefined>>();
   constructor(private readonly provider: RoutingProvider, readonly errors: string[]) {}
 
   private async guard<T>(label: string, p: Promise<T>): Promise<T | undefined> {
@@ -89,7 +90,14 @@ class RouteMemo implements RouteFetcher {
   }
 
   transit(from: LatLng, to: LatLng, opts: TransitOptions): Promise<RouteOption | undefined> {
-    return this.guard("transit route", this.provider.getTransitRoute(from, to, opts));
+    const minute = opts.arrivalTime ? `A${Math.floor(opts.arrivalTime.getTime() / 60_000)}` : `D${Math.floor((opts.departureTime?.getTime() ?? 0) / 60_000)}`;
+    const key = `${pairKey(from, to)}|${minute}`;
+    let p = this.transits.get(key);
+    if (!p) {
+      p = this.guard("transit route", this.provider.getTransitRoute(from, to, opts));
+      this.transits.set(key, p);
+    }
+    return p;
   }
 }
 
@@ -104,7 +112,9 @@ class LegResolver {
   constructor(private readonly memo: RouteMemo, private readonly cfg: PlannerConfig, private readonly context: TripContext = {}) {}
 
   resolve(req: RouteRequest): Promise<BestRoute> {
-    const key = `${pairKey(req.from, req.to)}|${req.departAfter.getTime()}|${req.arriveBy?.getTime() ?? "open"}`;
+    // Two classes in one building on different floors are two trips: the campus route starts on the
+    // floor. Google's walk between the buildings' map points is still fetched once, by the memo.
+    const key = `${pairKey(req.from, req.to)}|${req.from.floor ?? ""}>${req.to.floor ?? ""}|${req.departAfter.getTime()}|${req.arriveBy?.getTime() ?? "open"}`;
     let p = this.cache.get(key);
     if (!p) {
       p = resolveBestRoute({ ...req, ...this.context }, this.memo, this.cfg);

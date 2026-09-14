@@ -652,3 +652,14 @@ export function nearestEntrances(point: { latitude: number; longitude: number },
 export function anchorsOf(building: string, g: Graph = theGraph()): IndoorNode[] {
   return (g.anchorsByBuilding.get(building) ?? []).map((id) => g.net.nodes[id]);
 }
+
+/**
+ * The network's own label for a floor of a building, when the network has that floor: a room's floor
+ * number becomes the floor a campus route starts or ends on. Undefined otherwise, and a route then
+ * starts or ends on whichever floor is most convenient, as it always did.
+ */
+export function networkFloor(building: string | undefined, floor: number | "unknown" | undefined, g: Graph = theGraph()): string | undefined {
+  if (!building || floor === undefined || floor === "unknown") return undefined;
+  const label = String(floor);
+  return anchorsOf(building, g).some((a) => a.floor === label) ? label : undefined;
+}

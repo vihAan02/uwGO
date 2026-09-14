@@ -1,11 +1,11 @@
 {
- "fingerprint": "2fd01e9898f25cac",
+ "fingerprint": "67d3e337b8e4506b",
  "generatedFrom": {
   "knowledgeReviewedAt": "2026-09-14",
   "promotions": 0,
   "networkCommit": "b88e455",
   "places": 48,
-  "campusTrips": 2200,
+  "campusTrips": 2256,
   "networkTrips": 1560
  },
  "demand": [
@@ -505,15 +505,15 @@
    "routes": []
   },
   "door:07284470cb96f524": {
-   "tier": "P1",
-   "score": 18.7,
+   "tier": "P0",
+   "score": 20.4,
    "critical": false,
    "uncertainty": {
     "routing": 0.6,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.239,
+    "routing": 0.297,
     "traffic": 0.581,
     "shortcut": 0,
     "accessibility": 0.5
@@ -521,10 +521,10 @@
    "metrics": {
     "buildingShare": 0.0958,
     "campus": {
-     "usedBy": 1,
-     "share": 0.0002,
-     "detour": 0.009,
-     "extraPerTrip": 36,
+     "usedBy": 62,
+     "share": 0.0276,
+     "detour": 1.113,
+     "extraPerTrip": 40.4,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -554,19 +554,19 @@
    },
    "routes": [
     {
-     "from": "REV",
-     "to": "PAC",
-     "mode": "campus"
-    },
-    {
      "from": "DC",
      "to": "MKV",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
      "from": "MKV",
      "to": "DC",
-     "mode": "winter"
+     "mode": "campus"
+    },
+    {
+     "from": "MC",
+     "to": "MKV",
+     "mode": "campus"
     }
    ]
   },
@@ -737,15 +737,15 @@
    "routes": []
   },
   "door:1f1ff0ecb703a9c0": {
-   "tier": "P3",
-   "score": 1.5,
+   "tier": "P0",
+   "score": 3.6,
    "critical": false,
    "uncertainty": {
     "routing": 0.6,
     "access": 0.8
    },
    "factors": {
-    "routing": 0,
+    "routing": 0.071,
     "traffic": 0.253,
     "shortcut": 0,
     "accessibility": 0
@@ -753,10 +753,10 @@
    "metrics": {
     "buildingShare": 0.0417,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 8,
+     "share": 0.0055,
+     "detour": 0.476,
+     "extraPerTrip": 87.2,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -784,18 +784,29 @@
     },
     "accessUnknown": true
    },
-   "routes": []
+   "routes": [
+    {
+     "from": "QNC",
+     "to": "SLC",
+     "mode": "campus"
+    },
+    {
+     "from": "SLC",
+     "to": "QNC",
+     "mode": "campus"
+    }
+   ]
   },
   "door:20827964a85e8890": {
-   "tier": "P2",
-   "score": 6.3,
+   "tier": "P0",
+   "score": 14.8,
    "critical": false,
    "uncertainty": {
     "routing": 0.8,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.038,
+    "routing": 0.251,
     "traffic": 0.441,
     "shortcut": 0,
     "accessibility": 0.08
@@ -803,10 +814,10 @@
    "metrics": {
     "buildingShare": 0.0728,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 40,
+     "share": 0.0274,
+     "detour": 0.184,
+     "extraPerTrip": 6.7,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -836,27 +847,32 @@
    },
    "routes": [
     {
-     "from": "DC",
+     "from": "E2",
      "to": "MC",
-     "mode": "stepFree"
+     "mode": "campus"
     },
     {
      "from": "MC",
-     "to": "DC",
-     "mode": "stepFree"
+     "to": "E2",
+     "mode": "campus"
+    },
+    {
+     "from": "DWE",
+     "to": "MC",
+     "mode": "campus"
     }
    ]
   },
   "door:289e514204e906de": {
-   "tier": "P3",
-   "score": 1.3,
+   "tier": "P1",
+   "score": 3.3,
    "critical": false,
    "uncertainty": {
     "routing": 0.45,
     "access": 0.8
    },
    "factors": {
-    "routing": 0,
+    "routing": 0.087,
     "traffic": 0.288,
     "shortcut": 0,
     "accessibility": 0
@@ -864,10 +880,10 @@
    "metrics": {
     "buildingShare": 0.0475,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 12,
+     "share": 0.0062,
+     "detour": 0.674,
+     "extraPerTrip": 109.2,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -895,18 +911,34 @@
     },
     "accessUnknown": true
    },
-   "routes": []
+   "routes": [
+    {
+     "from": "DC",
+     "to": "EIT",
+     "mode": "campus"
+    },
+    {
+     "from": "EIT",
+     "to": "DC",
+     "mode": "campus"
+    },
+    {
+     "from": "C2",
+     "to": "EIT",
+     "mode": "campus"
+    }
+   ]
   },
   "door:2d57c32399d0d027": {
-   "tier": "P2",
-   "score": 4.5,
+   "tier": "P0",
+   "score": 5.7,
    "critical": false,
    "uncertainty": {
     "routing": 0.6,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.042,
+    "routing": 0.085,
     "traffic": 0.215,
     "shortcut": 0,
     "accessibility": 0.119
@@ -914,10 +946,10 @@
    "metrics": {
     "buildingShare": 0.0355,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 28,
+     "share": 0.009,
+     "detour": 0.113,
+     "extraPerTrip": 12.6,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -947,24 +979,24 @@
    },
    "routes": [
     {
-     "from": "EXP",
-     "to": "M3",
-     "mode": "winter"
-    },
-    {
-     "from": "M3",
-     "to": "EXP",
-     "mode": "winter"
-    },
-    {
      "from": "BMH",
-     "to": "M3",
-     "mode": "winter"
+     "to": "E2",
+     "mode": "campus"
+    },
+    {
+     "from": "E2",
+     "to": "BMH",
+     "mode": "campus"
+    },
+    {
+     "from": "OPT",
+     "to": "SLC",
+     "mode": "campus"
     }
    ]
   },
   "door:3ca1486cf9026f78": {
-   "tier": "P2",
+   "tier": "P0",
    "score": 8.3,
    "critical": false,
    "uncertainty": {
@@ -980,10 +1012,10 @@
    "metrics": {
     "buildingShare": 0.0319,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 37,
+     "share": 0.0127,
+     "detour": 0.064,
+     "extraPerTrip": 5.1,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -1014,31 +1046,31 @@
    "routes": [
     {
      "from": "DC",
-     "to": "PAS",
-     "mode": "winter"
+     "to": "SCH",
+     "mode": "campus"
     },
     {
-     "from": "PAS",
+     "from": "SCH",
      "to": "DC",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
-     "from": "DC",
-     "to": "EV1",
-     "mode": "winter"
+     "from": "SCH",
+     "to": "SLC",
+     "mode": "campus"
     }
    ]
   },
   "door:4caac7c88a4a743c": {
-   "tier": "P2",
-   "score": 3.3,
-   "critical": false,
+   "tier": "P0",
+   "score": 13.5,
+   "critical": true,
    "uncertainty": {
     "routing": 0.6,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.066,
+    "routing": 0.404,
     "traffic": 0.223,
     "shortcut": 0,
     "accessibility": 0
@@ -1046,12 +1078,12 @@
    "metrics": {
     "buildingShare": 0.0368,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
-     "lost": 0,
-     "lostShare": 0,
+     "usedBy": 49,
+     "share": 0.0175,
+     "detour": 5.258,
+     "extraPerTrip": 300,
+     "lost": 49,
+     "lostShare": 0.0175,
      "gained": 0,
      "gain": 0
     },
@@ -1081,30 +1113,30 @@
     {
      "from": "CMH",
      "to": "DC",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
      "from": "DC",
      "to": "CMH",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
      "from": "CMH",
-     "to": "SLC",
-     "mode": "winter"
+     "to": "E2",
+     "mode": "campus"
     }
    ]
   },
   "door:5ba0e3d2964bf706": {
    "tier": "P0",
-   "score": 18.7,
+   "score": 22.4,
    "critical": false,
    "uncertainty": {
     "routing": 0.55,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.394,
+    "routing": 0.529,
     "traffic": 0.581,
     "shortcut": 0,
     "accessibility": 0.289
@@ -1112,10 +1144,10 @@
    "metrics": {
     "buildingShare": 0.0958,
     "campus": {
-     "usedBy": 35,
-     "share": 0.0131,
-     "detour": 0.252,
-     "extraPerTrip": 19.2,
+     "usedBy": 82,
+     "share": 0.0565,
+     "detour": 0.618,
+     "extraPerTrip": 10.9,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -1146,23 +1178,23 @@
    "routes": [
     {
      "from": "DC",
-     "to": "PAC",
+     "to": "SLC",
      "mode": "campus"
     },
     {
-     "from": "MC",
-     "to": "PAC",
+     "from": "SLC",
+     "to": "DC",
      "mode": "campus"
     },
     {
-     "from": "E2",
-     "to": "PAC",
+     "from": "DC",
+     "to": "MKV",
      "mode": "campus"
     }
    ]
   },
   "door:6058fcb7db8bc4eb": {
-   "tier": "P2",
+   "tier": "P0",
    "score": 6.8,
    "critical": false,
    "uncertainty": {
@@ -1178,8 +1210,8 @@
    "metrics": {
     "buildingShare": 0.0359,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
+     "usedBy": 29,
+     "share": 0.0145,
      "detour": 0,
      "extraPerTrip": 0,
      "lost": 0,
@@ -1211,19 +1243,19 @@
    },
    "routes": [
     {
-     "from": "PAS",
-     "to": "SLC",
-     "mode": "winter"
+     "from": "DC",
+     "to": "EV1",
+     "mode": "campus"
     },
     {
-     "from": "SLC",
-     "to": "PAS",
-     "mode": "winter"
+     "from": "EV1",
+     "to": "DC",
+     "mode": "campus"
     },
     {
      "from": "EV1",
      "to": "SLC",
-     "mode": "winter"
+     "mode": "campus"
     }
    ]
   },
@@ -1294,15 +1326,15 @@
    ]
   },
   "door:6930fd0b99d02bef": {
-   "tier": "P1",
-   "score": 9.9,
+   "tier": "P0",
+   "score": 14.9,
    "critical": false,
    "uncertainty": {
     "routing": 0.75,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.114,
+    "routing": 0.248,
     "traffic": 0.216,
     "shortcut": 0,
     "accessibility": 0.25
@@ -1310,10 +1342,10 @@
    "metrics": {
     "buildingShare": 0.0356,
     "campus": {
-     "usedBy": 1,
-     "share": 0.0003,
-     "detour": 0.004,
-     "extraPerTrip": 14,
+     "usedBy": 66,
+     "share": 0.0254,
+     "detour": 0.484,
+     "extraPerTrip": 19.1,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -1343,32 +1375,32 @@
    },
    "routes": [
     {
-     "from": "EXP",
-     "to": "PAC",
-     "mode": "campus"
-    },
-    {
      "from": "DC",
      "to": "EXP",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
      "from": "EXP",
      "to": "DC",
-     "mode": "winter"
+     "mode": "campus"
+    },
+    {
+     "from": "EXP",
+     "to": "MC",
+     "mode": "campus"
     }
    ]
   },
   "door:6e8b95bc0582fea8": {
-   "tier": "P1",
-   "score": 16,
+   "tier": "P0",
+   "score": 42.5,
    "critical": false,
    "uncertainty": {
     "routing": 0.8,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.227,
+    "routing": 0.89,
     "traffic": 0.346,
     "shortcut": 0,
     "accessibility": 0.258
@@ -1376,10 +1408,10 @@
    "metrics": {
     "buildingShare": 0.0571,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 84,
+     "share": 0.0512,
+     "detour": 9.246,
+     "extraPerTrip": 180.4,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -1411,30 +1443,30 @@
     {
      "from": "DC",
      "to": "MKV",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
      "from": "MKV",
      "to": "DC",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
      "from": "MKV",
      "to": "SLC",
-     "mode": "winter"
+     "mode": "campus"
     }
    ]
   },
   "door:79502c535b0ea7cf": {
-   "tier": "P2",
-   "score": 10.1,
+   "tier": "P0",
+   "score": 11,
    "critical": false,
    "uncertainty": {
     "routing": 0.6,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.117,
+    "routing": 0.148,
     "traffic": 0.441,
     "shortcut": 0,
     "accessibility": 0.244
@@ -1442,10 +1474,10 @@
    "metrics": {
     "buildingShare": 0.0728,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 20,
+     "share": 0.0147,
+     "detour": 0.38,
+     "extraPerTrip": 25.9,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -1476,23 +1508,23 @@
    "routes": [
     {
      "from": "DC",
-     "to": "M3",
-     "mode": "winter"
-    },
-    {
-     "from": "M3",
-     "to": "DC",
-     "mode": "winter"
-    },
-    {
-     "from": "M3",
      "to": "MC",
-     "mode": "winter"
+     "mode": "campus"
+    },
+    {
+     "from": "MC",
+     "to": "DC",
+     "mode": "campus"
+    },
+    {
+     "from": "E3",
+     "to": "MC",
+     "mode": "campus"
     }
    ]
   },
   "door:7afa03ebca430f67": {
-   "tier": "P1",
+   "tier": "P0",
    "score": 17.8,
    "critical": false,
    "uncertainty": {
@@ -1508,10 +1540,10 @@
    "metrics": {
     "buildingShare": 0.0521,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 31,
+     "share": 0.0177,
+     "detour": 0.065,
+     "extraPerTrip": 3.7,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -1542,18 +1574,18 @@
    "routes": [
     {
      "from": "DC",
-     "to": "MKV",
-     "mode": "winter"
+     "to": "V1",
+     "mode": "campus"
     },
     {
-     "from": "MKV",
+     "from": "V1",
      "to": "DC",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
-     "from": "MKV",
-     "to": "SLC",
-     "mode": "winter"
+     "from": "SLC",
+     "to": "V1",
+     "mode": "campus"
     }
    ]
   },
@@ -1608,15 +1640,15 @@
    "routes": []
   },
   "door:7c324963bd35bf8f": {
-   "tier": "P3",
-   "score": 1.4,
+   "tier": "P1",
+   "score": 4.1,
    "critical": false,
    "uncertainty": {
     "routing": 0.45,
     "access": 0.8
    },
    "factors": {
-    "routing": 0,
+    "routing": 0.119,
     "traffic": 0.321,
     "shortcut": 0,
     "accessibility": 0
@@ -1624,10 +1656,10 @@
    "metrics": {
     "buildingShare": 0.053,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 19,
+     "share": 0.0111,
+     "detour": 0.429,
+     "extraPerTrip": 38.8,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -1655,7 +1687,23 @@
     },
     "accessUnknown": true
    },
-   "routes": []
+   "routes": [
+    {
+     "from": "DC",
+     "to": "E3",
+     "mode": "campus"
+    },
+    {
+     "from": "E3",
+     "to": "DC",
+     "mode": "campus"
+    },
+    {
+     "from": "DC",
+     "to": "DWE",
+     "mode": "campus"
+    }
+   ]
   },
   "door:7cd7959538e78ca9": {
    "tier": "P3",
@@ -1708,15 +1756,15 @@
    "routes": []
   },
   "door:8d097a89e6b7b905": {
-   "tier": "P2",
-   "score": 1,
+   "tier": "P1",
+   "score": 2.3,
    "critical": false,
    "uncertainty": {
     "routing": 0.45,
     "access": 0.45
    },
    "factors": {
-    "routing": 0.015,
+    "routing": 0.071,
     "traffic": 0.156,
     "shortcut": 0,
     "accessibility": 0
@@ -1724,10 +1772,10 @@
    "metrics": {
     "buildingShare": 0.0258,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 22,
+     "share": 0.0078,
+     "detour": 0.035,
+     "extraPerTrip": 4.5,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -1757,24 +1805,24 @@
    },
    "routes": [
     {
-     "from": "PAS",
-     "to": "PHY",
-     "mode": "winter"
-    },
-    {
-     "from": "PHY",
-     "to": "PAS",
-     "mode": "winter"
+     "from": "E2",
+     "to": "EV1",
+     "mode": "campus"
     },
     {
      "from": "EV1",
-     "to": "PHY",
-     "mode": "winter"
+     "to": "E2",
+     "mode": "campus"
+    },
+    {
+     "from": "E3",
+     "to": "EV1",
+     "mode": "campus"
     }
    ]
   },
   "door:8de488af0c73895b": {
-   "tier": "P2",
+   "tier": "P0",
    "score": 4,
    "critical": false,
    "uncertainty": {
@@ -1782,7 +1830,7 @@
     "access": 0.8
    },
    "factors": {
-    "routing": 0.046,
+    "routing": 0.048,
     "traffic": 0.173,
     "shortcut": 0,
     "accessibility": 0.096
@@ -1790,10 +1838,10 @@
    "metrics": {
     "buildingShare": 0.0285,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 14,
+     "share": 0.0031,
+     "detour": 0.428,
+     "extraPerTrip": 138.8,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -1823,32 +1871,32 @@
    },
    "routes": [
     {
-     "from": "ML",
-     "to": "RCH",
-     "mode": "winter"
-    },
-    {
      "from": "RCH",
-     "to": "ML",
-     "mode": "winter"
+     "to": "STC",
+     "mode": "campus"
     },
     {
-     "from": "LIB",
+     "from": "STC",
      "to": "RCH",
-     "mode": "winter"
+     "mode": "campus"
+    },
+    {
+     "from": "B1",
+     "to": "RCH",
+     "mode": "campus"
     }
    ]
   },
   "door:8ff2fa0c57074eb0": {
-   "tier": "P3",
-   "score": 2.4,
+   "tier": "P0",
+   "score": 4,
    "critical": false,
    "uncertainty": {
     "routing": 0.6,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.017,
+    "routing": 0.068,
     "traffic": 0.218,
     "shortcut": 0,
     "accessibility": 0.039
@@ -1856,10 +1904,10 @@
    "metrics": {
     "buildingShare": 0.0359,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 22,
+     "share": 0.0076,
+     "detour": 0.016,
+     "extraPerTrip": 2.1,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -1889,32 +1937,32 @@
    },
    "routes": [
     {
-     "from": "ML",
-     "to": "PHY",
-     "mode": "winter"
-    },
-    {
-     "from": "PHY",
+     "from": "E2",
      "to": "ML",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
      "from": "ML",
-     "to": "RCH",
-     "mode": "winter"
+     "to": "E2",
+     "mode": "campus"
+    },
+    {
+     "from": "E3",
+     "to": "ML",
+     "mode": "campus"
     }
    ]
   },
   "door:a79632160a96ad42": {
-   "tier": "P3",
-   "score": 1.2,
+   "tier": "P1",
+   "score": 1.7,
    "critical": false,
    "uncertainty": {
     "routing": 0.6,
     "access": 0.8
    },
    "factors": {
-    "routing": 0,
+    "routing": 0.017,
     "traffic": 0.193,
     "shortcut": 0,
     "accessibility": 0
@@ -1922,8 +1970,8 @@
    "metrics": {
     "buildingShare": 0.0319,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
+     "usedBy": 4,
+     "share": 0.0019,
      "detour": 0,
      "extraPerTrip": 0,
      "lost": 0,
@@ -1953,18 +2001,29 @@
     },
     "accessUnknown": true
    },
-   "routes": []
+   "routes": [
+    {
+     "from": "CMH",
+     "to": "EV1",
+     "mode": "campus"
+    },
+    {
+     "from": "EV1",
+     "to": "CMH",
+     "mode": "campus"
+    }
+   ]
   },
   "door:aee8a566fb5f264a": {
-   "tier": "P3",
-   "score": 1.5,
+   "tier": "P0",
+   "score": 5.9,
    "critical": false,
    "uncertainty": {
     "routing": 0.6,
     "access": 0.8
    },
    "factors": {
-    "routing": 0,
+    "routing": 0.147,
     "traffic": 0.255,
     "shortcut": 0,
     "accessibility": 0
@@ -1972,10 +2031,10 @@
    "metrics": {
     "buildingShare": 0.0421,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 17,
+     "share": 0.0104,
+     "detour": 1.156,
+     "extraPerTrip": 110.7,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -2003,18 +2062,34 @@
     },
     "accessUnknown": true
    },
-   "routes": []
+   "routes": [
+    {
+     "from": "SLC",
+     "to": "STC",
+     "mode": "campus"
+    },
+    {
+     "from": "STC",
+     "to": "SLC",
+     "mode": "campus"
+    },
+    {
+     "from": "STC",
+     "to": "V1",
+     "mode": "campus"
+    }
+   ]
   },
   "door:b85d2d2762ad5853": {
-   "tier": "P2",
-   "score": 2.9,
+   "tier": "P0",
+   "score": 3.6,
    "critical": false,
    "uncertainty": {
     "routing": 0.6,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.008,
+    "routing": 0.032,
     "traffic": 0.441,
     "shortcut": 0,
     "accessibility": 0
@@ -2022,10 +2097,10 @@
    "metrics": {
     "buildingShare": 0.0728,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 4,
+     "share": 0.0033,
+     "detour": 0.058,
+     "extraPerTrip": 17.6,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -2055,32 +2130,32 @@
    },
    "routes": [
     {
-     "from": "M3",
-     "to": "SLC",
-     "mode": "winter"
+     "from": "MC",
+     "to": "V1",
+     "mode": "campus"
     },
     {
-     "from": "SLC",
-     "to": "M3",
-     "mode": "winter"
+     "from": "V1",
+     "to": "MC",
+     "mode": "campus"
     },
     {
-     "from": "ERC",
-     "to": "SLC",
-     "mode": "winter"
+     "from": "MC",
+     "to": "PAC",
+     "mode": "campus"
     }
    ]
   },
   "door:b97df0c640324bea": {
    "tier": "P0",
-   "score": 12.2,
+   "score": 12.1,
    "critical": false,
    "uncertainty": {
     "routing": 0.7,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.117,
+    "routing": 0.114,
     "traffic": 0.581,
     "shortcut": 0,
     "accessibility": 0.25
@@ -2088,10 +2163,10 @@
    "metrics": {
     "buildingShare": 0.0958,
     "campus": {
-     "usedBy": 10,
-     "share": 0.0035,
-     "detour": 0.196,
-     "extraPerTrip": 56,
+     "usedBy": 11,
+     "share": 0.0048,
+     "detour": 0.158,
+     "extraPerTrip": 33.2,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -2121,32 +2196,32 @@
    },
    "routes": [
     {
-     "from": "MKV",
-     "to": "PAC",
+     "from": "EXP",
+     "to": "SLC",
+     "mode": "campus"
+    },
+    {
+     "from": "SLC",
+     "to": "EXP",
      "mode": "campus"
     },
     {
      "from": "V1",
      "to": "PAC",
      "mode": "campus"
-    },
-    {
-     "from": "EXP",
-     "to": "PAC",
-     "mode": "campus"
     }
    ]
   },
   "door:ba963550df7cfd34": {
-   "tier": "P3",
-   "score": 0.8,
+   "tier": "P1",
+   "score": 4.4,
    "critical": false,
    "uncertainty": {
     "routing": 0.45,
     "access": 0.8
    },
    "factors": {
-    "routing": 0,
+    "routing": 0.162,
     "traffic": 0.167,
     "shortcut": 0,
     "accessibility": 0
@@ -2154,10 +2229,10 @@
    "metrics": {
     "buildingShare": 0.0275,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 53,
+     "share": 0.015,
+     "detour": 0.614,
+     "extraPerTrip": 41.1,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -2185,18 +2260,34 @@
     },
     "accessUnknown": true
    },
-   "routes": []
+   "routes": [
+    {
+     "from": "DC",
+     "to": "HH",
+     "mode": "campus"
+    },
+    {
+     "from": "HH",
+     "to": "DC",
+     "mode": "campus"
+    },
+    {
+     "from": "HH",
+     "to": "SLC",
+     "mode": "campus"
+    }
+   ]
   },
   "door:baad47154396ed59": {
-   "tier": "P2",
-   "score": 1.9,
+   "tier": "P1",
+   "score": 2.1,
    "critical": false,
    "uncertainty": {
     "routing": 0.45,
     "access": 0.45
    },
    "factors": {
-    "routing": 0.041,
+    "routing": 0.051,
     "traffic": 0.215,
     "shortcut": 0,
     "accessibility": 0
@@ -2204,10 +2295,10 @@
    "metrics": {
     "buildingShare": 0.0355,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 16,
+     "share": 0.0057,
+     "detour": 0.019,
+     "extraPerTrip": 3.3,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -2237,32 +2328,32 @@
    },
    "routes": [
     {
-     "from": "DC",
-     "to": "OPT",
-     "mode": "winter"
+     "from": "BMH",
+     "to": "DC",
+     "mode": "campus"
     },
     {
-     "from": "OPT",
-     "to": "DC",
-     "mode": "winter"
+     "from": "DC",
+     "to": "BMH",
+     "mode": "campus"
     },
     {
      "from": "OPT",
      "to": "SLC",
-     "mode": "winter"
+     "mode": "campus"
     }
    ]
   },
   "door:c1b543edb4c6c151": {
-   "tier": "P2",
-   "score": 7.6,
+   "tier": "P1",
+   "score": 15.1,
    "critical": false,
    "uncertainty": {
     "routing": 0.45,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.162,
+    "routing": 0.497,
     "traffic": 0.301,
     "shortcut": 0,
     "accessibility": 0.16
@@ -2270,10 +2361,10 @@
    "metrics": {
     "buildingShare": 0.0497,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 65,
+     "share": 0.034,
+     "detour": 4.152,
+     "extraPerTrip": 122.1,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -2303,32 +2394,32 @@
    },
    "routes": [
     {
-     "from": "DC",
-     "to": "PAS",
-     "mode": "winter"
+     "from": "DWE",
+     "to": "SLC",
+     "mode": "campus"
     },
     {
-     "from": "PAS",
-     "to": "DC",
-     "mode": "winter"
+     "from": "SLC",
+     "to": "DWE",
+     "mode": "campus"
     },
     {
-     "from": "DC",
-     "to": "EV1",
-     "mode": "winter"
+     "from": "DWE",
+     "to": "MKV",
+     "mode": "campus"
     }
    ]
   },
   "door:c70692c82956207c": {
-   "tier": "P2",
-   "score": 3.3,
-   "critical": false,
+   "tier": "P0",
+   "score": 4.2,
+   "critical": true,
    "uncertainty": {
     "routing": 0.45,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.048,
+    "routing": 0.088,
     "traffic": 0.162,
     "shortcut": 0,
     "accessibility": 0.092
@@ -2336,12 +2427,12 @@
    "metrics": {
     "buildingShare": 0.0267,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
-     "lost": 0,
-     "lostShare": 0,
+     "usedBy": 18,
+     "share": 0.0038,
+     "detour": 1.154,
+     "extraPerTrip": 300,
+     "lost": 18,
+     "lostShare": 0.0038,
      "gained": 0,
      "gain": 0
     },
@@ -2369,19 +2460,19 @@
    },
    "routes": [
     {
-     "from": "DC",
+     "from": "EV1",
      "to": "LIB",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
      "from": "LIB",
-     "to": "DC",
-     "mode": "winter"
+     "to": "EV1",
+     "mode": "campus"
     },
     {
      "from": "LIB",
-     "to": "SLC",
-     "mode": "winter"
+     "to": "ML",
+     "mode": "campus"
     }
    ]
   },
@@ -2436,7 +2527,7 @@
    "routes": []
   },
   "door:de86feecce886d00": {
-   "tier": "P2",
+   "tier": "P1",
    "score": 3.8,
    "critical": false,
    "uncertainty": {
@@ -2452,8 +2543,8 @@
    "metrics": {
     "buildingShare": 0.0497,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
+     "usedBy": 2,
+     "share": 0.0013,
      "detour": 0,
      "extraPerTrip": 0,
      "lost": 0,
@@ -2502,15 +2593,15 @@
    ]
   },
   "door:df658713a18c09af": {
-   "tier": "P2",
-   "score": 9.3,
+   "tier": "P0",
+   "score": 17.6,
    "critical": false,
    "uncertainty": {
     "routing": 1,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.038,
+    "routing": 0.205,
     "traffic": 0.608,
     "shortcut": 0,
     "accessibility": 0.08
@@ -2518,10 +2609,10 @@
    "metrics": {
     "buildingShare": 0.1002,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 15,
+     "share": 0.0161,
+     "detour": 1.312,
+     "extraPerTrip": 81.7,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -2552,18 +2643,23 @@
    "routes": [
     {
      "from": "DC",
-     "to": "MC",
-     "mode": "stepFree"
+     "to": "STC",
+     "mode": "campus"
     },
     {
-     "from": "MC",
+     "from": "STC",
      "to": "DC",
-     "mode": "stepFree"
+     "mode": "campus"
+    },
+    {
+     "from": "DC",
+     "to": "QNC",
+     "mode": "campus"
     }
    ]
   },
   "door:e2df2ced317676e9": {
-   "tier": "P2",
+   "tier": "P0",
    "score": 4.2,
    "critical": false,
    "uncertainty": {
@@ -2579,10 +2675,10 @@
    "metrics": {
     "buildingShare": 0.042,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 8,
+     "share": 0.0038,
+     "detour": 0.094,
+     "extraPerTrip": 24.9,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -2612,32 +2708,32 @@
    },
    "routes": [
     {
+     "from": "EV1",
+     "to": "EV3",
+     "mode": "campus"
+    },
+    {
+     "from": "EV3",
+     "to": "EV1",
+     "mode": "campus"
+    },
+    {
      "from": "DC",
      "to": "PAS",
-     "mode": "winter"
-    },
-    {
-     "from": "PAS",
-     "to": "DC",
-     "mode": "winter"
-    },
-    {
-     "from": "PAS",
-     "to": "SLC",
      "mode": "winter"
     }
    ]
   },
   "door:e2f88c17f6a27d03": {
-   "tier": "P2",
-   "score": 3.4,
-   "critical": false,
+   "tier": "P0",
+   "score": 19.8,
+   "critical": true,
    "uncertainty": {
     "routing": 0.45,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.082,
+    "routing": 0.812,
     "traffic": 0.278,
     "shortcut": 0,
     "accessibility": 0.016
@@ -2645,12 +2741,12 @@
    "metrics": {
     "buildingShare": 0.0458,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
-     "lost": 0,
-     "lostShare": 0,
+     "usedBy": 75,
+     "share": 0.0352,
+     "detour": 10.572,
+     "extraPerTrip": 300,
+     "lost": 75,
+     "lostShare": 0.0352,
      "gained": 0,
      "gain": 0
     },
@@ -2680,30 +2776,30 @@
     {
      "from": "DC",
      "to": "PAS",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
      "from": "PAS",
      "to": "DC",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
      "from": "PAS",
      "to": "SLC",
-     "mode": "winter"
+     "mode": "campus"
     }
    ]
   },
   "door:e40e935800145264": {
-   "tier": "P2",
-   "score": 7.6,
+   "tier": "P1",
+   "score": 8.6,
    "critical": false,
    "uncertainty": {
     "routing": 0.45,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.12,
+    "routing": 0.165,
     "traffic": 0.204,
     "shortcut": 0,
     "accessibility": 0.25
@@ -2711,10 +2807,10 @@
    "metrics": {
     "buildingShare": 0.0336,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 46,
+     "share": 0.0147,
+     "detour": 0.728,
+     "extraPerTrip": 49.5,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -2744,32 +2840,32 @@
    },
    "routes": [
     {
-     "from": "DC",
+     "from": "E2",
      "to": "M3",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
      "from": "M3",
-     "to": "DC",
-     "mode": "winter"
+     "to": "E2",
+     "mode": "campus"
     },
     {
-     "from": "M3",
-     "to": "SLC",
-     "mode": "winter"
+     "from": "DWE",
+     "to": "M3",
+     "mode": "campus"
     }
    ]
   },
   "door:e8bdd5f6faeaaa42": {
-   "tier": "P2",
-   "score": 8,
+   "tier": "P0",
+   "score": 8.1,
    "critical": false,
    "uncertainty": {
     "routing": 0.6,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.22,
+    "routing": 0.223,
     "traffic": 0.238,
     "shortcut": 0,
     "accessibility": 0
@@ -2777,10 +2873,10 @@
    "metrics": {
     "buildingShare": 0.0393,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 38,
+     "share": 0.015,
+     "detour": 1.91,
+     "extraPerTrip": 127.7,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -2810,32 +2906,32 @@
    },
    "routes": [
     {
-     "from": "PAS",
-     "to": "SLC",
-     "mode": "winter"
+     "from": "DC",
+     "to": "NH",
+     "mode": "campus"
     },
     {
-     "from": "SLC",
-     "to": "PAS",
-     "mode": "winter"
+     "from": "NH",
+     "to": "DC",
+     "mode": "campus"
     },
     {
-     "from": "EV1",
-     "to": "SLC",
-     "mode": "winter"
+     "from": "E2",
+     "to": "NH",
+     "mode": "campus"
     }
    ]
   },
   "door:e8f86a96c1f2db22": {
-   "tier": "P2",
-   "score": 3.3,
-   "critical": false,
+   "tier": "P0",
+   "score": 9.5,
+   "critical": true,
    "uncertainty": {
     "routing": 0.6,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.041,
+    "routing": 0.249,
     "traffic": 0.109,
     "shortcut": 0,
     "accessibility": 0.086
@@ -2843,12 +2939,12 @@
    "metrics": {
     "buildingShare": 0.0179,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
-     "lost": 0,
-     "lostShare": 0,
+     "usedBy": 59,
+     "share": 0.0108,
+     "detour": 3.239,
+     "extraPerTrip": 300,
+     "lost": 59,
+     "lostShare": 0.0108,
      "gained": 0,
      "gain": 0
     },
@@ -2876,32 +2972,32 @@
    },
    "routes": [
     {
-     "from": "DC",
-     "to": "OPT",
-     "mode": "winter"
-    },
-    {
-     "from": "OPT",
-     "to": "DC",
-     "mode": "winter"
-    },
-    {
      "from": "OPT",
      "to": "SLC",
-     "mode": "winter"
+     "mode": "campus"
+    },
+    {
+     "from": "SLC",
+     "to": "OPT",
+     "mode": "campus"
+    },
+    {
+     "from": "MKV",
+     "to": "OPT",
+     "mode": "campus"
     }
    ]
   },
   "door:eca8f9fb93c96ea7": {
-   "tier": "P1",
-   "score": 5.8,
-   "critical": false,
+   "tier": "P0",
+   "score": 26.6,
+   "critical": true,
    "uncertainty": {
     "routing": 0.8,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.061,
+    "routing": 0.581,
     "traffic": 0.162,
     "shortcut": 0,
     "accessibility": 0.127
@@ -2909,12 +3005,12 @@
    "metrics": {
     "buildingShare": 0.0267,
     "campus": {
-     "usedBy": 1,
-     "share": 0.0002,
-     "detour": 0.009,
-     "extraPerTrip": 36,
-     "lost": 0,
-     "lostShare": 0,
+     "usedBy": 86,
+     "share": 0.0268,
+     "detour": 7.274,
+     "extraPerTrip": 271.9,
+     "lost": 84,
+     "lostShare": 0.0241,
      "gained": 0,
      "gain": 0
     },
@@ -2942,19 +3038,19 @@
    },
    "routes": [
     {
-     "from": "REV",
-     "to": "PAC",
-     "mode": "campus"
-    },
-    {
      "from": "DC",
      "to": "REV",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
      "from": "REV",
      "to": "DC",
-     "mode": "winter"
+     "mode": "campus"
+    },
+    {
+     "from": "REV",
+     "to": "SLC",
+     "mode": "campus"
     }
    ]
   },
@@ -3025,15 +3121,15 @@
    ]
   },
   "door:f7f5758ccfad5600": {
-   "tier": "P2",
-   "score": 4.1,
+   "tier": "P0",
+   "score": 7.1,
    "critical": false,
    "uncertainty": {
     "routing": 0.6,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.051,
+    "routing": 0.154,
     "traffic": 0.135,
     "shortcut": 0,
     "accessibility": 0.107
@@ -3041,10 +3137,10 @@
    "metrics": {
     "buildingShare": 0.0222,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 73,
+     "share": 0.0162,
+     "detour": 0.215,
+     "extraPerTrip": 13.3,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -3076,30 +3172,30 @@
     {
      "from": "DC",
      "to": "ERC",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
      "from": "ERC",
      "to": "DC",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
-     "from": "ERC",
-     "to": "SLC",
-     "mode": "winter"
+     "from": "E2",
+     "to": "ERC",
+     "mode": "campus"
     }
    ]
   },
   "door:faae1c8de856dd19": {
-   "tier": "P2",
-   "score": 7.9,
+   "tier": "P0",
+   "score": 13.3,
    "critical": false,
    "uncertainty": {
     "routing": 0.8,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.076,
+    "routing": 0.211,
     "traffic": 0.296,
     "shortcut": 0,
     "accessibility": 0.158
@@ -3107,10 +3203,10 @@
    "metrics": {
     "buildingShare": 0.0488,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 30,
+     "share": 0.0138,
+     "detour": 1.888,
+     "extraPerTrip": 137.2,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -3140,39 +3236,39 @@
    },
    "routes": [
     {
-     "from": "DC",
-     "to": "LIB",
-     "mode": "winter"
-    },
-    {
-     "from": "LIB",
-     "to": "DC",
-     "mode": "winter"
-    },
-    {
-     "from": "PAS",
+     "from": "EV1",
      "to": "PHY",
-     "mode": "winter"
+     "mode": "campus"
+    },
+    {
+     "from": "PHY",
+     "to": "EV1",
+     "mode": "campus"
+    },
+    {
+     "from": "ML",
+     "to": "PHY",
+     "mode": "campus"
     }
    ]
   },
   "hours:AL": {
    "tier": "P2",
-   "score": 3.5,
+   "score": 3.9,
    "critical": false,
    "uncertainty": {
     "routing": 0.8,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.056,
+    "routing": 0.067,
     "traffic": 0.156,
     "shortcut": 0,
     "accessibility": 0
    },
    "metrics": {
     "buildingShare": 0.0258,
-    "passThroughShare": 0.0569
+    "passThroughShare": 0.0581
    },
    "routes": []
   },
@@ -3185,7 +3281,7 @@
     "access": 0.8
    },
    "factors": {
-    "routing": 0.156,
+    "routing": 0.155,
     "traffic": 0.163,
     "shortcut": 0,
     "accessibility": 0
@@ -3218,34 +3314,34 @@
   },
   "hours:BMH": {
    "tier": "P3",
-   "score": 2.3,
+   "score": 2.5,
    "critical": false,
    "uncertainty": {
     "routing": 0.8,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.015,
+    "routing": 0.019,
     "traffic": 0.215,
     "shortcut": 0,
     "accessibility": 0
    },
    "metrics": {
     "buildingShare": 0.0355,
-    "passThroughShare": 0.0148
+    "passThroughShare": 0.0161
    },
    "routes": []
   },
   "hours:C2": {
    "tier": "P2",
-   "score": 4.7,
+   "score": 4.6,
    "critical": false,
    "uncertainty": {
     "routing": 0.8,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.073,
+    "routing": 0.072,
     "traffic": 0.221,
     "shortcut": 0,
     "accessibility": 0
@@ -3305,7 +3401,7 @@
     "access": 0.8
    },
    "factors": {
-    "routing": 0.074,
+    "routing": 0.073,
     "traffic": 0.608,
     "shortcut": 0,
     "accessibility": 0
@@ -3325,7 +3421,7 @@
     "access": 0.8
    },
    "factors": {
-    "routing": 0.095,
+    "routing": 0.094,
     "traffic": 0.301,
     "shortcut": 0,
     "accessibility": 0
@@ -3338,14 +3434,14 @@
   },
   "hours:E2": {
    "tier": "P2",
-   "score": 8.4,
+   "score": 8.5,
    "critical": false,
    "uncertainty": {
     "routing": 0.8,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.14,
+    "routing": 0.143,
     "traffic": 0.351,
     "shortcut": 0,
     "accessibility": 0
@@ -3358,21 +3454,21 @@
   },
   "hours:E3": {
    "tier": "P2",
-   "score": 6.4,
+   "score": 6.5,
    "critical": false,
    "uncertainty": {
     "routing": 0.8,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.096,
+    "routing": 0.099,
     "traffic": 0.321,
     "shortcut": 0,
     "accessibility": 0
    },
    "metrics": {
     "buildingShare": 0.053,
-    "passThroughShare": 0.0969
+    "passThroughShare": 0.0974
    },
    "routes": []
   },
@@ -3385,7 +3481,7 @@
     "access": 0.8
    },
    "factors": {
-    "routing": 0.033,
+    "routing": 0.032,
     "traffic": 0.175,
     "shortcut": 0,
     "accessibility": 0
@@ -3418,14 +3514,14 @@
   },
   "hours:EIT": {
    "tier": "P2",
-   "score": 8,
+   "score": 7.9,
    "critical": false,
    "uncertainty": {
     "routing": 0.8,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.142,
+    "routing": 0.14,
     "traffic": 0.288,
     "shortcut": 0,
     "accessibility": 0
@@ -3465,7 +3561,7 @@
     "access": 0.8
    },
    "factors": {
-    "routing": 0.16,
+    "routing": 0.159,
     "traffic": 0.25,
     "shortcut": 0,
     "accessibility": 0
@@ -3538,14 +3634,14 @@
   },
   "hours:EXP": {
    "tier": "P3",
-   "score": 3.3,
+   "score": 3.2,
    "critical": false,
    "uncertainty": {
     "routing": 0.8,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.039,
+    "routing": 0.038,
     "traffic": 0.216,
     "shortcut": 0,
     "accessibility": 0
@@ -3625,7 +3721,7 @@
     "access": 0.8
    },
    "factors": {
-    "routing": 0.238,
+    "routing": 0.236,
     "traffic": 0.441,
     "shortcut": 0,
     "accessibility": 0
@@ -3658,21 +3754,21 @@
   },
   "hours:ML": {
    "tier": "P2",
-   "score": 4.8,
+   "score": 5.5,
    "critical": false,
    "uncertainty": {
     "routing": 0.8,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.077,
+    "routing": 0.093,
     "traffic": 0.218,
     "shortcut": 0,
     "accessibility": 0
    },
    "metrics": {
     "buildingShare": 0.0359,
-    "passThroughShare": 0.0779
+    "passThroughShare": 0.0801
    },
    "routes": []
   },
@@ -3685,7 +3781,7 @@
     "access": 0.8
    },
    "factors": {
-    "routing": 0.096,
+    "routing": 0.095,
     "traffic": 0.238,
     "shortcut": 0,
     "accessibility": 0
@@ -3765,7 +3861,7 @@
     "access": 0.8
    },
    "factors": {
-    "routing": 0.091,
+    "routing": 0.09,
     "traffic": 0.296,
     "shortcut": 0,
     "accessibility": 0
@@ -3798,14 +3894,14 @@
   },
   "hours:QNC": {
    "tier": "P2",
-   "score": 9.7,
+   "score": 9.6,
    "critical": false,
    "uncertainty": {
     "routing": 0.8,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.191,
+    "routing": 0.189,
     "traffic": 0.253,
     "shortcut": 0,
     "accessibility": 0
@@ -3838,61 +3934,61 @@
   },
   "hours:REV": {
    "tier": "P3",
-   "score": 1.3,
+   "score": 1.5,
    "critical": false,
    "uncertainty": {
     "routing": 0.8,
     "access": 0.8
    },
    "factors": {
-    "routing": 0,
+    "routing": 0.005,
     "traffic": 0.162,
     "shortcut": 0,
     "accessibility": 0
    },
    "metrics": {
     "buildingShare": 0.0267,
-    "passThroughShare": 0
+    "passThroughShare": 0.0027
    },
    "routes": []
   },
   "hours:SCH": {
    "tier": "P2",
-   "score": 4,
+   "score": 4.1,
    "critical": false,
    "uncertainty": {
     "routing": 0.8,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.062,
+    "routing": 0.065,
     "traffic": 0.193,
     "shortcut": 0,
     "accessibility": 0
    },
    "metrics": {
     "buildingShare": 0.0319,
-    "passThroughShare": 0.063
+    "passThroughShare": 0.0641
    },
    "routes": []
   },
   "hours:SLC": {
    "tier": "P2",
-   "score": 4.6,
+   "score": 4.9,
    "critical": false,
    "uncertainty": {
     "routing": 0.3,
     "access": 0.3
    },
    "factors": {
-    "routing": 0.189,
+    "routing": 0.212,
     "traffic": 0.581,
     "shortcut": 0,
     "accessibility": 0
    },
    "metrics": {
     "buildingShare": 0.0958,
-    "passThroughShare": 0.1737
+    "passThroughShare": 0.1744
    },
    "routes": []
   },
@@ -4286,10 +4382,10 @@
    "metrics": {
     "buildingShare": 0.0644,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 8,
+     "share": 0.0028,
+     "detour": 0.038,
+     "extraPerTrip": 13.7,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -4319,19 +4415,19 @@
    },
    "routes": [
     {
-     "from": "E2",
-     "to": "SLC",
-     "mode": "winter"
+     "from": "QNC",
+     "to": "STC",
+     "mode": "campus"
     },
     {
-     "from": "SLC",
-     "to": "E2",
-     "mode": "winter"
+     "from": "STC",
+     "to": "QNC",
+     "mode": "campus"
     },
     {
-     "from": "E3",
-     "to": "SLC",
-     "mode": "winter"
+     "from": "NH",
+     "to": "QNC",
+     "mode": "campus"
     }
    ]
   },
@@ -4402,7 +4498,7 @@
    ]
   },
   "link:305f1d9cc843f330": {
-   "tier": "P2",
+   "tier": "P1",
    "score": 3.7,
    "critical": false,
    "uncertainty": {
@@ -4418,8 +4514,8 @@
    "metrics": {
     "buildingShare": 0.0612,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
+     "usedBy": 2,
+     "share": 0.0005,
      "detour": 0,
      "extraPerTrip": 0,
      "lost": 0,
@@ -4452,23 +4548,23 @@
    "routes": [
     {
      "from": "AL",
-     "to": "SLC",
-     "mode": "winter"
-    },
-    {
-     "from": "SLC",
-     "to": "AL",
-     "mode": "winter"
-    },
-    {
-     "from": "E2",
      "to": "ML",
+     "mode": "campus"
+    },
+    {
+     "from": "ML",
+     "to": "AL",
+     "mode": "campus"
+    },
+    {
+     "from": "AL",
+     "to": "SLC",
      "mode": "winter"
     }
    ]
   },
   "link:4522007ba4210597": {
-   "tier": "P2",
+   "tier": "P1",
    "score": 9.2,
    "critical": false,
    "uncertainty": {
@@ -4484,8 +4580,8 @@
    "metrics": {
     "buildingShare": 0.0806,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
+     "usedBy": 6,
+     "share": 0.0021,
      "detour": 0,
      "extraPerTrip": 0,
      "lost": 0,
@@ -4517,19 +4613,19 @@
    },
    "routes": [
     {
-     "from": "PAS",
-     "to": "SLC",
-     "mode": "winter"
+     "from": "NH",
+     "to": "STC",
+     "mode": "campus"
     },
     {
-     "from": "SLC",
-     "to": "PAS",
-     "mode": "winter"
+     "from": "STC",
+     "to": "NH",
+     "mode": "campus"
     },
     {
-     "from": "EV1",
-     "to": "SLC",
-     "mode": "winter"
+     "from": "NH",
+     "to": "QNC",
+     "mode": "campus"
     }
    ]
   },
@@ -4600,7 +4696,7 @@
    ]
   },
   "link:5ab3bb9f27bdb333": {
-   "tier": "P2",
+   "tier": "P0",
    "score": 8.7,
    "critical": false,
    "uncertainty": {
@@ -4616,10 +4712,10 @@
    "metrics": {
     "buildingShare": 0.106,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 8,
+     "share": 0.0059,
+     "detour": 0.043,
+     "extraPerTrip": 7.3,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -4651,22 +4747,22 @@
     {
      "from": "DC",
      "to": "DWE",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
      "from": "DWE",
      "to": "DC",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
      "from": "DWE",
-     "to": "SLC",
-     "mode": "winter"
+     "to": "E2",
+     "mode": "campus"
     }
    ]
   },
   "link:610dbb31c72ddf95": {
-   "tier": "P2",
+   "tier": "P1",
    "score": 7.5,
    "critical": false,
    "uncertainty": {
@@ -4682,10 +4778,10 @@
    "metrics": {
     "buildingShare": 0.0705,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 12,
+     "share": 0.0029,
+     "detour": 0.01,
+     "extraPerTrip": 3.5,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -4716,18 +4812,18 @@
    "routes": [
     {
      "from": "BMH",
-     "to": "DC",
-     "mode": "winter"
+     "to": "EXP",
+     "mode": "campus"
     },
     {
-     "from": "DC",
+     "from": "EXP",
      "to": "BMH",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
-     "from": "BMH",
-     "to": "SLC",
-     "mode": "winter"
+     "from": "EXP",
+     "to": "M3",
+     "mode": "campus"
     }
    ]
   },
@@ -4814,8 +4910,8 @@
    "metrics": {
     "buildingShare": 0.1649,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
+     "usedBy": 6,
+     "share": 0.0069,
      "detour": 0,
      "extraPerTrip": 0,
      "lost": 0,
@@ -4847,24 +4943,24 @@
    },
    "routes": [
     {
-     "from": "DC",
+     "from": "MC",
      "to": "SLC",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
      "from": "SLC",
-     "to": "DC",
-     "mode": "winter"
+     "to": "MC",
+     "mode": "campus"
     },
     {
      "from": "MC",
-     "to": "SLC",
-     "mode": "winter"
+     "to": "MKV",
+     "mode": "campus"
     }
    ]
   },
   "link:74685e0411c0f4e8": {
-   "tier": "P2",
+   "tier": "P1",
    "score": 3,
    "critical": false,
    "uncertainty": {
@@ -4880,10 +4976,10 @@
    "metrics": {
     "buildingShare": 0.0757,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 4,
+     "share": 0.0012,
+     "detour": 0.014,
+     "extraPerTrip": 11.5,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -4913,19 +5009,19 @@
    },
    "routes": [
     {
-     "from": "DC",
+     "from": "EV1",
      "to": "EV2",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
      "from": "EV2",
-     "to": "DC",
-     "mode": "winter"
+     "to": "EV1",
+     "mode": "campus"
     },
     {
-     "from": "EV2",
-     "to": "SLC",
-     "mode": "winter"
+     "from": "AL",
+     "to": "EV2",
+     "mode": "campus"
     }
    ]
   },
@@ -4996,7 +5092,7 @@
    ]
   },
   "link:7cee9b396acdf43d": {
-   "tier": "P2",
+   "tier": "P1",
    "score": 4.4,
    "critical": false,
    "uncertainty": {
@@ -5012,10 +5108,10 @@
    "metrics": {
     "buildingShare": 0.0527,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 4,
+     "share": 0.0006,
+     "detour": 0.032,
+     "extraPerTrip": 51.1,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -5045,19 +5141,19 @@
    },
    "routes": [
     {
-     "from": "DC",
+     "from": "E5",
      "to": "PSE",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
      "from": "PSE",
-     "to": "DC",
-     "mode": "winter"
+     "to": "E5",
+     "mode": "campus"
     },
     {
-     "from": "PSE",
-     "to": "SLC",
-     "mode": "winter"
+     "from": "E5",
+     "to": "E6",
+     "mode": "campus"
     }
    ]
   },
@@ -5162,7 +5258,7 @@
    "routes": []
   },
   "link:8eb27356d9f8db92": {
-   "tier": "P2",
+   "tier": "P1",
    "score": 7.3,
    "critical": false,
    "uncertainty": {
@@ -5178,10 +5274,10 @@
    "metrics": {
     "buildingShare": 0.1079,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 2,
+     "share": 0.0014,
+     "detour": 0.015,
+     "extraPerTrip": 11,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -5211,18 +5307,18 @@
    },
    "routes": [
     {
+     "from": "C2",
+     "to": "MC",
+     "mode": "campus"
+    },
+    {
+     "from": "MC",
+     "to": "C2",
+     "mode": "campus"
+    },
+    {
      "from": "DC",
      "to": "SLC",
-     "mode": "winter"
-    },
-    {
-     "from": "SLC",
-     "to": "DC",
-     "mode": "winter"
-    },
-    {
-     "from": "DC",
-     "to": "MC",
      "mode": "winter"
     }
    ]
@@ -5294,7 +5390,7 @@
    ]
   },
   "link:9aec29403c343d3c": {
-   "tier": "P2",
+   "tier": "P0",
    "score": 8,
    "critical": false,
    "uncertainty": {
@@ -5310,10 +5406,10 @@
    "metrics": {
     "buildingShare": 0.0573,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 8,
+     "share": 0.003,
+     "detour": 0.014,
+     "extraPerTrip": 4.7,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -5343,24 +5439,24 @@
    },
    "routes": [
     {
-     "from": "DC",
-     "to": "PAS",
-     "mode": "winter"
-    },
-    {
-     "from": "PAS",
-     "to": "DC",
-     "mode": "winter"
-    },
-    {
-     "from": "DC",
+     "from": "CMH",
      "to": "EV1",
-     "mode": "winter"
+     "mode": "campus"
+    },
+    {
+     "from": "EV1",
+     "to": "CMH",
+     "mode": "campus"
+    },
+    {
+     "from": "EV1",
+     "to": "SCH",
+     "mode": "campus"
     }
    ]
   },
   "link:9d96d5632d4c0b47": {
-   "tier": "P2",
+   "tier": "P1",
    "score": 11.1,
    "critical": false,
    "uncertainty": {
@@ -5376,10 +5472,10 @@
    "metrics": {
     "buildingShare": 0.0676,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 4,
+     "share": 0.001,
+     "detour": 0.032,
+     "extraPerTrip": 30.8,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -5409,24 +5505,24 @@
    },
    "routes": [
     {
-     "from": "E2",
-     "to": "SLC",
-     "mode": "winter"
+     "from": "B1",
+     "to": "ESC",
+     "mode": "campus"
     },
     {
-     "from": "SLC",
-     "to": "E2",
-     "mode": "winter"
+     "from": "ESC",
+     "to": "B1",
+     "mode": "campus"
     },
     {
-     "from": "E3",
-     "to": "SLC",
-     "mode": "winter"
+     "from": "B2",
+     "to": "ESC",
+     "mode": "campus"
     }
    ]
   },
   "link:a44a17d375f3a137": {
-   "tier": "P2",
+   "tier": "P1",
    "score": 7.1,
    "critical": false,
    "uncertainty": {
@@ -5442,8 +5538,8 @@
    "metrics": {
     "buildingShare": 0.1347,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
+     "usedBy": 2,
+     "share": 0.0019,
      "detour": 0,
      "extraPerTrip": 0,
      "lost": 0,
@@ -5475,24 +5571,24 @@
    },
    "routes": [
     {
+     "from": "C2",
+     "to": "DC",
+     "mode": "campus"
+    },
+    {
+     "from": "DC",
+     "to": "C2",
+     "mode": "campus"
+    },
+    {
      "from": "DC",
      "to": "SLC",
-     "mode": "winter"
-    },
-    {
-     "from": "SLC",
-     "to": "DC",
-     "mode": "winter"
-    },
-    {
-     "from": "DC",
-     "to": "MC",
      "mode": "winter"
     }
    ]
   },
   "link:b0c5ea1235007cd6": {
-   "tier": "P2",
+   "tier": "P1",
    "score": 2.1,
    "critical": false,
    "uncertainty": {
@@ -5508,10 +5604,10 @@
    "metrics": {
     "buildingShare": 0.043,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 4,
+     "share": 0.0005,
+     "detour": 0.015,
+     "extraPerTrip": 30.5,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -5541,19 +5637,19 @@
    },
    "routes": [
     {
-     "from": "DC",
+     "from": "E5",
      "to": "E6",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
      "from": "E6",
-     "to": "DC",
-     "mode": "winter"
+     "to": "E5",
+     "mode": "campus"
     },
     {
      "from": "E6",
-     "to": "SLC",
-     "mode": "winter"
+     "to": "PSE",
+     "mode": "campus"
     }
    ]
   },
@@ -5625,14 +5721,14 @@
   },
   "link:c34ea719b8b9dee5": {
    "tier": "P0",
-   "score": 40.5,
+   "score": 20.4,
    "critical": true,
    "uncertainty": {
     "routing": 0.7,
     "access": 0.45
    },
    "factors": {
-    "routing": 1,
+    "routing": 0.425,
     "traffic": 0.785,
     "shortcut": 0,
     "accessibility": 0
@@ -5640,10 +5736,10 @@
    "metrics": {
     "buildingShare": 0.1295,
     "campus": {
-     "usedBy": 47,
-     "share": 0.0177,
-     "detour": 5.322,
-     "extraPerTrip": 300,
+     "usedBy": 49,
+     "share": 0.0193,
+     "detour": 5.369,
+     "extraPerTrip": 278.3,
      "lost": 47,
      "lostShare": 0.0177,
      "gained": 0,
@@ -5678,27 +5774,27 @@
      "mode": "campus"
     },
     {
-     "from": "SLC",
-     "to": "PAC",
+     "from": "PAC",
+     "to": "SLC",
      "mode": "campus"
     },
     {
-     "from": "MC",
+     "from": "SLC",
      "to": "PAC",
      "mode": "campus"
     }
    ]
   },
   "link:cb6a5cbb57270d97": {
-   "tier": "P2",
-   "score": 6.5,
+   "tier": "P1",
+   "score": 7.4,
    "critical": false,
    "uncertainty": {
     "routing": 0.45,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.097,
+    "routing": 0.14,
     "traffic": 0.468,
     "shortcut": 0,
     "accessibility": 0.137
@@ -5706,10 +5802,10 @@
    "metrics": {
     "buildingShare": 0.0772,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 33,
+     "share": 0.0158,
+     "detour": 0.003,
+     "extraPerTrip": 0.2,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -5739,19 +5835,19 @@
    },
    "routes": [
     {
-     "from": "PAS",
-     "to": "SLC",
-     "mode": "winter"
+     "from": "DC",
+     "to": "EV1",
+     "mode": "campus"
     },
     {
-     "from": "SLC",
-     "to": "PAS",
-     "mode": "winter"
+     "from": "EV1",
+     "to": "DC",
+     "mode": "campus"
     },
     {
      "from": "EV1",
      "to": "SLC",
-     "mode": "winter"
+     "mode": "campus"
     }
    ]
   },
@@ -5922,7 +6018,7 @@
    ]
   },
   "link:e525e7be720411da": {
-   "tier": "P2",
+   "tier": "P1",
    "score": 5.2,
    "critical": false,
    "uncertainty": {
@@ -5938,10 +6034,10 @@
    "metrics": {
     "buildingShare": 0.0877,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 2,
+     "share": 0.001,
+     "detour": 0.019,
+     "extraPerTrip": 19,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -5971,32 +6067,32 @@
    },
    "routes": [
     {
-     "from": "E2",
+     "from": "EIT",
      "to": "ESC",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
      "from": "ESC",
-     "to": "E2",
-     "mode": "winter"
+     "to": "EIT",
+     "mode": "campus"
     },
     {
-     "from": "E3",
+     "from": "E2",
      "to": "ESC",
      "mode": "winter"
     }
    ]
   },
   "link:e896cef8a08ec31c": {
-   "tier": "P2",
-   "score": 6.3,
+   "tier": "P0",
+   "score": 7.4,
    "critical": false,
    "uncertainty": {
     "routing": 0.6,
     "access": 0.8
    },
    "factors": {
-    "routing": 0.062,
+    "routing": 0.101,
     "traffic": 0.408,
     "shortcut": 0,
     "accessibility": 0.123
@@ -6004,10 +6100,10 @@
    "metrics": {
     "buildingShare": 0.0673,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 30,
+     "share": 0.011,
+     "detour": 0.076,
+     "extraPerTrip": 6.9,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -6037,24 +6133,24 @@
    },
    "routes": [
     {
-     "from": "DC",
-     "to": "PAS",
-     "mode": "winter"
-    },
-    {
-     "from": "PAS",
-     "to": "DC",
-     "mode": "winter"
-    },
-    {
-     "from": "DC",
+     "from": "E2",
      "to": "EV1",
-     "mode": "winter"
+     "mode": "campus"
+    },
+    {
+     "from": "EV1",
+     "to": "E2",
+     "mode": "campus"
+    },
+    {
+     "from": "E3",
+     "to": "EV1",
+     "mode": "campus"
     }
    ]
   },
   "link:fb3ea7dae21f102e": {
-   "tier": "P2",
+   "tier": "P1",
    "score": 11.4,
    "critical": false,
    "uncertainty": {
@@ -6070,10 +6166,10 @@
    "metrics": {
     "buildingShare": 0.0498,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 6,
+     "share": 0.0014,
+     "detour": 0.046,
+     "extraPerTrip": 33.6,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -6103,24 +6199,24 @@
    },
    "routes": [
     {
-     "from": "E2",
-     "to": "SLC",
-     "mode": "winter"
+     "from": "B1",
+     "to": "QNC",
+     "mode": "campus"
     },
     {
-     "from": "SLC",
-     "to": "E2",
-     "mode": "winter"
+     "from": "QNC",
+     "to": "B1",
+     "mode": "campus"
     },
     {
-     "from": "E3",
-     "to": "SLC",
-     "mode": "winter"
+     "from": "B2",
+     "to": "ESC",
+     "mode": "campus"
     }
    ]
   },
   "link:fc8df53f6b2f3f8b": {
-   "tier": "P2",
+   "tier": "P1",
    "score": 3,
    "critical": false,
    "uncertainty": {
@@ -6136,10 +6232,10 @@
    "metrics": {
     "buildingShare": 0.069,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 4,
+     "share": 0.0011,
+     "detour": 0.003,
+     "extraPerTrip": 3.2,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -6169,19 +6265,19 @@
    },
    "routes": [
     {
-     "from": "DC",
+     "from": "EV1",
      "to": "HH",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
      "from": "HH",
-     "to": "DC",
-     "mode": "winter"
+     "to": "EV1",
+     "mode": "campus"
     },
     {
      "from": "HH",
-     "to": "SLC",
-     "mode": "winter"
+     "to": "ML",
+     "mode": "campus"
     }
    ]
   },
@@ -6202,8 +6298,8 @@
    "metrics": {
     "buildingShare": 0.113,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
+     "usedBy": 2,
+     "share": 0.0016,
      "detour": 0,
      "extraPerTrip": 0,
      "lost": 0,
@@ -6235,17 +6331,17 @@
    },
    "routes": [
     {
+     "from": "MC",
+     "to": "QNC",
+     "mode": "campus"
+    },
+    {
+     "from": "QNC",
+     "to": "MC",
+     "mode": "campus"
+    },
+    {
      "from": "E2",
-     "to": "SLC",
-     "mode": "winter"
-    },
-    {
-     "from": "SLC",
-     "to": "E2",
-     "mode": "winter"
-    },
-    {
-     "from": "E3",
      "to": "SLC",
      "mode": "winter"
     }
@@ -7709,7 +7805,7 @@
    "routes": []
   },
   "vertical:010d6849b15adf4d": {
-   "tier": "P2",
+   "tier": "P1",
    "score": 8.4,
    "critical": false,
    "uncertainty": {
@@ -7725,8 +7821,8 @@
    "metrics": {
     "buildingShare": 0.0906,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
+     "usedBy": 4,
+     "share": 0.0024,
      "detour": 0,
      "extraPerTrip": 0,
      "lost": 0,
@@ -7758,24 +7854,24 @@
    },
    "routes": [
     {
+     "from": "CPH",
+     "to": "DWE",
+     "mode": "campus"
+    },
+    {
+     "from": "DWE",
+     "to": "CPH",
+     "mode": "campus"
+    },
+    {
      "from": "CMH",
      "to": "DC",
-     "mode": "winter"
-    },
-    {
-     "from": "DC",
-     "to": "CMH",
-     "mode": "winter"
-    },
-    {
-     "from": "CMH",
-     "to": "SLC",
      "mode": "winter"
     }
    ]
   },
   "vertical:01fd0ebc02c01670": {
-   "tier": "P2",
+   "tier": "P1",
    "score": 6.3,
    "critical": false,
    "uncertainty": {
@@ -7791,8 +7887,8 @@
    "metrics": {
     "buildingShare": 0.0951,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
+     "usedBy": 2,
+     "share": 0.0012,
      "detour": 0,
      "extraPerTrip": 0,
      "lost": 0,
@@ -7824,18 +7920,18 @@
    },
    "routes": [
     {
+     "from": "EIT",
+     "to": "PHY",
+     "mode": "campus"
+    },
+    {
+     "from": "PHY",
+     "to": "EIT",
+     "mode": "campus"
+    },
+    {
      "from": "E2",
      "to": "SLC",
-     "mode": "winter"
-    },
-    {
-     "from": "SLC",
-     "to": "E2",
-     "mode": "winter"
-    },
-    {
-     "from": "DC",
-     "to": "PHY",
      "mode": "winter"
     }
    ]
@@ -7857,10 +7953,10 @@
    "metrics": {
     "buildingShare": 0.0649,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 8,
+     "share": 0.0027,
+     "detour": 0.026,
+     "extraPerTrip": 9.8,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -7890,19 +7986,19 @@
    },
    "routes": [
     {
-     "from": "PAS",
-     "to": "SLC",
-     "mode": "winter"
-    },
-    {
-     "from": "SLC",
-     "to": "PAS",
-     "mode": "winter"
-    },
-    {
-     "from": "DC",
+     "from": "QNC",
      "to": "STC",
-     "mode": "winter"
+     "mode": "campus"
+    },
+    {
+     "from": "STC",
+     "to": "QNC",
+     "mode": "campus"
+    },
+    {
+     "from": "NH",
+     "to": "QNC",
+     "mode": "campus"
     }
    ]
   },
@@ -8289,15 +8385,15 @@
    "routes": []
   },
   "vertical:12c14d2258420396": {
-   "tier": "P2",
-   "score": 2.6,
+   "tier": "P0",
+   "score": 3.5,
    "critical": false,
    "uncertainty": {
     "routing": 0.3,
     "access": 1
    },
    "factors": {
-    "routing": 0.01,
+    "routing": 0.067,
     "traffic": 0.156,
     "shortcut": 0,
     "accessibility": 0.1
@@ -8305,10 +8401,10 @@
    "metrics": {
     "buildingShare": 0.0258,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 20,
+     "share": 0.0074,
+     "detour": 0.035,
+     "extraPerTrip": 4.7,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -8338,24 +8434,24 @@
    },
    "routes": [
     {
-     "from": "PAS",
-     "to": "PHY",
-     "mode": "winter"
-    },
-    {
-     "from": "PHY",
-     "to": "PAS",
-     "mode": "winter"
+     "from": "E2",
+     "to": "EV1",
+     "mode": "campus"
     },
     {
      "from": "EV1",
-     "to": "PHY",
-     "mode": "winter"
+     "to": "E2",
+     "mode": "campus"
+    },
+    {
+     "from": "E3",
+     "to": "EV1",
+     "mode": "campus"
     }
    ]
   },
   "vertical:15ba72422bab90f6": {
-   "tier": "P1",
+   "tier": "P0",
    "score": 17.4,
    "critical": false,
    "uncertainty": {
@@ -8371,8 +8467,8 @@
    "metrics": {
     "buildingShare": 0.0958,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
+     "usedBy": 4,
+     "share": 0.0032,
      "detour": 0,
      "extraPerTrip": 0,
      "lost": 0,
@@ -8404,19 +8500,19 @@
    },
    "routes": [
     {
-     "from": "DC",
+     "from": "MC",
      "to": "MKV",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
      "from": "MKV",
-     "to": "DC",
-     "mode": "winter"
+     "to": "MC",
+     "mode": "campus"
     },
     {
-     "from": "DC",
-     "to": "V1",
-     "mode": "winter"
+     "from": "MC",
+     "to": "REV",
+     "mode": "campus"
     }
    ]
   },
@@ -8471,7 +8567,7 @@
    "routes": []
   },
   "vertical:1a0f48eee4b475a2": {
-   "tier": "P2",
+   "tier": "P0",
    "score": 3,
    "critical": false,
    "uncertainty": {
@@ -8487,8 +8583,8 @@
    "metrics": {
     "buildingShare": 0.0578,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
+     "usedBy": 6,
+     "share": 0.0044,
      "detour": 0,
      "extraPerTrip": 0,
      "lost": 0,
@@ -8522,17 +8618,17 @@
     {
      "from": "DC",
      "to": "DWE",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
      "from": "DWE",
      "to": "DC",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
      "from": "DWE",
-     "to": "SLC",
-     "mode": "winter"
+     "to": "E3",
+     "mode": "campus"
     }
    ]
   },
@@ -8919,15 +9015,15 @@
    "routes": []
   },
   "vertical:2937c2a29cf9d546": {
-   "tier": "P2",
-   "score": 1.1,
+   "tier": "P1",
+   "score": 1.2,
    "critical": false,
    "uncertainty": {
     "routing": 0.3,
     "access": 1
    },
    "factors": {
-    "routing": 0.024,
+    "routing": 0.027,
     "traffic": 0.253,
     "shortcut": 0,
     "accessibility": 0
@@ -8935,10 +9031,10 @@
    "metrics": {
     "buildingShare": 0.0417,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 8,
+     "share": 0.0028,
+     "detour": 0.048,
+     "extraPerTrip": 17.2,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -8968,19 +9064,19 @@
    },
    "routes": [
     {
-     "from": "E2",
-     "to": "QNC",
-     "mode": "winter"
-    },
-    {
      "from": "QNC",
-     "to": "E2",
-     "mode": "winter"
+     "to": "STC",
+     "mode": "campus"
     },
     {
-     "from": "E3",
+     "from": "STC",
      "to": "QNC",
-     "mode": "winter"
+     "mode": "campus"
+    },
+    {
+     "from": "NH",
+     "to": "QNC",
+     "mode": "campus"
     }
    ]
   },
@@ -9185,7 +9281,7 @@
    "routes": []
   },
   "vertical:2b726040e0297594": {
-   "tier": "P2",
+   "tier": "P0",
    "score": 5.3,
    "critical": false,
    "uncertainty": {
@@ -9201,10 +9297,10 @@
    "metrics": {
     "buildingShare": 0.042,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 12,
+     "share": 0.005,
+     "detour": 0.004,
+     "extraPerTrip": 0.8,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -9234,19 +9330,19 @@
    },
    "routes": [
     {
-     "from": "DC",
-     "to": "PAS",
-     "mode": "winter"
+     "from": "EV1",
+     "to": "EV2",
+     "mode": "campus"
     },
     {
-     "from": "PAS",
-     "to": "DC",
-     "mode": "winter"
+     "from": "EV2",
+     "to": "EV1",
+     "mode": "campus"
     },
     {
-     "from": "PAS",
-     "to": "SLC",
-     "mode": "winter"
+     "from": "AL",
+     "to": "EV2",
+     "mode": "campus"
     }
    ]
   },
@@ -9699,7 +9795,7 @@
    "routes": []
   },
   "vertical:61b8f29cb99a70a0": {
-   "tier": "P2",
+   "tier": "P0",
    "score": 4.3,
    "critical": false,
    "uncertainty": {
@@ -9715,8 +9811,8 @@
    "metrics": {
     "buildingShare": 0.1093,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
+     "usedBy": 6,
+     "share": 0.0044,
      "detour": 0,
      "extraPerTrip": 0,
      "lost": 0,
@@ -9749,18 +9845,18 @@
    "routes": [
     {
      "from": "DC",
-     "to": "E2",
-     "mode": "winter"
-    },
-    {
-     "from": "E2",
-     "to": "DC",
-     "mode": "winter"
-    },
-    {
-     "from": "DC",
      "to": "DWE",
-     "mode": "winter"
+     "mode": "campus"
+    },
+    {
+     "from": "DWE",
+     "to": "DC",
+     "mode": "campus"
+    },
+    {
+     "from": "DWE",
+     "to": "E3",
+     "mode": "campus"
     }
    ]
   },
@@ -9865,15 +9961,15 @@
    "routes": []
   },
   "vertical:6f794428566a403c": {
-   "tier": "P1",
-   "score": 12.6,
+   "tier": "P0",
+   "score": 13,
    "critical": false,
    "uncertainty": {
     "routing": 0.3,
     "access": 1
    },
    "factors": {
-    "routing": 0.008,
+    "routing": 0.032,
     "traffic": 0.441,
     "shortcut": 0,
     "accessibility": 0.558
@@ -9881,10 +9977,10 @@
    "metrics": {
     "buildingShare": 0.0728,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 4,
+     "share": 0.0033,
+     "detour": 0.058,
+     "extraPerTrip": 17.6,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -9914,19 +10010,19 @@
    },
    "routes": [
     {
-     "from": "M3",
-     "to": "SLC",
-     "mode": "winter"
+     "from": "MC",
+     "to": "V1",
+     "mode": "campus"
     },
     {
-     "from": "SLC",
-     "to": "M3",
-     "mode": "winter"
+     "from": "V1",
+     "to": "MC",
+     "mode": "campus"
     },
     {
-     "from": "ERC",
-     "to": "SLC",
-     "mode": "winter"
+     "from": "MC",
+     "to": "PAC",
+     "mode": "campus"
     }
    ]
   },
@@ -9997,15 +10093,15 @@
    ]
   },
   "vertical:7569bd3c83d5a920": {
-   "tier": "P2",
-   "score": 9.5,
+   "tier": "P0",
+   "score": 9.6,
    "critical": false,
    "uncertainty": {
     "routing": 0.3,
     "access": 1
    },
    "factors": {
-    "routing": 0.22,
+    "routing": 0.223,
     "traffic": 0.238,
     "shortcut": 0,
     "accessibility": 0.276
@@ -10013,10 +10109,10 @@
    "metrics": {
     "buildingShare": 0.0393,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 38,
+     "share": 0.015,
+     "detour": 1.91,
+     "extraPerTrip": 127.7,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -10046,24 +10142,24 @@
    },
    "routes": [
     {
-     "from": "PAS",
-     "to": "SLC",
-     "mode": "winter"
+     "from": "DC",
+     "to": "NH",
+     "mode": "campus"
     },
     {
-     "from": "SLC",
-     "to": "PAS",
-     "mode": "winter"
+     "from": "NH",
+     "to": "DC",
+     "mode": "campus"
     },
     {
-     "from": "EV1",
-     "to": "SLC",
-     "mode": "winter"
+     "from": "E2",
+     "to": "NH",
+     "mode": "campus"
     }
    ]
   },
   "vertical:77a61af267b24056": {
-   "tier": "P2",
+   "tier": "P1",
    "score": 3.4,
    "critical": false,
    "uncertainty": {
@@ -10079,10 +10175,10 @@
    "metrics": {
     "buildingShare": 0.0728,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 2,
+     "share": 0.0014,
+     "detour": 0.015,
+     "extraPerTrip": 11,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -10112,18 +10208,18 @@
    },
    "routes": [
     {
+     "from": "C2",
+     "to": "MC",
+     "mode": "campus"
+    },
+    {
+     "from": "MC",
+     "to": "C2",
+     "mode": "campus"
+    },
+    {
      "from": "DC",
      "to": "SLC",
-     "mode": "winter"
-    },
-    {
-     "from": "SLC",
-     "to": "DC",
-     "mode": "winter"
-    },
-    {
-     "from": "DC",
-     "to": "MC",
      "mode": "winter"
     }
    ]
@@ -10311,15 +10407,15 @@
    ]
   },
   "vertical:9407e940c7083614": {
-   "tier": "P2",
-   "score": 1.1,
+   "tier": "P0",
+   "score": 1.6,
    "critical": false,
    "uncertainty": {
     "routing": 0.3,
     "access": 1
    },
    "factors": {
-    "routing": 0.033,
+    "routing": 0.062,
     "traffic": 0.215,
     "shortcut": 0,
     "accessibility": 0
@@ -10327,10 +10423,10 @@
    "metrics": {
     "buildingShare": 0.0355,
     "campus": {
-     "usedBy": 0,
-     "share": 0,
-     "detour": 0,
-     "extraPerTrip": 0,
+     "usedBy": 18,
+     "share": 0.0065,
+     "detour": 0.095,
+     "extraPerTrip": 14.6,
      "lost": 0,
      "lostShare": 0,
      "gained": 0,
@@ -10361,18 +10457,18 @@
    "routes": [
     {
      "from": "BMH",
-     "to": "DC",
-     "mode": "winter"
+     "to": "E2",
+     "mode": "campus"
     },
     {
-     "from": "DC",
+     "from": "E2",
      "to": "BMH",
-     "mode": "winter"
+     "mode": "campus"
     },
     {
      "from": "BMH",
-     "to": "SLC",
-     "mode": "winter"
+     "to": "PHY",
+     "mode": "campus"
     }
    ]
   },
