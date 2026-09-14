@@ -59,6 +59,7 @@ import { connectorDoors, type ConnectorFetcher } from "./indoorRoute";
 /** Seconds charged at each crossing into, out of or between buildings, by how well it is evidenced. */
 export const CAMPUS_UNCERTAINTY_SECONDS: Record<Evidence, number> = {
   OFFICIAL: 0,
+  FIELD_VERIFIED: 0,
   CORROBORATED: 0,
   SURVEYED: 10,
   INFERRED: 30,
@@ -555,7 +556,7 @@ export function explainCampusDecision(d: CampusDecision): string {
   const google = d.googleSeconds === undefined ? "" : ` (${formatSeconds(d.googleSeconds)})`;
   if (d.chosen) {
     lines.push("Selected:", ...d.chosen.via.map((v, i) => `${i === 0 ? "  " : "  → "}${v}`));
-    lines.push(`because: ${d.summary} Estimated ${formatSeconds(d.chosen.seconds)}; weakest evidence ${d.chosen.evidence.toLowerCase()}.`);
+    lines.push(`because: ${d.summary} Estimated ${formatSeconds(d.chosen.seconds)}; weakest evidence ${d.chosen.evidence.toLowerCase().replace(/_/g, " ")}.`);
   } else {
     lines.push(`Selected: Google's walk${google}`, `because: ${d.summary}`);
   }

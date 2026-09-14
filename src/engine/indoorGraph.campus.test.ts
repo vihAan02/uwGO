@@ -5,7 +5,7 @@ import { UW_INDOOR_NETWORK as NET } from "@/data/indoor/uw-indoor-network.genera
 import { haversineMeters } from "@/routing/EstimateRoutingProvider";
 import { CAMPUS_RESEARCH, compileKnowledge, type Availability, type CampusOverlay, type EdgeFact } from "@/data/campus";
 import { torontoDate } from "@/time/toronto";
-import { INDOOR_PACE, anchorsOf, edgeSeconds, graphOver, nearestEntrances, openState, refusalFor, routeBetweenBuildings, routeBetweenNodes, searchTo, type RouteOptions } from "./indoorGraph";
+import { INDOOR_PACE, anchorsOf, edgeSeconds, graphOver, nearestEntrances, openState, refusalFor, routeBetweenBuildings, routeBetweenNodes, searchTo, type IndoorGraphRoute, type RouteOptions } from "./indoorGraph";
 
 /**
  * What the campus routing knowledge does to a search. A small made-up campus holds each rule on
@@ -189,6 +189,23 @@ describe("step-free routing", () => {
     expect(edgeSeconds({ ...oneFloor, kind: "ELEVATOR" }).seconds).toBe(INDOOR_PACE.elevatorWaitSeconds + INDOOR_PACE.elevatorSecondsPerFloor);
     expect(edgeSeconds({ ...oneFloor, kind: "RAMP" }).seconds).toBe(INDOOR_PACE.rampSecondsPerFloor);
     expect(edgeSeconds({ ...oneFloor, kind: "ELEVATOR", floors: 0 }).seconds).toBe(0);
+  });
+
+  it("crosses a stairwell as the elevator someone saw there, and step-free only once its access is confirmed", () => {
+    const seen = (over: Partial<EdgeFact>) => knowing({ edges: [fact("bStairs", { evidence: "FIELD_VERIFIED", vertical: ["STAIRS", "ELEVATOR"], verticalEvidence: "FIELD_VERIFIED", ...over })] });
+    const changeOfFloor = (r: IndoorGraphRoute) => r.segments.find((s) => s.floors !== 0)!;
+
+    // Walking, the quicker of the ways seen: one floor of stairs beats waiting for the elevator.
+    expect(changeOfFloor(route(seen({}), "a2", "bAnchor")!)).toMatchObject({ kind: "STAIRS", seconds: INDOOR_PACE.secondsPerFloor });
+    // An elevator seen is not an elevator known to be step-free.
+    expect(route(seen({}), "a2", "bAnchor", stepFree)).toBeUndefined();
+
+    const confirmed = route(seen({ access: { stepFree: true } }), "a2", "bAnchor", stepFree)!;
+    expect(changeOfFloor(confirmed)).toMatchObject({ kind: "ELEVATOR", seconds: INDOOR_PACE.elevatorWaitSeconds + INDOOR_PACE.elevatorSecondsPerFloor });
+
+    // How a change of floor is made rests on its own evidence: a guess about it changes nothing.
+    const guessed = route(seen({ access: { stepFree: true }, verticalEvidence: "INFERRED" }), "a2", "bAnchor", stepFree)!;
+    expect(changeOfFloor(guessed).kind).toBe("STAIRS");
   });
 
   it("never takes a link known not to be step-free, even when it is the fastest", () => {

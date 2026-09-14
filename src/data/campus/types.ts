@@ -17,6 +17,9 @@ import type { IndoorEdgeKind } from "../indoor/network";
  * How strong the evidence behind one fact is, strongest first.
  *
  * - OFFICIAL: an explicit university statement about this particular fact.
+ * - FIELD_VERIFIED: checked on the ground by someone working on UW Go, recorded as a field observation
+ *   and deliberately promoted (src/data/campus/field). Dated: construction or a later survey can make it
+ *   stale, which is why the observation's date travels with the fact.
  * - CORROBORATED: two independent sources agree, typically a university statement and the survey's
  *   geometry pointing at the same thing.
  * - SURVEYED: present in the WATIsGrass community survey only. It has real geometry, but nobody has
@@ -25,13 +28,18 @@ import type { IndoorEdgeKind } from "../indoor/network";
  * - INFERRED: an analytical hypothesis, or a match UW Go made that no source states.
  * - UNRESOLVED: sources disagree, or the only statement is undated or disputed.
  */
-export type Evidence = "OFFICIAL" | "CORROBORATED" | "SURVEYED" | "ANECDOTAL" | "INFERRED" | "UNRESOLVED";
+export type Evidence = "OFFICIAL" | "FIELD_VERIFIED" | "CORROBORATED" | "SURVEYED" | "ANECDOTAL" | "INFERRED" | "UNRESOLVED";
 
-export const EVIDENCE_ORDER: readonly Evidence[] = ["OFFICIAL", "CORROBORATED", "SURVEYED", "ANECDOTAL", "INFERRED", "UNRESOLVED"];
+export const EVIDENCE_ORDER: readonly Evidence[] = ["OFFICIAL", "FIELD_VERIFIED", "CORROBORATED", "SURVEYED", "ANECDOTAL", "INFERRED", "UNRESOLVED"];
 
 /** The weaker of two pieces of evidence: a route is only as certain as its least certain part. */
 export function weakerEvidence(a: Evidence, b: Evidence): Evidence {
   return EVIDENCE_ORDER.indexOf(a) >= EVIDENCE_ORDER.indexOf(b) ? a : b;
+}
+
+/** The stronger of two pieces of evidence: what a claim rests on once a second source confirms it. */
+export function strongerEvidence(a: Evidence, b: Evidence): Evidence {
+  return EVIDENCE_ORDER.indexOf(a) <= EVIDENCE_ORDER.indexOf(b) ? a : b;
 }
 
 /**
@@ -73,6 +81,9 @@ export interface Access {
 }
 
 export const UNKNOWN_ACCESS: Access = { stepFree: null, automaticDoor: null, ramp: null, accessibleDesignation: null, independent: null };
+
+/** How a change of floor can be made, as far as anyone has seen. */
+export type VerticalKind = "STAIRS" | "ELEVATOR" | "RAMP";
 
 /** Day of the week in Toronto, Sunday = 0, as `Date#getDay` numbers it. */
 export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
@@ -226,6 +237,19 @@ export interface NetworkEdgeRef {
   between: readonly [string, string];
 }
 
+/** A promotion of field observations that a fact now rests on. See src/data/campus/field. */
+export interface FieldProvenance {
+  promotionId: string;
+  observationIds: readonly string[];
+  /** Date of the latest observation promoted, YYYY-MM-DD, on the verifier's own clock. */
+  observedOn: string;
+  /** Who checked on the ground. */
+  verifiedBy: readonly string[];
+  reviewedAt: string;
+  /** What the promotion claimed; `describeClaims` in field/rules.ts puts it in words. */
+  claims: import("./field/types").FieldClaims;
+}
+
 export interface EdgeFact {
   ref: NetworkEdgeRef;
   label: string;
@@ -242,8 +266,23 @@ export interface EdgeFact {
   passage?: Readonly<Record<string, Passage>>;
   access?: Partial<Access>;
   availability?: Availability;
-  /** Evidence for the passage and access claims when it differs from the segment's own. */
+  /** Evidence for the passage claims when it differs from the segment's own. */
   passageEvidence?: Evidence;
+  /**
+   * Evidence for the access claims when it differs from the segment's own. A visit that confirms which door
+   * this is does not confirm what a research description said about its opener, so routing relies on access
+   * claims by this, not by `evidence`.
+   */
+  accessEvidence?: Evidence;
+  /**
+   * How this change of floor can be made, where someone has seen it: the survey's kind is only its first
+   * word. It decides the timing and what a route says; a step-free route still needs `access.stepFree`.
+   */
+  vertical?: readonly VerticalKind[];
+  /** Evidence for `vertical` when it differs from the segment's own. */
+  verticalEvidence?: Evidence;
+  /** The field observations this fact rests on, once promoted. */
+  field?: readonly FieldProvenance[];
 }
 
 /**
@@ -278,6 +317,8 @@ export interface BuildingFact {
     arrivalAdvice: string;
   };
   availability?: { value: Availability; ruleId?: string; evidence: Evidence; sourceIds: readonly string[]; basis: string };
+  /** The field observations this building's facts rest on, once promoted. */
+  field?: readonly FieldProvenance[];
 }
 
 export interface Conflict {

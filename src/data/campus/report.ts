@@ -8,7 +8,7 @@
 import type { CampusKnowledge, SurveyedEdge } from "./knowledge";
 import type { Activation, Evidence, FieldCheck } from "./types";
 
-const EVIDENCE: readonly Evidence[] = ["OFFICIAL", "CORROBORATED", "SURVEYED", "ANECDOTAL", "INFERRED", "UNRESOLVED"];
+const EVIDENCE: readonly Evidence[] = ["OFFICIAL", "FIELD_VERIFIED", "CORROBORATED", "SURVEYED", "ANECDOTAL", "INFERRED", "UNRESOLVED"];
 const ACTIVATION: readonly Activation[] = ["ACTIVE", "EXPERIMENTAL", "QUARANTINED", "HISTORICAL"];
 
 const lower = (s: string) => s.toLowerCase();
@@ -109,7 +109,8 @@ export function renderCampusAudit(k: CampusKnowledge, surveyed: ReadonlyMap<stri
     push("", `Treatment: ${c.treatment}`, "");
   }
 
-  push("## Field verification backlog", "", "Things to walk out and check. Priority 1 blocks a production decision; 2 would improve routing; 3 completes the inventory.", "");
+  push("## Field verification backlog", "", "Things to walk out and check, as reviewers wrote them down. Priority 1 blocks a production decision; 2 would improve routing; 3 completes the inventory. The list to walk, ranked from what UW Go actually routes and with exactly what to check at each place, is `docs/campus-field-verification.md`; record findings at `/dev/campus-audit` (see `src/data/campus/field/README.md`).", "");
+  push(`Promoted field observations: ${k.promotions.length}.${k.promotions.length ? ` ${k.promotions.map((p) => `${p.id} (${p.observedOn}, by ${p.verifiedBy.join(", ")})`).join("; ")}.` : ""}`, "");
   const placementChecks: FieldCheck[] = placements
     .filter((f) => f.research?.portals?.length)
     .map((f) => ({

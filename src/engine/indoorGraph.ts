@@ -356,9 +356,12 @@ function hoursRefusal(g: Graph, buildings: readonly string[], c: CampusConstrain
   return undefined;
 }
 
-/** The claims a fact attaches that a route may rely on to widen what it uses. */
-function usableAccess(fact: EdgeFact | undefined, experimental: boolean): Partial<Access> | undefined {
-  return fact && claimsUsable(fact.evidence, experimental) ? fact.access : undefined;
+/**
+ * The access claims a fact attaches that a route may rely on to widen what it uses. They carry their own
+ * evidence: confirming which door a fact is about does not confirm what was said about its opener.
+ */
+export function usableAccess(fact: EdgeFact | undefined, experimental: boolean): Partial<Access> | undefined {
+  return fact && claimsUsable(fact.accessEvidence ?? fact.evidence, experimental) ? fact.access : undefined;
 }
 
 /** The passage a fact states for a direction, if it states one. */
@@ -443,8 +446,30 @@ export function crossingCost(g: Graph, index: number, opts: RouteOptions = {}): 
   return cost;
 }
 
+/**
+ * The kind a traveller crosses a segment as. For a change of floor someone has seen, that is the way
+ * they would make it: an elevator or ramp when they need step-free (reached only once it is documented as
+ * step-free; see `refusalFor`), otherwise whichever way seen is quickest. Anything else is as surveyed.
+ */
+export function travelKind(g: Graph, index: number, opts: RouteOptions = {}, pace: Pace = INDOOR_PACE): IndoorEdgeKind {
+  const edge = g.net.edges[index];
+  const fact = g.facts[index];
+  const seen = fact?.vertical;
+  if (!fact || !seen?.length || !isVertical(edge.kind)) return edge.kind;
+  const c = opts.constraints ?? {};
+  if (!claimsUsable(fact.verticalEvidence ?? fact.evidence, Boolean(c.experimental))) return edge.kind;
+  if (c.access?.stepFree) return seen.includes("ELEVATOR") ? "ELEVATOR" : seen.includes("RAMP") ? "RAMP" : edge.kind;
+  return [...seen].sort((x, y) => edgeSeconds({ ...edge, kind: x }, pace).seconds - edgeSeconds({ ...edge, kind: y }, pace).seconds)[0];
+}
+
+/** Seconds to cross a segment the way this traveller would. */
+function secondsOf(g: Graph, arc: Arc, opts: RouteOptions, pace: Pace): { seconds: number; outdoor: number } {
+  const kind = travelKind(g, arc.index, opts, pace);
+  return edgeSeconds(kind === arc.edge.kind ? arc.edge : { ...arc.edge, kind }, pace);
+}
+
 function arcCost(g: Graph, arc: Arc, opts: RouteOptions, pace: Pace, penalty: number): { cost: number; seconds: number } {
-  const t = edgeSeconds(arc.edge, pace);
+  const t = secondsOf(g, arc, opts, pace);
   const cost = (t.seconds - t.outdoor) + t.outdoor * penalty + (isCrossing(g, arc.edge) ? crossingCost(g, arc.index, opts) : 0);
   return { cost, seconds: t.seconds };
 }
@@ -522,10 +547,10 @@ export function routeOf(arcs: readonly Arc[], opts: RouteOptions = {}, g: Graph 
   const penalty = opts.outdoorPenalty ?? OUTDOOR_PENALTY;
   const segments: IndoorSegment[] = arcs.map((arc) => {
     const e = arc.edge;
-    const t = edgeSeconds(e, pace);
+    const t = secondsOf(g, arc, opts, pace);
     const forward = arc.from === e.a;
     return {
-      kind: e.kind,
+      kind: travelKind(g, arc.index, opts, pace),
       from: g.net.nodes[arc.from],
       to: g.net.nodes[arc.to],
       metres: e.metres,

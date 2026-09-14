@@ -121,6 +121,7 @@ describe("UW Go's reviewed decisions", () => {
 
   it("use a claim only as far as its evidence goes", () => {
     expect(claimsUsable("OFFICIAL", false)).toBe(true);
+    expect(claimsUsable("FIELD_VERIFIED", false)).toBe(true);
     expect(claimsUsable("CORROBORATED", false)).toBe(true);
     expect(claimsUsable("SURVEYED", false)).toBe(false);
     expect(claimsUsable("INFERRED", false)).toBe(false);

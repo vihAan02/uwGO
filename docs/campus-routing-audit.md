@@ -26,12 +26,12 @@ Status: `research_seed_not_navigation_ready`. Every record has routing disabled.
 
 Research records never route on their own. A fact is attached to a surveyed segment by UW Go's overlay, and routing uses it as its activation says. Restrictions (a door that may not be used inwards, a link that is not step-free) apply whatever their evidence; anything that widens what a route may use needs official or corroborated evidence.
 
-| Activation | official | corroborated | surveyed | anecdotal | inferred | unresolved |
-|---|---|---|---|---|---|---|
-| active | 0 | 32 | 0 | 0 | 6 | 1 |
-| experimental | 0 | 0 | 0 | 0 | 0 | 0 |
-| quarantined | 0 | 0 | 0 | 0 | 1 | 1 |
-| historical | 0 | 0 | 0 | 0 | 0 | 0 |
+| Activation | official | field_verified | corroborated | surveyed | anecdotal | inferred | unresolved |
+|---|---|---|---|---|---|---|---|
+| active | 0 | 0 | 32 | 0 | 0 | 6 | 1 |
+| experimental | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| quarantined | 0 | 0 | 0 | 0 | 0 | 1 | 1 |
+| historical | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 
 Segments the survey has that routing does not use:
 
@@ -225,7 +225,9 @@ Treatment: Step-free routing never changes floor by stairs, and uses an elevator
 
 ## Field verification backlog
 
-Things to walk out and check. Priority 1 blocks a production decision; 2 would improve routing; 3 completes the inventory.
+Things to walk out and check, as reviewers wrote them down. Priority 1 blocks a production decision; 2 would improve routing; 3 completes the inventory. The list to walk, ranked from what UW Go actually routes and with exactly what to check at each place, is `docs/campus-field-verification.md`; record findings at `/dev/campus-audit` (see `src/data/campus/field/README.md`).
+
+Promoted field observations: 0.
 
 ### Priority 1
 

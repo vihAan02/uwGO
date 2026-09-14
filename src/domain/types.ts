@@ -236,7 +236,7 @@ export interface RouteOption {
 }
 
 /** How well-evidenced a door, link or route is. See src/data/campus/types.ts. */
-export type CampusEvidence = "OFFICIAL" | "CORROBORATED" | "SURVEYED" | "ANECDOTAL" | "INFERRED" | "UNRESOLVED";
+export type CampusEvidence = "OFFICIAL" | "FIELD_VERIFIED" | "CORROBORATED" | "SURVEYED" | "ANECDOTAL" | "INFERRED" | "UNRESOLVED";
 
 /**
  * What a campus-aware walk decided about one trip.
