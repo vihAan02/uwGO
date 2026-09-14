@@ -5,6 +5,7 @@ import type { CampusLocation, ClassTransition, DayPlan, DayPlanItem, EndOfDayDes
 import { formatClock, formatDuration, minutesBetween } from "@/time/toronto";
 import { googleMapsDirectionsUrl, travelModeFor } from "@/lib/mapsLinks";
 import { indoorPathLabel } from "@/engine/indoorRoute";
+import { explainCampusDecision } from "@/engine/campusRoute";
 import { findRoomPosition } from "@/data/floorplans";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -79,15 +80,17 @@ function WalkChoiceRow({ label, r, chosen, note, onSelect }: { label: string; r:
 export function IndoorComparison({ t, id, label, sel }: { t: ClassTransition; id: string; label: string; sel: Selectable }) {
   const rec = t.recommendedRoute;
   const indoor = t.indoorRoute;
-  const fastest = t.walkingRoute;
+  // The fastest walk is the campus-aware one when the plan took it, otherwise Google's.
+  const fastest = t.campusWalk ?? t.walkingRoute;
   if (!rec || !indoor || !fastest || rec.mode === "TRANSIT") return null;
   // Lit: the way the map is showing for this leg, or until one is tapped, the way the plan took.
   const winterShown = sel.selectedId === `${id}-winter` || (sel.selectedId !== `${id}-fastest` && Boolean(rec.indoorPath));
   const show = (which: "fastest" | "winter", route: RouteOption) =>
     sel.onSelect(`${id}-${which}`, { kind: "LEG", label, from: t.from, to: t.to, route, walkFallback: fastest });
+  const through = fastest.campus?.via.filter((v) => v.startsWith("through ")).map((v) => v.slice("through ".length)) ?? [];
   return (
     <div className="mt-2 space-y-1 text-sm">
-      <WalkChoiceRow label="Fastest" r={fastest} chosen={!winterShown} note="mostly outdoors" onSelect={() => show("fastest", fastest)} />
+      <WalkChoiceRow label="Fastest" r={fastest} chosen={!winterShown} note={through.length ? `via ${through.join(", ")}` : "mostly outdoors"} onSelect={() => show("fastest", fastest)} />
       <WalkChoiceRow label="Winter route" r={indoor} chosen={winterShown} note={`${indoorPathLabel(indoor)} · mostly indoors`} onSelect={() => show("winter", indoor)} />
     </div>
   );
@@ -136,11 +139,36 @@ export function pressable(select: () => void) {
   };
 }
 
+/**
+ * Why a walk uses the doors it does: shown when campus knowledge changed the route, or could not
+ * and the student needs telling how to get in. The full reasoning is a developer aid only.
+ */
+function CampusNote({ t }: { t: ClassTransition }) {
+  const decision = t.campus;
+  if (!decision) return null;
+  const shown = t.recommendedRoute?.campus?.summary ?? (decision.outcome === "NO_USABLE_ROUTE" ? decision.warnings[0] : undefined);
+  const dev = process.env.NODE_ENV !== "production" && (decision.outcome !== "KEPT_GOOGLE" || decision.rejected.length > 0);
+  if (!shown && !dev) return null;
+  return (
+    <>
+      {shown && <p className={cn("mt-1.5 text-xs", decision.outcome === "NO_USABLE_ROUTE" ? "text-warn" : "text-ink-muted")}>{shown}</p>}
+      {dev && (
+        <details className="mt-1" onClick={(e) => e.stopPropagation()}>
+          <summary className="cursor-pointer list-none text-[11px] text-ink-muted [&::-webkit-details-marker]:hidden">Route reasoning (dev)</summary>
+          <pre className="mt-1 overflow-x-auto whitespace-pre-wrap rounded-md bg-surface p-2 text-[11px] leading-snug text-ink-muted">{explainCampusDecision(decision)}</pre>
+        </details>
+      )}
+    </>
+  );
+}
+
 function LeaveRow({ t, id, sel, label, day }: { t: ClassTransition; id: string; sel: Selectable; label: string; day: DayPlan }) {
   const rec = t.recommendedRoute!;
-  const alt = rec.mode === "WALK" ? t.transitRoute : t.walkingRoute;
+  // The walk to fall back on, or to offer beside a bus: the campus-aware one when there is one.
+  const walk = t.campusWalk ?? t.walkingRoute;
+  const alt = rec.mode === "WALK" ? t.transitRoute : walk;
   const sameSpot = rec.durationMinutes === 0;
-  const select = () => sel.onSelect(id, { kind: "LEG", label, from: t.from, to: t.to, route: rec, walkFallback: t.walkingRoute });
+  const select = () => sel.onSelect(id, { kind: "LEG", label, from: t.from, to: t.to, route: rec, walkFallback: walk });
   return (
     <li data-reveal className={cn(ROW, (sel.selectedId === id || sel.selectedId?.startsWith(`${id}-`)) && SELECTED)}>
       <Time at={t.recommendedDeparture!} />
@@ -155,10 +183,12 @@ function LeaveRow({ t, id, sel, label, day }: { t: ClassTransition; id: string; 
         </div>
         {rec.mode === "TRANSIT" && <TransitSteps route={rec} />}
         <RouteAdjustedNote route={rec} />
+        <CampusNote t={t} />
         <IndoorComparison t={t} id={id} label={label} sel={sel} />
-        {/* Reporting hangs off the winter route when there is one: its tunnels and bridges are
-            the segments worth reporting, whether or not the plan chose to take it today. */}
-        <ReportClosure route={t.indoorRoute ?? rec} />
+        {/* Reporting hangs off the route whose doors and links the student is sent through: a
+            campus-aware walk when the plan took one, otherwise the winter route when there is one,
+            whether or not the plan chose to take it today. */}
+        <ReportClosure route={rec.campus ? rec : t.indoorRoute ?? rec} />
         {alt && (
           <div className="mt-1.5 flex items-center gap-1.5 text-xs text-ink-muted">
             <ModeIcon route={alt} className="size-3.5" />

@@ -16,6 +16,8 @@ import { useClosures } from "@/lib/ClosuresProvider";
 import { RemindersProvider, useReminders } from "@/lib/useReminders";
 import { CROWD_LABELS, estimateFromPct, waitLabel } from "@/data/pac/crowd";
 import { formatISODate, mondayOfWeek, todayISO, torontoDate, weekdayOf } from "@/time/toronto";
+import { campusGraphGeoJSON } from "@/engine/campusDebug";
+import { explainCampusDecision } from "@/engine/campusRoute";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -54,6 +56,17 @@ export function WeekView() {
   const pac = usePacLive(Boolean(hydrated && state.gym?.enabled));
   const closures = useClosures();
   const { plan, loading, error } = usePlan(hydrated && account.status !== "loading" ? meetings : undefined, state.home, state.config, monday, { gym: state.gym, routePreference: state.routePreference, gapChoices: state.gapChoices, endOfDay: state.endOfDay, closedEdgeIds: closures.closed, pacLive: pac.reading, pacSamples: pac.samples });
+
+  // Developer inspection of campus routing, from the browser console: the graph as GeoJSON, and
+  // each planned leg's reasoning. Never in a production build.
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+    (window as unknown as { uwgoCampus?: unknown }).uwgoCampus = {
+      geojson: campusGraphGeoJSON,
+      explain: explainCampusDecision,
+      legs: () => Object.values(plan?.days ?? {}).flatMap((d) => d?.transitions ?? []).filter((t) => t.campus).map((t) => ({ from: t.from.name, to: t.to.name, outcome: t.campus!.outcome, reasoning: explainCampusDecision(t.campus!) })),
+    };
+  }, [plan]);
   const pacNow = pac.reading ? estimateFromPct(pac.reading.occupancyPct, "LIVE") : undefined;
   const visibleDays = useMemo(() => DAYS_IN_ORDER.filter((d) => ["M", "T", "W", "Th", "F"].includes(d) || (plan?.days[d]?.classes.length ?? 0) > 0), [plan]);
   const dayPlan = plan?.days[day];
@@ -154,7 +167,7 @@ export function WeekView() {
           )}
           {plan && <div data-reveal><NextClassCard next={next} onSelect={() => {
             const t = next.transition;
-            if (t?.recommendedRoute) setPicked({ id: "next", selection: { kind: "LEG", label: `Next: ${t.from.name} → ${t.to.name}`, from: t.from, to: t.to, route: t.recommendedRoute, walkFallback: t.walkingRoute } });
+            if (t?.recommendedRoute) setPicked({ id: "next", selection: { kind: "LEG", label: `Next: ${t.from.name} → ${t.to.name}`, from: t.from, to: t.to, route: t.recommendedRoute, walkFallback: t.campusWalk ?? t.walkingRoute } });
             else if (next.scheduledClass) setPicked({ id: "next", selection: { kind: "PLACE", label: next.scheduledClass.meeting.courseCode, at: next.scheduledClass.location } });
           }} /></div>}
         </Reveal>

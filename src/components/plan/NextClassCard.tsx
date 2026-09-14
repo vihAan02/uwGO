@@ -52,7 +52,7 @@ export function NextClassCard({ next, onSelect }: { next: NextUp; onSelect: () =
 
   const rec = t?.recommendedRoute;
   const bus = rec?.mode === "TRANSIT" ? rec.steps?.find((s) => s.mode === "TRANSIT")?.transit : undefined;
-  const walkAlt = rec?.mode === "TRANSIT" ? t?.walkingRoute : undefined;
+  const walkAlt = rec?.mode === "TRANSIT" ? t?.campusWalk ?? t?.walkingRoute : undefined;
   const busAlt = rec?.mode === "WALK" ? t?.transitRoute : undefined;
 
   return (

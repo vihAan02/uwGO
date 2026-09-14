@@ -4,6 +4,8 @@ import { Check, Construction } from "lucide-react";
 import type { RouteOption } from "@/domain/types";
 import { UW_INDOOR_NETWORK as NET } from "@/data/indoor/uw-indoor-network.generated";
 import { edgeById, edgeLabel, labelForEdgeId } from "@/data/indoor/edgeId";
+import type { IndoorEdge } from "@/data/indoor/network";
+import { CAMPUS_KNOWLEDGE } from "@/data/campus";
 import { useClosures } from "@/lib/ClosuresProvider";
 import { Button } from "@/components/ui/button";
 
@@ -55,15 +57,40 @@ interface Reportable {
   label: string;
 }
 
+/** The reviewed name for a segment when there is one, otherwise what it is. */
+const nameOf = (id: string, edge: IndoorEdge) => CAMPUS_KNOWLEDGE.edgeFacts.get(id)?.label ?? edgeLabel(NET, edge);
+
+/**
+ * The buildings a chain of segments passes through, in the order it is walked. A segment's own
+ * ends are stored in whichever order the survey drew them, so the order is followed through the
+ * nodes consecutive segments share rather than read off each segment.
+ */
+function buildingsWalked(chain: readonly IndoorEdge[]): string[] {
+  if (!chain.length) return [];
+  const shares = (e: IndoorEdge, node: number) => e.a === node || e.b === node;
+  let node = chain.length > 1 && shares(chain[1], chain[0].a) ? chain[0].b : chain[0].a;
+  const walked: string[] = [];
+  const add = (n: number) => { const b = NET.nodes[n].building; if (b !== "OUT" && walked[walked.length - 1] !== b) walked.push(b); };
+  add(node);
+  for (const e of chain) {
+    if (!shares(e, node)) break; // not a chain after all: keep what is known
+    node = e.a === node ? e.b : e.a;
+    add(node);
+  }
+  return walked;
+}
+
 /**
  * The parts of a route worth reporting, named so a student can tell them apart.
  *
- * Tunnels and bridges each join two buildings and stand alone. A path outside has no buildings
- * of its own, and a route can cross half a dozen of them in a row, so consecutive ones are
- * gathered into a single stretch named for the buildings either side of it. Reporting that
- * stretch reports every segment in it, which is how a hoarding across a path actually behaves.
+ * Tunnels, bridges and other links between two buildings each stand alone, and so does each door
+ * to outside: a locked entrance is a closure too. A path outside has no buildings of its own, and a
+ * route can cross half a dozen of them in a row, so consecutive ones are gathered into a single
+ * stretch named for the buildings either side of it; the corridors of a building the route only
+ * passes through are gathered the same way. Reporting a stretch reports every segment in it, which
+ * is how a hoarding across a path, or a building locked for the night, actually behaves.
  */
-function reportableSegments(route: RouteOption): Reportable[] {
+export function reportableSegments(route: RouteOption): Reportable[] {
   const ids = route.indoorEdgeIds ?? [];
   const edges = ids.map((id) => ({ id, edge: edgeById(NET, id) }));
   /** The building this segment touches, if any; undefined for a segment wholly outside. */
@@ -78,17 +105,33 @@ function reportableSegments(route: RouteOption): Reportable[] {
     return undefined;
   };
 
+  const walked = buildingsWalked(edges.map((e) => e.edge).filter((e): e is IndoorEdge => Boolean(e)));
+  const ends = new Set([walked[0], walked[walked.length - 1]]);
+
   const out: Reportable[] = [];
   const seen = new Set<string>();
   for (let i = 0; i < edges.length; i++) {
     const { id, edge } = edges[i];
     if (!edge || seen.has(id)) continue;
-    if (edge.kind === "TUNNEL" || edge.kind === "BRIDGE") {
+    const a = NET.nodes[edge.a].building;
+    const b = NET.nodes[edge.b].building;
+    if (edge.kind === "TUNNEL" || edge.kind === "BRIDGE" || (a !== b && edge.kind !== "OUTDOOR")) {
       seen.add(id);
-      out.push({ ids: [id], label: edgeLabel(NET, edge) });
+      out.push({ ids: [id], label: a !== b && a !== "OUT" && b !== "OUT" && edge.kind !== "TUNNEL" && edge.kind !== "BRIDGE" ? CAMPUS_KNOWLEDGE.edgeFacts.get(id)?.label ?? `Link between ${[a, b].sort().join(" and ")}` : nameOf(id, edge) });
       continue;
     }
-    if (edge.kind !== "OUTDOOR") continue;
+    if (edge.kind !== "OUTDOOR") {
+      // The corridors of a building the route only passes through, as one stretch.
+      if (a === "OUT" || ends.has(a)) continue;
+      const run: string[] = [];
+      let j = i;
+      for (; j < edges.length && edges[j].edge && edges[j].edge!.kind !== "OUTDOOR" && NET.nodes[edges[j].edge!.a].building === a && NET.nodes[edges[j].edge!.b].building === a; j++) {
+        if (!seen.has(edges[j].id)) { seen.add(edges[j].id); run.push(edges[j].id); }
+      }
+      i = j - 1;
+      if (run.length) out.push({ ids: run, label: `Through ${a}` });
+      continue;
+    }
     // Gather this run of segments outside into one thing to report.
     const run: string[] = [];
     const from = near(i, -1);
