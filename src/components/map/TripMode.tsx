@@ -1,6 +1,7 @@
 "use client";
-import { ArrowLeft, ChevronDown, Compass, Loader2, LocateFixed } from "lucide-react";
+import { ChevronDown, Compass, Loader2, LocateFixed } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ModeIcon } from "@/components/plan/ModeIcon";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { APIProvider, AdvancedMarker, Map, Pin, useAdvancedMarkerRef, useMap } from "@vis.gl/react-google-maps";
 import { decode } from "@googlemaps/polyline-codec";
@@ -11,10 +12,11 @@ import { rerouteFrom, resolveTripRoute, type TripRouteStatus } from "@/lib/tripR
 import { TripRerouter } from "@/lib/tripReroute";
 import { useClosures } from "@/lib/ClosuresProvider";
 import { CONSUME_MAX_OFF_METERS, advanceProgress, pathMetrics, projectOntoPath, remainingPath, type PathMetrics, type Point, type Projection } from "@/lib/routeProgress";
-import { liveHeadline, modeLabel, plannedHeadline, sameHeadline, type TripHeadline } from "@/lib/tripDisplay";
+import { liveHeadline, plannedHeadline, sameHeadline, tripInstruction, type TripHeadline } from "@/lib/tripDisplay";
 import { currentHeading, useDeviceHeading, type HeadingSample } from "@/lib/useDeviceHeading";
 import { headingDelta, smoothHeading } from "@/lib/deviceHeading";
 import { NAV_ZOOM, centreShiftMeters, comfortablyVisible, navigationPose, poseSettled, stepPose, visibleBounds, type CameraPose, type Insets } from "@/lib/tripCamera";
+import { DURATION, EASE_OUT } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 const KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY;
@@ -61,6 +63,8 @@ const FRAME_MS = 33;
 const COURSE_MIN_SPEED = 0.7;
 /** A raster map (no WebGL) snaps to whole zoom levels, so aiming between two of them would never settle. */
 const RASTER_NAV_ZOOM = 17;
+/** Side room when the whole trip is framed, so neither end sits against the edge of the screen. */
+const FRAME_SIDE_PX = 48;
 
 const reducedMotion = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -120,7 +124,7 @@ function TripCamera({ metrics, live, heading, headingUp, follow, hasPos, insets,
       const bounds = new google.maps.LatLngBounds();
       for (const p of metrics.path) bounds.extend(p);
       const i = insetsRef.current;
-      map.fitBounds(bounds, { top: i.topPx + 24, bottom: i.bottomPx + 24, left: 32, right: 32 });
+      map.fitBounds(bounds, { top: i.topPx + 24, bottom: i.bottomPx + 24, left: FRAME_SIDE_PX, right: FRAME_SIDE_PX });
     };
     frame();
     const settle = setTimeout(frame, 350);
@@ -229,25 +233,28 @@ function TripCamera({ metrics, live, heading, headingUp, follow, hasPos, insets,
           <svg viewBox="0 0 64 64" className="h-16 w-16">
             <defs>
               <linearGradient id="uwgo-cone" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="rgb(56 189 248)" stopOpacity="0.55" />
-                <stop offset="1" stopColor="rgb(56 189 248)" stopOpacity="0" />
+                <stop offset="0" stopColor="rgb(29 78 216)" stopOpacity="0.45" />
+                <stop offset="1" stopColor="rgb(29 78 216)" stopOpacity="0" />
               </linearGradient>
             </defs>
             <path d="M32 32 L14 4 A34 34 0 0 1 50 4 Z" fill="url(#uwgo-cone)" />
           </svg>
         </div>
-        <div className="relative h-4 w-4 rounded-full border-2 border-white bg-sky-400 shadow-[0_0_0_6px_rgba(56,189,248,0.35)]" />
+        <div className="relative h-4 w-4 rounded-full border-2 border-white bg-brand shadow-[0_0_0_6px_rgb(29_78_216/0.22)]" />
       </div>
     </AdvancedMarker>
   );
 }
 
-/** Fades and lifts the panel's content in whenever `phase` changes; nothing under reduced motion. */
+/** Fades and lifts the panel's content in whenever `phase` changes after the first render; nothing under reduced motion. */
 function usePhaseEntrance(ref: RefObject<HTMLElement | null>, phase: string) {
+  const first = useRef(true);
   useLayoutEffect(() => {
+    // The panels' own entrance covers the first phase.
+    if (first.current) { first.current = false; return; }
     const el = ref.current;
     if (!el || reducedMotion()) return;
-    const anim = animate(el, { opacity: [0, 1], translateY: [6, 0], duration: 220, ease: "out(3)" });
+    const anim = animate(el, { opacity: [0, 1], translateY: [6, 0], duration: DURATION.base, ease: EASE_OUT });
     return () => { anim.cancel(); el.style.opacity = ""; el.style.transform = ""; };
   }, [ref, phase]);
 }
@@ -269,6 +276,40 @@ function useInsets(top: RefObject<HTMLElement | null>, bottom: RefObject<HTMLEle
   return insets;
 }
 
+/**
+ * Back ends the trip rather than leaving the planner. The trip keeps a history entry of its own while it
+ * runs: pressing back pops it, and ending the trip from the screen goes back through it too, so nothing is
+ * left behind. `finish` runs `onEnd` exactly once whichever way the trip ends, including under React's
+ * development double effects, which find the entry already there and do not stack a second.
+ */
+function useBackEndsTrip(onEnd: () => void): () => void {
+  const onEndRef = useRef(onEnd);
+  const finished = useRef(false);
+  useEffect(() => { onEndRef.current = onEnd; });
+  const finish = useCallback(() => {
+    if (finished.current) return;
+    finished.current = true;
+    onEndRef.current();
+  }, []);
+  useEffect(() => {
+    if (!(window.history.state as { uwgoTrip?: boolean } | null)?.uwgoTrip) {
+      window.history.pushState({ ...(window.history.state ?? {}), uwgoTrip: true }, "");
+    }
+    const onPop = () => { if (!(window.history.state as { uwgoTrip?: boolean } | null)?.uwgoTrip) finish(); };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [finish]);
+  return useCallback(() => {
+    if ((window.history.state as { uwgoTrip?: boolean } | null)?.uwgoTrip) {
+      window.history.back();
+      // If the browser declines to go back, the trip still ends.
+      setTimeout(finish, 400);
+    } else {
+      finish();
+    }
+  }, [finish]);
+}
+
 export function TripMode({ trip, onEnd }: { trip: Trip; onEnd: () => void }) {
   const [resolved, setResolved] = useState<{ route: RouteOption; status: TripRouteStatus; note?: string }>({ route: trip.route, status: "PLANNED" });
   const [checking, setChecking] = useState(trip.route.mode === "TRANSIT");
@@ -286,6 +327,11 @@ export function TripMode({ trip, onEnd }: { trip: Trip; onEnd: () => void }) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const sheetContentRef = useRef<HTMLDivElement>(null);
   const insets = useInsets(topRef, sheetRef);
+  const end = useBackEndsTrip(onEnd);
+  // The trip replaces the planner: focus starts on where the student is going, so a screen reader
+  // announces the new screen and a keyboard starts from its top.
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => { headingRef.current?.focus({ preventScroll: true }); }, []);
   // Closures are read through a ref, not a dependency: a background refresh of the tallies must
   // not rebuild the rerouter and restart its off-route evidence mid-trip. The getter is called at
   // the moment a reroute happens, so a closure confirmed during the walk is still honoured.
@@ -378,6 +424,17 @@ export function TripMode({ trip, onEnd }: { trip: Trip; onEnd: () => void }) {
     return () => clearInterval(id);
   }, [commitProgress]);
 
+  // The panels arrive once, the instruction from above and the numbers from below.
+  useLayoutEffect(() => {
+    if (reducedMotion()) return;
+    const panels = [topRef.current?.firstElementChild, sheetRef.current?.firstElementChild].filter((el): el is HTMLElement => el instanceof HTMLElement);
+    const anims = panels.map((el, i) => animate(el, { opacity: [0, 1], translateY: [i === 0 ? -8 : 8, 0], duration: DURATION.base, ease: EASE_OUT }));
+    return () => {
+      for (const a of anims) a.cancel();
+      for (const el of panels) { el.style.opacity = ""; el.style.transform = ""; }
+    };
+  }, []);
+
   const onUserGesture = useCallback(() => setFollow(false), []);
   const recenter = () => setFollow(true);
 
@@ -407,7 +464,7 @@ export function TripMode({ trip, onEnd }: { trip: Trip; onEnd: () => void }) {
     return () => clearTimeout(id);
   }, [resolved]);
 
-  const modeLine = checking ? "Checking the bus…" : board ? `${modeLabel(route)} ${board.lineShort ?? board.line} · board ${formatClock(board.departureTime)}` : route.campus?.summary ? `${modeLabel(route)} · ${route.campus.summary}` : modeLabel(route);
+  const instruction = checking ? "Checking the bus…" : tripInstruction(route, trip.to);
 
   /** What to know right now, under the numbers: a reroute in progress, a change, or the state of the GPS. */
   const status: { text: string; tone: "muted" | "warn" | "busy" } | undefined = rerouting
@@ -420,9 +477,7 @@ export function TripMode({ trip, onEnd }: { trip: Trip; onEnd: () => void }) {
           ? { text: "Location is off, so this is the planned route without your position.", tone: "muted" }
           : geoState === "unavailable"
             ? { text: "Can’t get your location right now, so this is the planned route.", tone: "muted" }
-            : board
-              ? { text: `Board at ${board.departureStop}`, tone: "muted" }
-              : undefined;
+            : undefined;
 
   const map = KEY ? (
     <APIProvider apiKey={KEY}>
@@ -434,12 +489,13 @@ export function TripMode({ trip, onEnd }: { trip: Trip; onEnd: () => void }) {
         mapId={MAP_ID}
         gestureHandling="greedy"
         disableDefaultUI
+        clickableIcons={false}
         tiltInteractionEnabled={false}
         headingInteractionEnabled={false}
         style={{ width: "100%", height: "100%" }}
       >
         <AdvancedMarker position={pt(trip.to)} title={trip.to.name}>
-          <Pin background="#1d4ed8" borderColor="#1d4ed8" glyphColor="#fff" glyph="B" />
+          <Pin background="#1d4ed8" borderColor="#ffffff" glyphColor="#fff" />
         </AdvancedMarker>
         <TripCamera
           metrics={metrics}
@@ -454,86 +510,95 @@ export function TripMode({ trip, onEnd }: { trip: Trip; onEnd: () => void }) {
       </Map>
     </APIProvider>
   ) : (
-    <div className="flex h-full items-center justify-center p-6 text-center text-sm text-white/70">Map unavailable: no browser map key.</div>
+    <div className="flex h-full items-center justify-center p-6 text-center text-sm text-ink-muted">The map isn&rsquo;t available right now.</div>
   );
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden bg-ink text-white" data-testid="trip-mode">
+    <div className="fixed inset-0 z-40 overflow-hidden bg-map-ground text-ink" data-testid="trip-mode">
       {/* The map is the screen. Everything else floats over it and stays as small as it can. */}
       <div className="absolute inset-0">{map}</div>
 
-      {/* Where am I going. */}
-      <div ref={topRef} className="pointer-events-none absolute inset-x-0 top-0 z-10 px-3 pt-[max(0.625rem,env(safe-area-inset-top))] sm:px-4">
-        <div className="pointer-events-auto mx-auto flex max-w-xl items-center gap-2 rounded-2xl bg-ink/90 py-1.5 pl-1.5 pr-2 shadow-[0_8px_30px_-10px_rgb(15_23_42/0.6)] backdrop-blur">
-          <Button onClick={onEnd} aria-label="End trip" variant="inverse-soft" size="icon" className="shrink-0 rounded-full"><ArrowLeft /></Button>
-          <div className="min-w-0 flex-1">
-            <h1 className="truncate text-[15px] font-bold leading-tight">{trip.to.name}</h1>
-            <p className="truncate text-xs leading-tight text-white/70">{modeLine}</p>
+      {/* One instruction: where to go and the next thing to do. */}
+      <div ref={topRef} className="pointer-events-none absolute inset-x-0 top-0 z-10 pt-[max(0.625rem,env(safe-area-inset-top))] pr-[max(0.75rem,env(safe-area-inset-right))] pl-[max(0.75rem,env(safe-area-inset-left))]">
+        <div className="pointer-events-auto mx-auto max-w-xl rounded-2xl bg-ink px-4 py-3 text-white shadow-float">
+          <div className="flex items-start gap-3">
+            <ModeIcon route={route} className="mt-1 size-6 text-white/80" />
+            <div className="min-w-0 flex-1">
+              <h1 ref={headingRef} tabIndex={-1} className="truncate text-[18px] font-semibold leading-6 outline-none">{trip.to.name}</h1>
+              <p className="mt-0.5 text-[15px] leading-[22px] text-white/80">{instruction}</p>
+            </div>
+            {hasDetails && (
+              <button
+                type="button"
+                onClick={() => setShowDetails((v) => !v)}
+                aria-expanded={showDetails}
+                aria-label="Bus details"
+                className="-my-1 -mr-2 grid size-11 shrink-0 touch-manipulation place-items-center rounded-full text-white/80 outline-none transition-colors hover:bg-white/10 focus-visible:ring-[3px] focus-visible:ring-white/40"
+              >
+                <ChevronDown className={cn("size-5 transition-transform duration-150", showDetails && "rotate-180")} />
+              </button>
+            )}
           </div>
-          {hasDetails && (
-            <Button onClick={() => setShowDetails((v) => !v)} aria-expanded={showDetails} aria-label="Trip details" variant="ghost" size="icon" className="shrink-0 rounded-full text-white/80 hover:bg-white/10 hover:text-white">
-              <ChevronDown className={cn("transition-transform", showDetails && "rotate-180")} />
-            </Button>
+          {showDetails && (
+            <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 border-t border-white/15 pt-3 text-[14px] leading-5 text-white/70">
+              <dt>From</dt><dd className="text-white">{trip.from.name}</dd>
+              {board && <><dt>Board at</dt><dd className="text-white">{board.departureStop} · {formatClock(board.departureTime)}</dd></>}
+              {board?.line && board.line !== board.lineShort && <><dt>Line</dt><dd className="text-white">{board.line}{board.headsign ? ` toward ${board.headsign}` : ""}</dd></>}
+              {lastLeg && <><dt>Get off</dt><dd className="text-white">{lastLeg.arrivalStop} {formatClock(lastLeg.arrivalTime)}</dd></>}
+              {route.transferCount ? <><dt>Transfers</dt><dd className="text-white">{route.transferCount}</dd></> : null}
+              {walkBefore > 0 && <><dt>Walk first</dt><dd className="text-white">{formatDuration(walkBefore)}</dd></>}
+              {walkAfter > 0 && <><dt>Walk after</dt><dd className="text-white">{formatDuration(walkAfter)}</dd></>}
+            </dl>
           )}
         </div>
       </div>
 
-      {/* Map controls, thumb height, clear of the sheet. Only what is needed right now. */}
+      {/* Map controls, thumb height, clear of the bar. Only what is needed right now. */}
       {geoState === "on" && (compass.status === "needs-permission" || !follow) && (
-        <div className="absolute right-3 z-10 flex flex-col items-end gap-2 sm:right-4" style={{ bottom: insets.bottomPx + 12 }}>
+        <div className="absolute z-10 flex flex-col items-end gap-2 right-[max(0.75rem,env(safe-area-inset-right))]" style={{ bottom: insets.bottomPx + 12 }}>
           {compass.status === "needs-permission" && (
             // iOS only grants the compass from a tap, so it is asked for here rather than at Start Trip.
-            <Button onClick={compass.request} variant="inverse-soft" size="lg" className="rounded-full bg-ink/90 shadow-lg backdrop-blur hover:bg-ink">
+            <Button onClick={compass.request} variant="float" size="touch" className="rounded-full">
               <Compass /> Use compass
             </Button>
           )}
           {!follow && (
-            <Button onClick={recenter} variant="inverse" size="lg" className="rounded-full shadow-lg">
+            <Button onClick={recenter} variant="float" size="touch" className="rounded-full">
               <LocateFixed /> Recenter
             </Button>
           )}
         </div>
       )}
 
-      {/* How long, how far, what next. */}
-      <div ref={sheetRef} className="absolute inset-x-0 bottom-0 z-10 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-4 sm:pb-4">
-        <div className="mx-auto max-w-xl rounded-3xl bg-ink/92 p-4 shadow-[0_-8px_40px_-12px_rgb(15_23_42/0.7)] backdrop-blur">
+      {/* How long, how far, when, and the way out. Held clear of Google's logo and terms along the map's bottom edge (DESIGN.md §2). */}
+      <div ref={sheetRef} className="absolute inset-x-0 bottom-0 z-10 pr-[max(0.75rem,env(safe-area-inset-right))] pb-[max(2.25rem,env(safe-area-inset-bottom))] pl-[max(0.75rem,env(safe-area-inset-left))]">
+        <div className="mx-auto max-w-xl rounded-3xl bg-surface p-4 shadow-sheet">
           <div ref={sheetContentRef}>
             {arrived ? (
               <div className="flex items-center gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="text-[1.75rem] font-bold leading-none tracking-[-0.02em]">You&rsquo;re here</p>
-                  <p className="mt-1.5 truncate text-sm text-white/70">{trip.to.name}</p>
+                  <p className="text-[28px] font-semibold leading-8 tracking-[-0.02em]">You&rsquo;re here</p>
+                  <p className="mt-1 truncate text-[15px] leading-[22px] text-ink-muted">{trip.to.name}</p>
                 </div>
-                <Button onClick={onEnd} size="lg" className="shrink-0 rounded-full px-6">Done</Button>
+                <Button onClick={end} size="primary" className="shrink-0 rounded-full px-6">Done</Button>
               </div>
             ) : (
               <>
-                <div className="flex flex-wrap items-baseline gap-x-2 tabular-nums" aria-live="polite" data-testid="trip-summary">
-                  <span className="text-[2rem] font-bold leading-none tracking-[-0.02em]">{shown.time}</span>
-                  {shown.distance && <span className="text-[15px] text-white/75">· {shown.distance}</span>}
-                  {shown.arrival && <span className="text-[15px] text-white/75">· arrive {shown.arrival}</span>}
+                <div className="flex items-center gap-3">
+                  <div className="min-w-0 flex-1" aria-live="polite" data-testid="trip-summary">
+                    <p className="text-[28px] font-semibold leading-8 tracking-[-0.02em] tabular-nums">{shown.time}</p>
+                    <p className="mt-0.5 text-[15px] leading-[22px] text-ink-muted tabular-nums">
+                      {[shown.distance, shown.arrival && `arrive ${shown.arrival}`].filter(Boolean).join(" · ")}
+                    </p>
+                  </div>
+                  <Button onClick={end} variant="secondary" size="primary" className="shrink-0 rounded-full px-5">End trip</Button>
                 </div>
                 {status && (
-                  <p role="status" className={cn("mt-2 flex items-start gap-1.5 text-sm leading-snug", status.tone === "warn" ? "text-amber-200" : status.tone === "busy" ? "text-white/85" : "text-white/65")}>
+                  <p role="status" className={cn("mt-3 flex items-start gap-2 text-[14px] leading-5", status.tone === "warn" ? "text-warn" : status.tone === "busy" ? "text-ink" : "text-ink-muted")}>
                     {status.tone === "busy" && <Loader2 className="mt-0.5 size-4 shrink-0 motion-safe:animate-spin" aria-hidden="true" />}
                     <span>{status.text}</span>
                   </p>
                 )}
-                {showDetails && (
-                  <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 border-t border-white/10 pt-3 text-sm text-white/70">
-                    <dt>From</dt><dd className="text-white/90">{trip.from.name}</dd>
-                    {board && <><dt>Board at</dt><dd className="text-white/90">{board.departureStop}</dd></>}
-                    {board?.line && board.line !== board.lineShort && <><dt>Line</dt><dd className="text-white/90">{board.line}{board.headsign ? ` toward ${board.headsign}` : ""}</dd></>}
-                    {lastLeg && <><dt>Get off</dt><dd className="text-white/90">{lastLeg.arrivalStop} {formatClock(lastLeg.arrivalTime)}</dd></>}
-                    {route.transferCount ? <><dt>Transfers</dt><dd className="text-white/90">{route.transferCount}</dd></> : null}
-                    {walkBefore > 0 && <><dt>Walk first</dt><dd className="text-white/90">{formatDuration(walkBefore)}</dd></>}
-                    {walkAfter > 0 && <><dt>Walk after</dt><dd className="text-white/90">{formatDuration(walkAfter)}</dd></>}
-                  </dl>
-                )}
-                <div className="mt-3">
-                  <Button onClick={onEnd} variant="inverse-soft" size="lg" className="rounded-full px-5">End trip</Button>
-                </div>
               </>
             )}
           </div>

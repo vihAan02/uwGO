@@ -1,7 +1,33 @@
 import { describe, expect, it } from "vitest";
 import type { RouteOption } from "@/domain/types";
 import { pathMetrics, projectOntoPath, type Point } from "./routeProgress";
-import { distanceLabel, liveHeadline, modeLabel, plannedHeadline, sameHeadline } from "./tripDisplay";
+import type { CampusLocation } from "@/domain/types";
+import { distanceLabel, liveHeadline, modeLabel, plannedHeadline, sameHeadline, tripInstruction } from "./tripDisplay";
+
+describe("the one instruction at the top of a trip", () => {
+  const mc: CampusLocation = { id: "UW:MC", name: "Mathematics & Computer Building", latitude: 43.472, longitude: -80.544, kind: "BUILDING", buildingCode: "MC" };
+  const base: RouteOption = { mode: "WALK", durationMinutes: 8, provider: "google-routes", computedAt: "", isEstimate: false };
+
+  it("says where to board a bus, and when", () => {
+    const leave = new Date("2026-09-15T14:05:00Z"); // 10:05 AM in Waterloo
+    const bus: RouteOption = {
+      ...base, mode: "TRANSIT",
+      steps: [{ mode: "WALK", durationMinutes: 3 }, { mode: "TRANSIT", durationMinutes: 9, transit: { line: "University", lineShort: "201", vehicle: "Bus", departureStop: "UW Station", arrivalStop: "Laurier", departureTime: leave, arrivalTime: leave } }],
+    };
+    expect(tripInstruction(bus, mc)).toBe("Board 201 at UW Station · 10:05 AM");
+  });
+
+  it("names the buildings an indoor route goes through before any campus note", () => {
+    expect(tripInstruction({ ...base, indoorPath: ["STC", "B2", "QNC", "MC"] }, mc)).toBe("Indoors via STC → B2 → QNC → MC");
+  });
+
+  it("gives the campus note that explains a walk, or else just where to walk", () => {
+    const campus = { ...base, campus: { summary: "Enter PAC through SLC's ground-floor link", via: [], evidence: "CORROBORATED" } } as unknown as RouteOption;
+    expect(tripInstruction(campus, mc)).toBe("Enter PAC through SLC's ground-floor link");
+    expect(tripInstruction(base, mc)).toBe("Walk to MC");
+    expect(tripInstruction(base, { ...mc, id: "home", name: "Village 1", kind: "HOME", buildingCode: undefined })).toBe("Walk to home");
+  });
+});
 
 /** East along one street, then north: about 400 m. */
 const ROUTE: Point[] = [

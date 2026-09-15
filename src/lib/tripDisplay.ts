@@ -1,4 +1,4 @@
-import type { RouteOption } from "@/domain/types";
+import type { CampusLocation, RouteOption } from "@/domain/types";
 import { formatClock, formatDuration } from "@/time/toronto";
 import { ARRIVED_METERS, formatRemaining, remainingFrom, type PathMetrics, type Projection } from "./routeProgress";
 
@@ -26,6 +26,18 @@ export function modeLabel(r: RouteOption): string {
   const vehicle = (first?.vehicle ?? "").toLowerCase();
   if (vehicle.includes("light rail") || vehicle.includes("tram")) return "ION light rail";
   return vehicle.includes("bus") ? "Bus" : "Transit";
+}
+
+/**
+ * The one instruction Trip Mode gives at the top of the screen: where to board a bus, which buildings an
+ * indoor route goes through, the campus note that explains a walk, or simply where to walk to.
+ */
+export function tripInstruction(route: RouteOption, to: CampusLocation): string {
+  const board = route.mode === "TRANSIT" ? route.steps?.find((s) => s.mode === "TRANSIT")?.transit : undefined;
+  if (board) return `Board ${board.lineShort ?? board.line} at ${board.departureStop} · ${formatClock(board.departureTime)}`;
+  if (route.indoorPath?.length) return `Indoors via ${route.indoorPath.join(" → ")}`;
+  if (route.campus?.summary) return route.campus.summary;
+  return `Walk to ${to.kind === "HOME" ? "home" : to.buildingCode ?? to.name}`;
 }
 
 /** Route distance as shown: whole metres under a kilometre, otherwise one decimal. */
