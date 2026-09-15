@@ -4,6 +4,7 @@ import { ClipboardPaste, LogOut, Plus, Trash2 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useUserState } from "@/lib/UserStateProvider";
+import { useBackCloses } from "@/lib/useBackCloses";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Sheet, SheetBody, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -20,21 +21,28 @@ import { RoutePrefPicker } from "../prefs/RoutePrefPicker";
 function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
     <section className="py-5">
-      <h3 className="font-semibold">{title}</h3>
-      {hint && <p className="mt-0.5 text-sm text-ink-muted">{hint}</p>}
+      <h3 className="text-[15px] font-semibold leading-5">{title}</h3>
+      {hint && <p className="mt-0.5 text-[13px] leading-[18px] text-ink-muted">{hint}</p>}
       <div className="mt-3">{children}</div>
     </section>
   );
 }
 
+/**
+ * The profile: everything about the student that is a standing preference rather than a decision about
+ * one trip (DESIGN.md §1). A modal sheet over the planner or the courses page, bottom on a phone and at
+ * the side on a wider screen; the one destructive action sits last, apart, behind a confirmation.
+ */
 export function SettingsSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const router = useRouter();
   const { state, setHome, setConfig, setGym, setRoutePreference, setIncludeInPlan, removeMeeting, addMeeting, reset } = useStore();
   const auth = useAuth();
   const account = useUserState();
   const meetings = state.schedule?.meetings ?? [];
+  // Back closes the sheet, as it ends a trip, rather than leaving the page under it.
+  const close = useBackCloses("settings", open, () => onOpenChange(false));
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={(next) => (next ? onOpenChange(true) : close())}>
       <SheetContent>
         <SheetHeader>
           <div>
@@ -47,10 +55,10 @@ export function SettingsSheet({ open, onOpenChange }: { open: boolean; onOpenCha
             <Section title="Account">
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="truncate text-sm text-ink-muted">{auth.user.email}{auth.mode === "DEV_BYPASS" ? " (dev bypass)" : ""}</p>
-                  {account.status === "ready" && <p className="mt-0.5 text-xs text-ink-muted">Your schedule and preferences are saved to this account.</p>}
+                  <p className="truncate text-[14px] leading-5">{auth.user.email}{auth.mode === "DEV_BYPASS" ? " (dev bypass)" : ""}</p>
+                  {account.status === "ready" && <p className="mt-0.5 text-[13px] leading-[18px] text-ink-muted">Your schedule and preferences are saved to this account.</p>}
                 </div>
-                <Button variant="outline" size="sm" className="shrink-0" onClick={async () => { await account.flush(); await auth.signOut(); }}><LogOut /> Log out</Button>
+                <Button variant="outline" size="touch" className="shrink-0" onClick={async () => { await account.flush(); await auth.signOut(); }}><LogOut /> Log out</Button>
               </div>
             </Section>
           )}
@@ -76,14 +84,14 @@ export function SettingsSheet({ open, onOpenChange }: { open: boolean; onOpenCha
               {meetings.map((m) => {
                 const id = `include-${m.id}`;
                 return (
-                  <li key={m.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
-                    <label htmlFor={id} className="min-w-0 cursor-pointer">
+                  <li key={m.id} className="flex min-h-14 items-center justify-between gap-3 py-1.5 text-[14px] leading-5">
+                    <label htmlFor={id} className="min-w-0 flex-1 cursor-pointer py-2">
                       <span className="font-semibold">{m.courseCode}</span>{" "}
                       <span className="text-ink-muted">{m.component}{m.section ? ` ${m.section}` : ""} · {m.days.join("") || "no time"} · {m.location.kind === "ROOM" ? `${m.location.buildingCode} ${m.location.roomNumber}` : m.location.kind.toLowerCase()}</span>
                     </label>
-                    <div className="flex shrink-0 items-center gap-1">
+                    <div className="flex shrink-0 items-center gap-3">
                       {m.source === "MANUAL" && (
-                        <Button variant="ghost" size="icon-sm" className="text-ink-muted" aria-label={`Remove ${m.courseCode}`} onClick={() => removeMeeting(m.id)}><Trash2 /></Button>
+                        <Button variant="ghost" size="icon-touch" className="rounded-full text-ink-muted" aria-label={`Remove ${m.courseCode}`} onClick={() => removeMeeting(m.id)}><Trash2 /></Button>
                       )}
                       <Switch id={id} checked={m.includeInPlan} onCheckedChange={(v) => setIncludeInPlan(m.id, v)} />
                     </div>
@@ -91,22 +99,22 @@ export function SettingsSheet({ open, onOpenChange }: { open: boolean; onOpenCha
                 );
               })}
             </ul>
-            <Button variant="outline" className="mt-3 w-full sm:w-auto" onClick={() => { onOpenChange(false); router.push("/setup?replace=1"); }}>
+            <Button variant="outline" size="touch" className="mt-3 w-full sm:w-auto" onClick={() => { onOpenChange(false); router.push("/setup?replace=1"); }}>
               <ClipboardPaste /> Paste a new schedule
             </Button>
-            <details className="group mt-3">
-              <summary className="flex min-h-9 cursor-pointer list-none items-center gap-1.5 text-sm font-medium text-brand [&::-webkit-details-marker]:hidden">
+            <details className="group mt-2">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center gap-1.5 text-[14px] font-medium text-brand [&::-webkit-details-marker]:hidden">
                 <Plus className="size-4 transition-transform group-open:rotate-45" aria-hidden="true" />
                 Add a class by hand
               </summary>
-              <div className="mt-3"><ManualClassForm defaultUniversity="WLU" onAdd={addMeeting} /></div>
+              <div className="mt-2"><ManualClassForm defaultUniversity="WLU" onAdd={addMeeting} /></div>
             </details>
           </Section>
 
           <Section title="Start over" hint="Removes your schedule, home and preferences from this device and your account.">
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="w-full sm:w-auto"><Trash2 /> Delete everything</Button>
+                <Button variant="destructive" size="touch" className="w-full sm:w-auto"><Trash2 /> Delete everything</Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
@@ -121,7 +129,7 @@ export function SettingsSheet({ open, onOpenChange }: { open: boolean; onOpenCha
             </AlertDialog>
           </Section>
 
-          <p className="py-5 text-xs leading-relaxed text-ink-muted">Building data: University of Waterloo campus map (used as-is) and Wilfrid Laurier University pages. Laurier coordinates © OpenStreetMap contributors (ODbL). Routes and maps by Google. PAC hours and live occupancy from Waterloo Athletics. Winter routes run over the campus tunnel and bridge network surveyed by WATIsGrass (Ricky Qin and Manasva Katyal, github.com/rickyqin005/WATIsGrass, GPL-3.0), cross-checked against the UW Campus Accessibility building pages.</p>
+          <p className="py-5 text-[12px] leading-[18px] text-ink-muted">Building data: University of Waterloo campus map (used as-is) and Wilfrid Laurier University pages. Laurier coordinates © OpenStreetMap contributors (ODbL). Routes and maps by Google. PAC hours and live occupancy from Waterloo Athletics. Winter routes run over the campus tunnel and bridge network surveyed by WATIsGrass (Ricky Qin and Manasva Katyal, github.com/rickyqin005/WATIsGrass, GPL-3.0), cross-checked against the UW Campus Accessibility building pages.</p>
         </SheetBody>
       </SheetContent>
     </Sheet>

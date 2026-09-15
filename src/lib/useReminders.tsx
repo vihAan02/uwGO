@@ -3,15 +3,16 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { ClassTransition, DayPlan, WeekPlan } from "@/domain/types";
 import { DAYS_IN_ORDER } from "@/domain/types";
 import { dueReminders, loadReminders, reminderFor, remindableLegs, saveReminders, syncReminders, type Reminder } from "./reminders";
+import type { RouteChoice } from "./routeChoices";
 
 export type NotifyPermission = "unsupported" | "default" | "granted" | "denied";
 
 interface RemindersApi {
   permission: NotifyPermission;
-  /** Reminder set for this leg, if any. */
-  get(day: DayPlan, t: ClassTransition): Reminder | undefined;
-  /** Set or clear a reminder for a leg. Asks for notification permission the first time. */
-  toggle(day: DayPlan, t: ClassTransition): Promise<void>;
+  /** Reminder set for this leg, made the plan's way or the way the student chose, if any. */
+  get(day: DayPlan, t: ClassTransition, choice?: RouteChoice): Reminder | undefined;
+  /** Set or clear a reminder for a leg or one way to make it. Asks for notification permission the first time. */
+  toggle(day: DayPlan, t: ClassTransition, choice?: RouteChoice): Promise<void>;
   /** The latest in-page reminder, for browsers where a system notification cannot be shown. */
   banner?: Reminder;
   dismissBanner(): void;
@@ -47,7 +48,12 @@ async function showNotification(r: Reminder): Promise<boolean> {
 
 const TICK_MS = 15_000;
 
-export function RemindersProvider({ plan, children }: { plan: WeekPlan | undefined; children: React.ReactNode }) {
+export function RemindersProvider({ plan, bufferMinutes, children }: {
+  plan: WeekPlan | undefined;
+  /** The arrival buffer the plan's other ways to go are timed with, so their reminders follow the plan too. */
+  bufferMinutes?: number;
+  children: React.ReactNode;
+}) {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [permission, setPermission] = useState<NotifyPermission>("default");
   const [banner, setBanner] = useState<Reminder | undefined>();
@@ -67,14 +73,14 @@ export function RemindersProvider({ plan, children }: { plan: WeekPlan | undefin
   useEffect(() => {
     if (!plan) return;
     const id = setTimeout(() => {
-      const current = remindableLegs(DAYS_IN_ORDER.map((d) => plan.days[d]));
+      const current = remindableLegs(DAYS_IN_ORDER.map((d) => plan.days[d]), bufferMinutes);
       setReminders((list) => {
         const { reminders: next, changed } = syncReminders(list, current, new Date());
         return changed ? next : list;
       });
     }, 0);
     return () => clearTimeout(id);
-  }, [plan]);
+  }, [plan, bufferMinutes]);
 
   // The scheduler. A timer while the page is open, plus a check whenever the tab comes back.
   useEffect(() => {
@@ -100,13 +106,13 @@ export function RemindersProvider({ plan, children }: { plan: WeekPlan | undefin
     return () => { cancelled = true; clearInterval(id); document.removeEventListener("visibilitychange", onVisible); };
   }, []);
 
-  const get = useCallback((day: DayPlan, t: ClassTransition) => {
-    const r = reminderFor(day, t);
+  const get = useCallback((day: DayPlan, t: ClassTransition, choice?: RouteChoice) => {
+    const r = reminderFor(day, t, choice);
     return r ? reminders.find((x) => x.id === r.id) : undefined;
   }, [reminders]);
 
-  const toggle = useCallback(async (day: DayPlan, t: ClassTransition) => {
-    const r = reminderFor(day, t);
+  const toggle = useCallback(async (day: DayPlan, t: ClassTransition, choice?: RouteChoice) => {
+    const r = reminderFor(day, t, choice);
     if (!r) return;
     const existing = reminders.find((x) => x.id === r.id);
     if (existing) { setReminders((list) => list.filter((x) => x.id !== r.id)); return; }

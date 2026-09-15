@@ -1,52 +1,24 @@
 "use client";
-import { useEffect, useRef } from "react";
-import { AlertTriangle, Check, ExternalLink, MapPin, X } from "lucide-react";
-import type { CampusLocation, ClassTransition, DayPlan, DayPlanItem, HomeReturnAnalysis, RouteOption, ScheduledClass, UserHome } from "@/domain/types";
+import { useLayoutEffect, useRef } from "react";
+import { AlertTriangle, Check, ExternalLink, X } from "lucide-react";
+import { animate } from "animejs";
+import type { CampusLocation, ClassTransition, DayPlan, HomeReturnAnalysis, RouteOption, ScheduledClass, UserHome } from "@/domain/types";
 import { formatClock, formatDuration, minutesBetween } from "@/time/toronto";
 import { googleMapsDirectionsUrl, travelModeFor } from "@/lib/mapsLinks";
+import { classRowId, legRowId } from "@/lib/planFocus";
+import { transitLabel, type RouteChoice } from "@/lib/routeChoices";
+import { DURATION, EASE_OUT, prefersReducedMotion } from "@/lib/motion";
 import { indoorPathLabel } from "@/engine/indoorRoute";
 import { findRoomPosition } from "@/data/floorplans";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
-import type { MapSelection } from "../map/MapPanel";
 import { RemindButton } from "./RemindButton";
 import { GymCard } from "./GymCard";
 import { ModeIcon } from "./ModeIcon";
 import { GapChoicePicker, type ChooseGap } from "./GapChoicePicker";
 import { ReportClosure, RouteAdjustedNote } from "./ClosureControls";
-
-export interface Selectable {
-  selectedId: string | undefined;
-  onSelect: (id: string, selection: MapSelection) => void;
-}
-
-/** The time rail on the left of every row. */
-function Time({ at, end }: { at: Date; end?: Date }) {
-  return (
-    <div className="w-16 shrink-0 pt-0.5 text-right font-mono text-xs font-semibold tabular-nums sm:w-[4.5rem] sm:text-[13px]">
-      <time>{formatClock(at)}</time>
-      {end && <div className="font-normal text-ink-muted"><time>{formatClock(end)}</time></div>}
-    </div>
-  );
-}
-
-function feasibilityBadge(f: ClassTransition["feasibility"]) {
-  switch (f) {
-    case "COMFORTABLE": return <Badge variant="ok">On time</Badge>;
-    case "TIGHT": return <Badge variant="warn">Tight</Badge>;
-    case "LIKELY_LATE": return <Badge variant="bad">Likely late</Badge>;
-    default: return <Badge>No route</Badge>;
-  }
-}
-
-function routeSummary(r: RouteOption): string {
-  if (r.indoorPath) return `${formatDuration(r.durationMinutes)} indoors · ${indoorPathLabel(r)}`;
-  if (r.mode === "WALK") return r.durationMinutes === 0 ? "Same building" : `${formatDuration(r.durationMinutes)} walk${r.isEstimate ? " (est.)" : ""}`;
-  const names = (r.steps ?? []).filter((s) => s.mode === "TRANSIT").map((s) => s.transit?.lineShort ?? s.transit?.line).filter(Boolean).join(" → ");
-  return `${formatDuration(r.durationMinutes)} · ${names || "transit"}${r.transferCount ? ` · ${r.transferCount} transfer${r.transferCount > 1 ? "s" : ""}` : ""}`;
-}
 
 /**
  * "Floor 2" from the V1 rule, or "Floor 2 · east side" when the room's position on the
@@ -59,53 +31,84 @@ export function floorLabel(room: ScheduledClass["room"]): string {
   return pos?.description ? `${base} · ${pos.description}` : base;
 }
 
-function WalkChoiceRow({ label, r, chosen, note, onSelect }: { label: string; r: RouteOption; chosen: boolean; note: string; onSelect: () => void }) {
+/** Every row lines its text up after the time rail; details under a leg start at the same edge. */
+const ROW_BUTTON = "flex w-full touch-manipulation gap-3 px-4 py-3 text-left outline-none transition-colors duration-150 hover:bg-fill/50 active:bg-fill focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand sm:gap-4 sm:px-5 lg:px-4";
+const ROW_STATIC = "flex gap-3 px-4 py-3 sm:gap-4 sm:px-5 lg:px-4";
+const INDENT = "pl-[92px] pr-4 sm:pl-[108px] sm:pr-5 lg:pl-[104px] lg:pr-4";
+const SELECTED = "bg-brand/[0.045] shadow-[inset_3px_0_0_0_var(--color-brand)]";
+
+/** The time rail on the left of every row. Inside a button, so phrasing content only. */
+function Time({ at, end }: { at?: Date; end?: Date }) {
   return (
-    <button
-      type="button"
-      aria-pressed={chosen}
-      // The leg row underneath is pressable too; without this it would take the click and show its own route.
-      onClick={(e) => { e.stopPropagation(); onSelect(); }}
-      className={cn("flex w-full cursor-pointer items-baseline justify-between gap-2 rounded-lg px-2 py-1 text-left", chosen ? "bg-brand-soft text-brand" : "text-ink-muted")}
-    >
-      <span className="shrink-0"><span className="font-semibold">{label}</span> · {formatDuration(r.durationMinutes)}</span>
-      <span className="min-w-0 text-right text-xs">{note}</span>
-    </button>
+    <span aria-hidden={at ? undefined : true} className="w-16 shrink-0 pt-px text-right font-mono text-[13px] font-medium leading-5 tabular-nums sm:w-[4.5rem]">
+      {at && <time className="block">{formatClock(at)}</time>}
+      {end && <time className="block font-normal text-ink-muted">{formatClock(end)}</time>}
+    </span>
   );
 }
 
-/** The two ways to walk: Google's fastest and the indoor path, side by side. Tapping one shows that way on the map. */
-export function IndoorComparison({ t, id, label, sel }: { t: ClassTransition; id: string; label: string; sel: Selectable }) {
-  const rec = t.recommendedRoute;
-  const indoor = t.indoorRoute;
-  // The fastest walk is the campus-aware one when the plan took it, otherwise Google's.
-  const fastest = t.campusWalk ?? t.walkingRoute;
-  if (!rec || !indoor || !fastest || rec.mode === "TRANSIT") return null;
-  // Lit: the way the map is showing for this leg, or until one is tapped, the way the plan took.
-  const winterShown = sel.selectedId === `${id}-winter` || (sel.selectedId !== `${id}-fastest` && Boolean(rec.indoorPath));
-  const show = (which: "fastest" | "winter", route: RouteOption) =>
-    sel.onSelect(`${id}-${which}`, { kind: "LEG", label, from: t.from, to: t.to, route, walkFallback: fastest });
-  // The buildings the walk cuts through, not the ones it starts and ends in.
-  const through = (fastest.campus?.via.filter((v) => v.startsWith("through ")).map((v) => v.slice("through ".length)) ?? []).filter((b) => b !== t.from.buildingCode && b !== t.to.buildingCode);
-  return (
-    <div className="mt-2 space-y-1 text-sm">
-      <WalkChoiceRow label="Fastest" r={fastest} chosen={!winterShown} note={through.length ? `via ${through.join(", ")}` : "mostly outdoors"} onSelect={() => show("fastest", fastest)} />
-      <WalkChoiceRow label="Winter route" r={indoor} chosen={winterShown} note={`${indoorPathLabel(indoor)} · mostly indoors`} onSelect={() => show("winter", indoor)} />
-    </div>
-  );
+const classInto = (plan: DayPlan, t: ClassTransition) =>
+  plan.classes.find((c) => c.start.getTime() === t.arriveBy.getTime() && c.location.id === t.to.id);
+
+/** "10 min walk", "11 min indoors", "Bus 201". */
+function how(route: RouteOption): string {
+  if (route.mode === "TRANSIT") return transitLabel(route);
+  // An indoor route is timed over the surveyed network; only its short joins to a door can be estimated.
+  return `${formatDuration(route.durationMinutes)} ${route.indoorPath ? "indoors" : "walk"}${route.isEstimate && !route.indoorPath ? " (est.)" : ""}`;
+}
+
+/** What the leg is, in the words a student would say: "10 min walk to CS 135", "Bus 201 to Lazaridis Hall", "8 min walk home". */
+export function legTitle(plan: DayPlan, t: ClassTransition, route: RouteOption): string {
+  const cls = classInto(plan, t);
+  const where = cls ? cls.meeting.courseCode : t.to.kind === "HOME" ? "home" : t.to.name;
+  if (route.mode === "WALK" && route.durationMinutes === 0) return cls ? `${where} is in the same building` : `Already at ${where}`;
+  return !cls && t.to.kind === "HOME" ? `${how(route)} home` : `${how(route)} to ${where}`;
+}
+
+/**
+ * Only an exception is worth a colour: a tight or a likely-late leg, or a way the student chose that lands
+ * after the class starts. An on-time one says nothing.
+ */
+function concernOf(t: ClassTransition, choice?: RouteChoice): { text: string; tone: "warn" | "bad" } | undefined {
+  if (!t.hasDeadline) return undefined;
+  // The plan's verdicts are about its own pick; another way is judged only by when it arrives.
+  if (choice && !choice.recommended) {
+    const late = choice.arriveAt ? minutesBetween(t.arriveBy, choice.arriveAt) : 0;
+    return late > 0 ? { text: `This way arrives ${late} min after class starts`, tone: "bad" } : undefined;
+  }
+  if (t.feasibility === "LIKELY_LATE") return { text: `Likely late: only ${t.availableMinutes} min between classes`, tone: "bad" };
+  if (t.feasibility === "TIGHT" && t.expectedArrival) return { text: `Tight: ${Math.max(0, minutesBetween(t.expectedArrival, t.arriveBy))} min to spare`, tone: "warn" };
+  return undefined;
+}
+
+/** The line under a leg: boarding for a bus, then when it lands and, before a class, the real margin. */
+function legMeta(t: ClassTransition, route: RouteOption, arriveAt: Date | undefined, concerned: boolean): string {
+  const parts: string[] = [];
+  if (route.mode === "TRANSIT") {
+    const first = route.steps?.find((s) => s.mode === "TRANSIT")?.transit;
+    parts.push(formatDuration(route.durationMinutes));
+    if (first) parts.push(`board ${formatClock(first.departureTime)} at ${first.departureStop}`);
+  }
+  if (arriveAt) {
+    parts.push(`arrive ${formatClock(arriveAt)}`);
+    // The real margin, not the configured buffer: a tight hop can land later than intended.
+    const early = t.hasDeadline ? minutesBetween(arriveAt, t.arriveBy) : 0;
+    if (early > 0 && !concerned) parts.push(`${early} min early`);
+  }
+  return parts.join(" · ");
 }
 
 function TransitSteps({ route }: { route: RouteOption }) {
   if (!route.steps) return null;
   return (
-    <ol className="mt-2 space-y-1 text-sm">
+    <ol className="mt-2 space-y-1 text-[13px] leading-[18px]">
       {route.steps.map((s, i) => s.mode === "TRANSIT" && s.transit ? (
-        <li key={i} className="rounded-lg bg-brand-soft px-2 py-1">
-          <span className="font-semibold">{s.transit.lineShort ?? s.transit.line}</span> {s.transit.vehicle.toLowerCase()} {s.transit.headsign ? `toward ${s.transit.headsign}` : ""}
-          <div className="text-ink-muted">Board {s.transit.departureStop} {formatClock(s.transit.departureTime)} &rarr; {s.transit.arrivalStop} {formatClock(s.transit.arrivalTime)}</div>
+        <li key={i} className="rounded-xl bg-fill px-3 py-2">
+          <span className="font-semibold">{s.transit.lineShort ?? s.transit.line}</span> {s.transit.vehicle.toLowerCase()}{s.transit.headsign ? ` toward ${s.transit.headsign}` : ""}
+          <span className="block text-ink">Board {s.transit.departureStop} {formatClock(s.transit.departureTime)} &rarr; {s.transit.arrivalStop} {formatClock(s.transit.arrivalTime)}</span>
         </li>
       ) : (
-        <li key={i} className="px-2 text-ink-muted">Walk {formatDuration(s.durationMinutes)}</li>
+        <li key={i} className="px-3 text-ink-muted">Walk {formatDuration(s.durationMinutes)}</li>
       ))}
     </ol>
   );
@@ -113,29 +116,12 @@ function TransitSteps({ route }: { route: RouteOption }) {
 
 function MapsLink({ from, to, route }: { from: CampusLocation; to: CampusLocation; route?: RouteOption }) {
   return (
-    <Button asChild variant="ghost" size="xs" className="-ml-2 text-ink-muted">
-      <a href={googleMapsDirectionsUrl(from, to, travelModeFor(route))} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+    <Button asChild variant="outline" size="touch">
+      <a href={googleMapsDirectionsUrl(from, to, travelModeFor(route))} target="_blank" rel="noopener noreferrer">
         <ExternalLink /> Google Maps
       </a>
     </Button>
   );
-}
-
-const ROW = "flex gap-3 px-3 py-3 transition-colors duration-150 sm:gap-4 sm:px-4";
-const SELECTED = "bg-brand/[0.045] shadow-[inset_3px_0_0_0_var(--color-brand)]";
-const PRESSABLE = "-m-1 min-w-0 flex-1 cursor-pointer rounded-lg p-1 outline-none focus-visible:ring-[3px] focus-visible:ring-brand/35";
-
-export function pressable(select: () => void) {
-  return {
-    role: "button" as const,
-    tabIndex: 0,
-    onClick: select,
-    onKeyDown: (e: React.KeyboardEvent) => {
-      // A key pressed on a control inside the row (Google Maps, Remind me, a route choice) is that control's.
-      if (e.target !== e.currentTarget) return;
-      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(); }
-    },
-  };
 }
 
 /**
@@ -143,80 +129,124 @@ export function pressable(select: () => void) {
  * could not and the student needs telling how to get in. The full reasoning is a developer aid,
  * reached from the console (`window.uwgoCampus.legs()`), never rendered.
  */
-function CampusNote({ t }: { t: ClassTransition }) {
+function CampusNote({ t, route }: { t: ClassTransition; route: RouteOption }) {
   const decision = t.campus;
   if (!decision) return null;
-  const shown = t.recommendedRoute?.campus?.summary ?? (decision.outcome === "NO_USABLE_ROUTE" ? decision.warnings[0] : undefined);
+  const shown = route.campus?.summary ?? (decision.outcome === "NO_USABLE_ROUTE" ? decision.warnings[0] : undefined);
   if (!shown) return null;
-  return <p className={cn("mt-1.5 text-xs", decision.outcome === "NO_USABLE_ROUTE" ? "text-warn" : "text-ink-muted")}>{shown}</p>;
+  return <p className={cn("mt-1.5 text-[13px] leading-[18px]", decision.outcome === "NO_USABLE_ROUTE" ? "text-warn" : "text-ink-muted")}>{shown}</p>;
 }
 
-function LeaveRow({ t, id, sel, label, day }: { t: ClassTransition; id: string; sel: Selectable; label: string; day: DayPlan }) {
-  const rec = t.recommendedRoute!;
-  // The walk to fall back on, or to offer beside a bus: the campus-aware one when there is one.
-  const walk = t.campusWalk ?? t.walkingRoute;
-  const alt = rec.mode === "WALK" ? t.transitRoute : walk;
-  const sameSpot = rec.durationMinutes === 0;
-  const select = () => sel.onSelect(id, { kind: "LEG", label, from: t.from, to: t.to, route: rec, walkFallback: walk });
+/**
+ * What only matters for the leg the student is looking at: how the way goes, why it changed, a closure to
+ * report, a reminder and Google Maps. Shown under that one leg, never under every row.
+ */
+function LegDetails({ t, plan, route, choice }: { t: ClassTransition; plan: DayPlan; route: RouteOption; choice?: RouteChoice }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || prefersReducedMotion()) return;
+    const anim = animate(el, { opacity: [0, 1], translateY: [4, 0], duration: DURATION.quick, ease: EASE_OUT });
+    return () => {
+      anim.cancel();
+      el.style.opacity = "";
+      el.style.transform = "";
+    };
+  }, []);
+  // Reporting hangs off the route whose doors and links the student is sent through: this way when it
+  // uses campus knowledge or the indoor network, otherwise the winter route when there is one.
+  const reportOn = route.campus || route.indoorPath ? route : t.indoorRoute ?? route;
   return (
-    <li data-reveal className={cn(ROW, (sel.selectedId === id || sel.selectedId?.startsWith(`${id}-`)) && SELECTED)}>
-      <Time at={t.recommendedDeparture!} />
-      <div className={PRESSABLE} {...pressable(select)}>
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 font-semibold leading-snug">Leave {t.from.name}</div>
-          {t.hasDeadline && feasibilityBadge(t.feasibility)}
+    <div ref={ref} data-leg-details className={cn(INDENT, "-mt-1 pb-3")}>
+      {route.indoorPath && <p className="text-[13px] leading-[18px] text-ink-muted">Through {indoorPathLabel(route)}</p>}
+      {route.mode === "TRANSIT" && <TransitSteps route={route} />}
+      <RouteAdjustedNote route={route} />
+      <CampusNote t={t} route={route} />
+      <ReportClosure route={reportOn} />
+      {route.durationMinutes > 0 && (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          {t.hasDeadline && <RemindButton day={plan} t={t} choice={choice} />}
+          <MapsLink from={t.from} to={t.to} route={route} />
         </div>
-        <div className="mt-0.5 flex items-center gap-1.5 text-sm text-ink-muted">
-          <ModeIcon route={rec} />
-          <span>{routeSummary(rec)}{t.hasDeadline && t.expectedArrival ? ` · arrive ${formatClock(t.expectedArrival)}` : ""}</span>
-        </div>
-        {rec.mode === "TRANSIT" && <TransitSteps route={rec} />}
-        <RouteAdjustedNote route={rec} />
-        <CampusNote t={t} />
-        <IndoorComparison t={t} id={id} label={label} sel={sel} />
-        {/* Reporting hangs off the route whose doors and links the student is sent through: a
-            campus-aware walk when the plan took one, otherwise the winter route when there is one,
-            whether or not the plan chose to take it today. */}
-        <ReportClosure route={rec.campus ? rec : t.indoorRoute ?? rec} />
-        {alt && (
-          <div className="mt-1.5 flex items-center gap-1.5 text-xs text-ink-muted">
-            <ModeIcon route={alt} className="size-3.5" />
-            <span>
-              Also: {routeSummary(alt)}
-              {alt.mode === "TRANSIT" && alt.departureTime && alt.arrivalTime ? ` · leave ${formatClock(alt.departureTime)}, arrive ${formatClock(alt.arrivalTime)}` : ""}
+      )}
+    </div>
+  );
+}
+
+export function LeaveRow({ t, plan, selected, choice, onPick }: {
+  t: ClassTransition;
+  plan: DayPlan;
+  selected: boolean;
+  /**
+   * The way the student chose for this leg, when it is the one in focus. The row, its details and its
+   * reminder all describe that way, so the day never contradicts the summary above it.
+   */
+  choice?: RouteChoice;
+  onPick: (transitionId: string) => void;
+}) {
+  const route = choice?.route ?? t.recommendedRoute!;
+  const leaveAt = choice ? choice.leaveAt : t.recommendedDeparture;
+  const arriveAt = choice ? choice.arriveAt : t.expectedArrival;
+  const concern = concernOf(t, choice);
+  const title = legTitle(plan, t, route);
+  return (
+    <li data-reveal className={cn(selected && SELECTED)}>
+      <button
+        type="button"
+        onClick={() => onPick(t.id)}
+        aria-current={selected ? "true" : undefined}
+        aria-label={`${title}${leaveAt ? `, leave ${formatClock(leaveAt)}` : ""}${concern ? `. ${concern.text}` : ""}`}
+        className={ROW_BUTTON}
+      >
+        <Time at={leaveAt} />
+        <span className="min-w-0 flex-1">
+          <span className="flex min-w-0 items-start gap-1.5 text-[16px] font-semibold leading-[22px]">
+            <ModeIcon route={route} className="mt-[3px] text-ink-muted" />
+            <span className="min-w-0">{title}</span>
+          </span>
+          <span className="mt-0.5 block text-[13px] leading-[18px] text-ink-muted">{legMeta(t, route, arriveAt, Boolean(concern))}</span>
+          {concern && (
+            <span className={cn("mt-1 flex items-center gap-1.5 text-[13px] font-medium leading-[18px]", concern.tone === "bad" ? "text-bad" : "text-warn")}>
+              <AlertTriangle className="size-3.5 shrink-0" aria-hidden="true" />
+              {concern.text}
             </span>
-          </div>
-        )}
-        {t.feasibility === "LIKELY_LATE" && <p className="mt-2 text-sm text-bad">Only {t.availableMinutes} min between classes; this trip needs more.</p>}
-        {!sameSpot && (
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-            <MapsLink from={t.from} to={t.to} route={rec} />
-            {t.hasDeadline && <RemindButton day={day} t={t} />}
-          </div>
-        )}
-      </div>
+          )}
+        </span>
+      </button>
+      {selected && <LegDetails t={t} plan={plan} route={route} choice={choice} />}
     </li>
   );
 }
 
-function ClassRow({ c, id, sel, focusRef }: { c: ScheduledClass; id: string; sel: Selectable; focusRef?: (el: HTMLLIElement | null) => void }) {
+export function ClassRow({ c, selected, onPick }: { c: ScheduledClass; selected: boolean; onPick: (classId: string) => void }) {
   const m = c.meeting;
-  const roomLabel = m.location.kind === "ROOM" ? `${m.location.buildingCode} ${m.location.roomNumber}` : "";
-  const floor = floorLabel(c.room);
+  const room = m.location.kind === "ROOM" ? `${m.location.buildingCode} ${m.location.roomNumber}` : m.location.kind === "ONLINE" ? "Online" : "Room TBA";
   const isWlu = m.university === "WLU";
-  const select = () => sel.onSelect(id, { kind: "PLACE", label: `${m.courseCode} · ${roomLabel}`, at: c.location });
+  // A lecture is what a class usually is; the tag only says something when it is not, or is at Laurier.
+  const tag = isWlu || m.component !== "LEC" ? `${isWlu ? "Laurier · " : ""}${m.component}${m.section ? ` ${m.section}` : ""}` : undefined;
+  const building = c.room.buildingName ?? c.location.name;
+  const where = c.room.floor === "unknown" ? building : `${building} · ${floorLabel(c.room)}`;
   return (
-    <li ref={focusRef} data-reveal className={cn(ROW, "py-3.5", sel.selectedId === id && SELECTED)}>
-      <Time at={c.start} end={c.end} />
-      <div className={PRESSABLE} {...pressable(select)}>
-        <div className="flex items-baseline justify-between gap-2">
-          <div className="text-lg font-bold leading-tight tracking-[-0.01em]">{m.courseCode}</div>
-          <Badge variant={isWlu ? "wlu" : "neutral"}>{isWlu ? "Laurier · " : ""}{m.component}{m.section ? ` ${m.section}` : ""}</Badge>
-        </div>
-        {m.courseTitle && <div className="text-sm text-ink-muted">{m.courseTitle}</div>}
-        <div className="mt-1.5 font-semibold">{roomLabel}</div>
-        <div className="text-sm text-ink-muted">{c.room.buildingName ?? c.location.name} · {floor}</div>
-      </div>
+    <li data-reveal className={cn(selected && SELECTED)}>
+      <button
+        type="button"
+        onClick={() => onPick(c.id)}
+        aria-current={selected ? "true" : undefined}
+        aria-label={`${m.courseCode} in ${room}, ${formatClock(c.start)} to ${formatClock(c.end)}`}
+        className={ROW_BUTTON}
+      >
+        <Time at={c.start} end={c.end} />
+        <span className="min-w-0 flex-1">
+          <span className="flex items-start justify-between gap-2">
+            <span className="flex min-w-0 flex-wrap items-baseline gap-x-2">
+              <span className="text-[16px] font-semibold leading-[22px]">{m.courseCode}</span>
+              <span className="font-mono text-[15px] font-medium leading-[22px] text-ink-muted">{room}</span>
+            </span>
+            {tag && <Badge variant={isWlu ? "wlu" : "neutral"} className="mt-0.5">{tag}</Badge>}
+          </span>
+          <span className="mt-0.5 block text-[13px] leading-[18px] text-ink-muted">{where}</span>
+        </span>
+      </button>
     </li>
   );
 }
@@ -226,20 +256,11 @@ function cfgBuffer(h: HomeReturnAnalysis): number {
   return Math.max(0, h.gapMinutes - h.travelHomeMinutes - h.travelBackMinutes - h.usableHomeMinutes);
 }
 
-function legLine(r: RouteOption | undefined, minutes: number): string {
-  if (!r) return formatDuration(minutes);
-  if (r.mode === "TRANSIT") {
-    const names = (r.steps ?? []).filter((x) => x.mode === "TRANSIT").map((x) => x.transit?.lineShort ?? x.transit?.line).filter(Boolean).join(" → ");
-    return `${formatDuration(minutes)} · bus ${names || ""}`.trim();
-  }
-  return `${formatDuration(minutes)} ${r.indoorPath ? "indoors" : "walk"}${r.isEstimate && !r.indoorPath ? " (est.)" : ""}`;
-}
-
 /**
- * previous class ends -> travel home -> time at home -> leave home -> travel back -> next class.
- * The number that matters is usable time at home; travel is already taken out of it.
+ * Going home in a gap, once chosen: the verdict and the one number that matters, time at home with the
+ * travel already taken out. The trips there and back are ordinary legs in the day below this row.
  */
-function HomeCard({ h, home, from, to, gapStart, idBase, sel, day, backLeg }: { h: HomeReturnAnalysis; home: UserHome | undefined; from?: CampusLocation; to?: CampusLocation; gapStart: Date; idBase: string; sel: Selectable; day: DayPlan; backLeg?: ClassTransition }) {
+function HomeSummary({ h }: { h: HomeReturnAnalysis }) {
   const verdict = h.recommendation === "WORTH_IT"
     ? { Icon: Check, text: "You can go home", cls: "text-ok" }
     : h.recommendation === "POSSIBLE"
@@ -247,139 +268,85 @@ function HomeCard({ h, home, from, to, gapStart, idBase, sel, day, backLeg }: { 
       : h.possible
         ? { Icon: X, text: "Not worth going home", cls: "text-bad" }
         : { Icon: X, text: "Not enough time to go home", cls: "text-bad" };
-  const sub = h.recommendation === "WORTH_IT"
-    ? undefined
-    : h.possible
-      ? `You would only have ${formatDuration(h.usableHomeMinutes)} at home after ${formatDuration(h.travelHomeMinutes)} there and ${formatDuration(h.travelBackMinutes)} back.`
-      : `${formatDuration(h.travelHomeMinutes)} home and ${formatDuration(h.travelBackMinutes)} back don't fit in ${formatDuration(h.gapMinutes)} with your ${formatDuration(cfgBuffer(h))} buffer; you wouldn't make your next class safely.`;
-  const homeLoc: CampusLocation | undefined = home ? { id: "home", name: home.name, latitude: home.latitude, longitude: home.longitude, kind: "HOME" } : undefined;
+  const detail = h.possible && h.leaveHomeAt
+    ? `${formatDuration(h.usableHomeMinutes)} at home · leave home ${formatClock(h.leaveHomeAt)}`
+    : `${formatDuration(h.travelHomeMinutes)} home and ${formatDuration(h.travelBackMinutes)} back don't fit in ${formatDuration(h.gapMinutes)} with your ${formatDuration(cfgBuffer(h))} buffer.`;
   return (
-    <div className="mt-3 border-t border-line pt-3">
-      <div className={cn("flex items-center gap-1.5 font-semibold", verdict.cls)}>
+    <div className="mt-2">
+      <p className={cn("flex items-center gap-1.5 text-[14px] font-medium leading-5", verdict.cls)}>
         <verdict.Icon className="size-4 shrink-0" aria-hidden="true" />
         {verdict.text}
-      </div>
-      {sub && <p className="mt-1 text-sm text-ink-muted">{sub}</p>}
-      {h.possible && h.arriveHomeAt && h.leaveHomeAt && (
-        <>
-          <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-            <dt className="text-ink-muted">Class ends</dt><dd className="font-mono tabular-nums">{formatClock(gapStart)}</dd>
-            <dt className="text-ink-muted">Get home</dt><dd className="font-mono tabular-nums">{formatClock(h.arriveHomeAt)} <span className="font-sans text-ink-muted">· {legLine(h.routeHome, h.travelHomeMinutes)}</span></dd>
-            <dt className="text-ink-muted">Time at home</dt><dd className="text-base font-bold">{formatDuration(h.usableHomeMinutes)}</dd>
-            <dt className="text-ink-muted">Leave home</dt><dd className="font-mono font-semibold tabular-nums">{formatClock(h.leaveHomeAt)} <span className="font-sans font-normal text-ink-muted">· {legLine(h.routeBack, h.travelBackMinutes)}</span></dd>
-            <dt className="text-ink-muted">Next class</dt><dd className="font-mono tabular-nums">{formatClock(h.nextClassStart)}</dd>
-          </dl>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            {homeLoc && from && to && (
-              <>
-                <Button variant="outline" size="xs" onClick={(e) => { e.stopPropagation(); sel.onSelect(`${idBase}-out`, { kind: "LEG", label: `${from.name} → ${homeLoc.name}`, from, to: homeLoc, route: h.routeHome }); }}><MapPin /> Trip home</Button>
-                <Button variant="outline" size="xs" onClick={(e) => { e.stopPropagation(); sel.onSelect(`${idBase}-back`, { kind: "LEG", label: `${homeLoc.name} → ${to.name}`, from: homeLoc, to, route: h.routeBack }); }}><MapPin /> Trip back</Button>
-              </>
-            )}
-            {backLeg && <RemindButton day={day} t={backLeg} />}
-          </div>
-        </>
-      )}
+      </p>
+      <p className="mt-0.5 text-[13px] leading-[18px] text-ink-muted">{detail}</p>
     </div>
   );
 }
 
-function endpointLabel(loc: CampusLocation, cls: ScheduledClass | undefined): string {
-  if (loc.kind === "HOME") return "Home";
-  if (!cls) return loc.name;
-  const bld = cls.meeting.location.kind === "ROOM" ? cls.meeting.location.buildingCode : loc.buildingCode;
-  return bld ? `${cls.meeting.courseCode} (${bld})` : cls.meeting.courseCode;
-}
-
-function neighbouringClasses(items: DayPlanItem[], index: number): { prev?: ScheduledClass; next?: ScheduledClass } {
-  let prev: ScheduledClass | undefined;
-  let next: ScheduledClass | undefined;
-  for (let i = index - 1; i >= 0; i--) { const it = items[i]; if (it.kind === "CLASS") { prev = it.scheduledClass; break; } }
-  for (let i = index + 1; i < items.length; i++) { const it = items[i]; if (it.kind === "CLASS") { next = it.scheduledClass; break; } }
-  return { prev, next };
-}
-
-export function DayTimeline({ plan, home, busy, sel, focusClassId, onChooseGap }: { plan: DayPlan; home: UserHome | undefined; busy: boolean; sel: Selectable; focusClassId?: string; onChooseGap?: ChooseGap }) {
-  const focusEl = useRef<HTMLLIElement | null>(null);
-  const scrolledFor = useRef<string | undefined>(undefined);
-
-  // Bring the class that matters into view once, when today is opened. Tracking the id
-  // it last scrolled for means a student who then scrolls away is left alone.
-  useEffect(() => {
-    if (!focusClassId || scrolledFor.current === focusClassId) return;
-    const el = focusEl.current;
-    if (!el) return;
-    scrolledFor.current = focusClassId;
-    el.scrollIntoView({ block: "center", behavior: "smooth" });
-  }, [focusClassId, plan]);
-
-  if (plan.classes.length === 0) return <p className="py-12 text-center text-ink-muted">No classes on this day.</p>;
+/**
+ * The day as one list: leaving, classes, free time. Rows are picked by what they are (a leg by its
+ * transition id, a class by its id), never by position, so a rebuilt plan never moves the highlight onto
+ * another row. Picking a row changes what the planner is about; the summary and the map follow.
+ */
+export function DayTimeline({ plan, home, busy, focusId, focusChoice, onPickLeg, onPickClass, onChooseGap }: {
+  plan: DayPlan;
+  home: UserHome | undefined;
+  busy: boolean;
+  focusId: string | undefined;
+  /** The way the student chose for the leg in focus, which its row and details describe. */
+  focusChoice?: RouteChoice;
+  onPickLeg: (transitionId: string) => void;
+  onPickClass: (classId: string) => void;
+  onChooseGap?: ChooseGap;
+}) {
+  if (plan.classes.length === 0) return <p className="px-4 py-10 text-center text-[15px] text-ink-muted">No classes on this day.</p>;
   return (
     <div className={cn("transition-opacity duration-200", busy && "opacity-60")}>
       {plan.warnings.length > 0 && (
-        <ul className="mb-3 space-y-1 rounded-xl bg-bad-soft p-3 text-sm text-bad">{plan.warnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
+        <ul className="mx-4 mb-3 space-y-1 rounded-xl bg-bad-soft p-3 text-[14px] leading-5 text-bad sm:mx-5 lg:mx-0">{plan.warnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
       )}
-      {/* One list, hairlines between rows: the day reads as a sequence, not a stack of cards. Replays its entrance when the day or the plan's shape changes. */}
-      <Reveal key={`${plan.date}-${plan.items.length}`} as="ol" step={30} duration={450} className="overflow-hidden rounded-2xl border border-line bg-surface divide-y divide-line">
+      {/*
+        One list, hairlines between rows: the day reads as a sequence, not a stack of cards. The entrance plays
+        for a new day. Rows are keyed by what they are, so a plan rebuilt for the same day (a gap answered, a
+        closure confirmed) keeps its rows, an open gap picker and the focus inside it.
+      */}
+      <Reveal key={plan.date} as="ol" step={30} duration={300} className="divide-y divide-line border-y border-line bg-surface lg:overflow-hidden lg:rounded-2xl lg:border">
         {plan.items.map((item, i) => {
           switch (item.kind) {
             case "LEAVE": {
-              const { prev, next } = neighbouringClasses(plan.items, i);
-              const t = item.transition;
-              return <LeaveRow key={i} t={t} id={`leg-${i}`} sel={sel} label={`${endpointLabel(t.from, prev)} → ${endpointLabel(t.to, next)}`} day={plan} />;
+              const selected = focusId === legRowId(item.transition.id);
+              return <LeaveRow key={`leave:${item.transition.id}`} t={item.transition} plan={plan} selected={selected} choice={selected ? focusChoice : undefined} onPick={onPickLeg} />;
             }
+            // The arrival and its margin are already in the leg's own line.
+            case "ARRIVE": return null;
+            case "CLASS": return <ClassRow key={`class:${item.scheduledClass.id}`} c={item.scheduledClass} selected={focusId === classRowId(item.scheduledClass.id)} onPick={onPickClass} />;
             case "GYM": return (
-              <li key={i} data-reveal className={cn(ROW, "bg-canvas/60")}>
-                <div className="w-16 shrink-0 sm:w-[4.5rem]" />
+              <li key={`gym:${i}`} data-reveal className={ROW_STATIC}>
+                <Time />
                 <div className="min-w-0 flex-1">
-                  <div className="font-semibold">Gym after class?</div>
+                  <p className="text-[15px] font-semibold leading-[22px]">Gym after class?</p>
                   <GymCard w={item.window} />
                 </div>
               </li>
             );
-            case "ARRIVE": return (
-              <li key={i} data-reveal className={cn(ROW, "py-2 text-sm text-ink-muted")}>
-                <Time at={item.at} />
-                {/* The real margin, not the configured buffer: a tight hop can land later than intended. */}
-                <div className="min-w-0 flex-1 pt-0.5">
-                  Arrive {item.to.name}
-                  {item.transition.hasDeadline ? ` · ${Math.max(0, minutesBetween(item.at, item.transition.arriveBy))} min before class` : ""}
+            case "GAP": return (
+              <li key={`gap:${item.classId}`} data-reveal className={ROW_STATIC}>
+                <Time />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[15px] font-semibold leading-[22px]">{formatDuration(item.minutes)} free</p>
+                  <p className="text-[13px] leading-[18px] text-ink-muted">{formatClock(item.from)} &ndash; {formatClock(item.to)}</p>
+                  {/* The detail blocks only make sense once the student has committed to going. */}
+                  {item.choice?.value.kind === "REZ" && item.homeReturn && <HomeSummary h={item.homeReturn} />}
+                  {item.choice?.value.kind === "GYM" && item.gym && <GymCard w={item.gym} heading="Your workout" compact />}
+                  {onChooseGap
+                    ? <GapChoicePicker gap={item} onChoose={onChooseGap} />
+                    : !home && <p className="mt-1 text-[13px] leading-[18px] text-ink-muted">Set where you live to see if you can go home.</p>}
                 </div>
               </li>
             );
-            case "CLASS": return (
-              <ClassRow
-                key={i}
-                c={item.scheduledClass}
-                id={`class-${i}`}
-                sel={sel}
-                focusRef={item.scheduledClass.id === focusClassId ? (el) => { focusEl.current = el; } : undefined}
-              />
-            );
-            case "GAP": {
-              const { prev, next } = neighbouringClasses(plan.items, i);
-              return (
-                <li key={i} data-reveal className={cn(ROW, "bg-canvas/60")}>
-                  <div className="w-16 shrink-0 sm:w-[4.5rem]" />
-                  <div className="min-w-0 flex-1">
-                    <div className="font-semibold">{formatDuration(item.minutes)} free</div>
-                    <div className="text-sm text-ink-muted">{formatClock(item.from)} &ndash; {formatClock(item.to)}</div>
-                    {/* The detail blocks only make sense once the student has committed to going. */}
-                    {item.choice?.value.kind === "REZ" && item.homeReturn && (
-                      <HomeCard h={item.homeReturn} home={home} from={prev?.location} to={next?.location} gapStart={item.from} idBase={`home-${i}`} sel={sel} day={plan} backLeg={plan.transitions.find((t) => t.from.kind === "HOME" && next && t.arriveBy.getTime() === next.start.getTime() && t.to.id === next.location.id)} />
-                    )}
-                    {item.choice?.value.kind === "GYM" && item.gym && <GymCard w={item.gym} heading="Your workout" />}
-                    {onChooseGap
-                      ? <GapChoicePicker gap={item} onChoose={onChooseGap} />
-                      : !home && <p className="mt-1 text-sm text-ink-muted">Set where you live to see if you can go home.</p>}
-                  </div>
-                </li>
-              );
-            }
             case "NOTE": return (
-              <li key={i} data-reveal className={cn(ROW, "py-2 text-sm text-ink-muted")}>
-                <div className="w-16 shrink-0 sm:w-[4.5rem]" />
-                <div className="min-w-0 flex-1">{item.text}</div>
+              <li key={`note:${i}`} data-reveal className={cn(ROW_STATIC, "text-[13px] leading-[18px] text-ink-muted")}>
+                <Time />
+                <p className="min-w-0 flex-1">{item.text}</p>
               </li>
             );
           }

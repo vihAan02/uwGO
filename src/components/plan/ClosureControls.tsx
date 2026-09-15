@@ -31,7 +31,7 @@ export function RouteAdjustedNote({ route }: { route: RouteOption }) {
     return ids.length > 1 ? `${first} and ${ids.length - 1} more` : first;
   };
   return (
-    <p className="mt-1.5 text-xs text-warn">
+    <p className="mt-1.5 text-[13px] leading-[18px] text-warn">
       {avoided.length > 0 && (
         <>
           <span className="font-semibold">Route adjusted</span>
@@ -174,27 +174,30 @@ export function ReportClosure({ route }: { route: RouteOption }) {
   };
 
   return (
-    <details className="group mt-2" onClick={(e) => e.stopPropagation()}>
-      <summary className="flex min-h-8 cursor-pointer list-none items-center gap-1.5 text-xs font-medium text-ink-muted [&::-webkit-details-marker]:hidden">
-        <Construction className="size-3.5" aria-hidden="true" />
+    <details className="group mt-1">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center gap-1.5 text-[13px] font-medium text-ink-muted [&::-webkit-details-marker]:hidden">
+        <Construction className="size-4" aria-hidden="true" />
         Something blocked?
       </summary>
-      <ul className="mt-1 space-y-1">
+      <ul className="space-y-2 pb-1">
         {segments.map((s) => {
           const reported = isReported(s);
           const left = remainingFor(s);
           return (
-            <li key={s.ids[0]} className="flex items-center justify-between gap-2 text-xs">
-              <span className="min-w-0 truncate text-ink-muted">{s.label}</span>
+            <li key={s.ids[0]} className="flex items-center justify-between gap-3 text-[13px] leading-[18px]">
+              <span className="min-w-0">
+                <span className="block text-ink">{s.label}</span>
+                {reported && left > 0 && <span className="block text-[12px] leading-4 text-ink-muted">{left} more report{left === 1 ? "" : "s"} needed to close it</span>}
+              </span>
               <Button
                 variant={reported ? "secondary" : "outline"}
-                size="xs"
+                size="touch"
+                className="shrink-0 px-3 text-[13px]"
                 disabled={busy === s.label}
                 aria-pressed={reported}
-                onClick={(e) => { e.stopPropagation(); void toggle(s); }}
+                onClick={() => void toggle(s)}
               >
                 {reported ? <><Check /> Reported</> : "Report closed"}
-                {reported && left > 0 && <span className="font-normal text-ink-muted">{left} more needed</span>}
               </Button>
             </li>
           );

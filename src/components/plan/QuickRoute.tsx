@@ -29,12 +29,14 @@ function currentPosition(): Promise<LatLng> {
  * Quick routes: from where the student is right now to home, the gym or the nearest open library, whatever the
  * time and whatever the day's plan says. The route goes on the map like any leg, so Start trip takes it from there.
  */
-export function QuickRoute({ home, preference, closedEdgeIds, selectedId, onRoute, onSetHome }: {
+export function QuickRoute({ home, preference, closedEdgeIds, selectedId, beginRequest, onRoute, onSetHome }: {
   home: UserHome | undefined;
   preference: RoutePreference;
   closedEdgeIds?: ReadonlySet<string>;
   selectedId: string | undefined;
-  onRoute: (id: string, selection: MapSelection) => void;
+  /** Called when a lookup starts; the token comes back with the route so the planner can tell whether anything was picked meanwhile. */
+  beginRequest: () => number;
+  onRoute: (request: number, id: string, selection: MapSelection) => void;
   onSetHome: () => void;
 }) {
   const [busy, setBusy] = useState<QuickDestination | undefined>();
@@ -44,6 +46,7 @@ export function QuickRoute({ home, preference, closedEdgeIds, selectedId, onRout
 
   const go = async (dest: QuickDestination) => {
     const request = ++latest.current;
+    const token = beginRequest();
     setBusy(dest);
     setMessage(undefined);
     const result = await planQuickRoute(dest, {
@@ -54,7 +57,7 @@ export function QuickRoute({ home, preference, closedEdgeIds, selectedId, onRout
     if (request !== latest.current) return;
     setBusy(undefined);
     if (result.kind === "ROUTE") {
-      onRoute(quickRouteId(dest), { kind: "LEG", label: `Your location → ${result.to.name}`, from: result.from, to: result.to, route: result.route });
+      onRoute(token, quickRouteId(dest), { kind: "LEG", label: `Your location → ${result.to.name}`, from: result.from, to: result.to, route: result.route });
       setMessage(result.note ? { text: result.note } : undefined);
     } else {
       setMessage({ text: result.message, setHome: result.kind === "PROBLEM" && result.action === "SET_HOME" });
@@ -62,10 +65,9 @@ export function QuickRoute({ home, preference, closedEdgeIds, selectedId, onRout
   };
 
   return (
-    <section className="mt-3 border-t border-line px-1 pt-3" aria-labelledby="quick-route-title">
-      <h2 id="quick-route-title" className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-muted">Quick route</h2>
-      <p className="mt-0.5 text-sm text-ink-muted">From where you are, right now.</p>
-      <div className="mt-2 flex flex-wrap gap-2">
+    <section className="border-t border-line pt-4 lg:border-t-0 lg:pt-0" aria-labelledby="quick-route-title">
+      <h2 id="quick-route-title" className="text-[15px] font-semibold leading-5">From where you are</h2>
+      <div className="mt-2 grid grid-cols-3 gap-2 sm:flex">
         {QUICK_DESTINATIONS.map((dest) => {
           const shown = selectedId === quickRouteId(dest);
           return (
@@ -75,18 +77,18 @@ export function QuickRoute({ home, preference, closedEdgeIds, selectedId, onRout
               aria-pressed={shown}
               data-state={shown ? "on" : "off"}
               aria-busy={busy === dest}
-              className={cn(toggleItemVariants(), "min-w-[5.5rem] flex-none")}
+              className={cn(toggleItemVariants(), "min-w-0 touch-manipulation rounded-full px-2 sm:min-w-[6rem] sm:flex-none")}
               onClick={() => void go(dest)}
             >
-              {busy === dest && <span aria-hidden="true" className="size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />}
+              {busy === dest && <span aria-hidden="true" className="size-3.5 rounded-full border-2 border-current border-t-transparent motion-safe:animate-spin" />}
               {QUICK_LABELS[dest]}
             </button>
           );
         })}
       </div>
-      <div role="status" aria-live="polite" className="mt-2 flex min-h-5 flex-wrap items-center gap-x-2 text-sm text-ink-muted empty:hidden">
+      <div role="status" aria-live="polite" className="mt-2 flex min-h-5 flex-wrap items-center gap-x-2 text-[13px] leading-[18px] text-ink-muted empty:hidden">
         {busy ? "Finding the way from where you are…" : message?.text}
-        {!busy && message?.setHome && <Button variant="link" size="xs" onClick={onSetHome}>Set home</Button>}
+        {!busy && message?.setHome && <Button variant="link" size="touch" className="min-h-11 text-[13px]" onClick={onSetHome}>Set home</Button>}
       </div>
     </section>
   );
