@@ -15,10 +15,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Reveal } from "@/components/ui/reveal";
-import { Wordmark } from "@/components/ui/wordmark";
 import { cn } from "@/lib/utils";
-import { AppTabs } from "@/components/nav/AppTabs";
-import { BOTTOM_NAV_PAD, BottomNav } from "@/components/nav/BottomNav";
+import { PageHeader } from "@/components/nav/PageHeader";
+import { SettingsSheet } from "@/components/plan/SettingsSheet";
 import { CourseColorPicker } from "./CourseColorPicker";
 import { Timetable } from "./Timetable";
 
@@ -34,6 +33,7 @@ export function CoursesView() {
   const auth = useAuth();
   const settled = account.status === "ready" || account.status === "local" || account.status === "offline";
   const meetings = state.schedule?.meetings;
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
     if (hydrated && settled && !meetings?.length) router.replace("/setup");
@@ -57,123 +57,119 @@ export function CoursesView() {
   if (account.status === "error" && !meetings?.length) return <AccountLoadError />;
 
   return (
-    <main className={cn("app mx-auto w-full max-w-5xl px-4 sm:px-6", BOTTOM_NAV_PAD)}>
-      <header className="sticky top-0 z-10 -mx-4 border-b border-line bg-canvas/90 px-4 backdrop-blur sm:-mx-6 sm:px-6">
-        <div className="flex h-14 items-center justify-between gap-2">
-          <Wordmark />
-          <AppTabs className="hidden lg:flex" />
-        </div>
-      </header>
-      <BottomNav />
+    <>
+      <PageHeader title="Courses" onOpenSettings={() => setSettingsOpen(true)} initial={auth.user?.email?.[0]} />
+      <main className="app mx-auto w-full max-w-5xl px-4 pb-[calc(env(safe-area-inset-bottom)+4rem)] sm:px-6">
+        <div className="pt-4 empty:hidden"><AccountSyncNotice /></div>
 
-      <div className="pt-4 empty:hidden"><AccountSyncNotice /></div>
-
-      <Reveal step={70}>
-        <div data-reveal className="pt-6">
-          <h1 className="text-[1.75rem] font-semibold leading-tight tracking-[-0.02em]">Your courses</h1>
-          <p className="mt-1 text-ink-muted">
-            {[name, term, `${courses.length} course${courses.length === 1 ? "" : "s"}`].filter(Boolean).join(" · ")}
-            {laurierCount > 0 && ` · ${laurierCount} at Laurier`}
-          </p>
-        </div>
-
-        <div data-reveal className="mt-4 flex flex-wrap items-center gap-2">
-          <Button asChild size="sm">
-            <Link href="/setup?replace=1"><Pencil /> Update schedule</Link>
-          </Button>
-          {needsInfo > 0 && (
-            <span className="inline-flex items-center gap-1.5 text-sm text-warn">
-              <TriangleAlert className="size-4" aria-hidden="true" />
-              {needsInfo} Laurier course{needsInfo === 1 ? "" : "s"} missing a room or professor
-            </span>
-          )}
-        </div>
-
-        <section data-reveal className="mt-6">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Your timetable</h2>
-          <div className="mt-3">
-            <Timetable meetings={meetings ?? []} colors={colors} onColorChange={setCourseColor} onShowCourse={showCourse} />
+        <Reveal step={30} duration={300}>
+          <div data-reveal className="pt-5">
+            <h1 className="text-[20px] font-semibold leading-[26px] tracking-[-0.01em]">Your courses</h1>
+            <p className="mt-0.5 text-[15px] leading-[22px] text-ink-muted">
+              {[name, term, `${courses.length} course${courses.length === 1 ? "" : "s"}`].filter(Boolean).join(" · ")}
+              {laurierCount > 0 && ` · ${laurierCount} at Laurier`}
+            </p>
           </div>
-        </section>
 
-        <ul className="mt-8 divide-y divide-line border-t border-line">
-          {courses.map((c) => (
-            <li
-              key={c.key}
-              data-reveal
-              id={`course-${c.key}`}
-              className={cn("scroll-mt-20 py-4", selected === c.key && "bg-brand/[0.045] shadow-[inset_3px_0_0_0_var(--color-brand)]")}
-            >
-              <div className="flex items-center gap-2.5">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      type="button"
-                      aria-label={`Colour for ${c.code}`}
-                      className="grid size-7 shrink-0 place-items-center rounded-full outline-none transition-colors duration-150 hover:bg-line/60 focus-visible:ring-[3px] focus-visible:ring-brand/35"
-                    >
-                      <span aria-hidden="true" className="size-3.5 rounded-full" style={{ backgroundColor: colors.get(c.key)?.rail }} />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent align="start" className="w-auto">
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">Colour for {c.code}</p>
-                    <CourseColorPicker value={colors.get(c.key)?.id} courseLabel={c.code} onChange={(color) => setCourseColor(c.key, color)} />
-                  </PopoverContent>
-                </Popover>
-                <button
-                  type="button"
-                  onClick={() => setSelected((k) => (k === c.key ? undefined : c.key))}
-                  aria-expanded={selected === c.key}
-                  className="flex min-w-0 flex-1 items-baseline justify-between gap-3 text-left outline-none focus-visible:ring-[3px] focus-visible:ring-brand/35"
-                >
-                  <h2 className="text-lg font-bold leading-tight tracking-[-0.01em]">{c.code}</h2>
-                  {c.university === "WLU" && <Badge variant="wlu">Laurier{c.laurierCode ? ` · ${c.laurierCode}` : ""}</Badge>}
-                </button>
-              </div>
+          <div data-reveal className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
+            <Button asChild size="touch">
+              <Link href="/setup?replace=1"><Pencil /> Update schedule</Link>
+            </Button>
+            {needsInfo > 0 && (
+              <span className="inline-flex items-center gap-1.5 text-[14px] leading-5 text-warn">
+                <TriangleAlert className="size-4 shrink-0" aria-hidden="true" />
+                {needsInfo} Laurier course{needsInfo === 1 ? "" : "s"} missing a room or professor
+              </span>
+            )}
+          </div>
 
-              <div className="pl-9.5">
-                {c.title && <p className="text-sm text-ink-muted">{c.title}</p>}
-                {c.instructors.length > 0 && <p className="mt-1 text-sm text-ink-muted">{c.instructors.join(", ")}</p>}
+          <section data-reveal className="mt-6">
+            <h2 className="text-[15px] font-semibold leading-5">Your timetable</h2>
+            <div className="mt-3">
+              <Timetable meetings={meetings ?? []} colors={colors} onColorChange={setCourseColor} onShowCourse={showCourse} />
+            </div>
+          </section>
 
-                <ul className="mt-2 space-y-1 text-sm">
-                  {c.meetings.map((m) => {
-                    const room = parseRawLocation(m.location, m.university);
-                    const where = m.location.kind === "ROOM" ? `${m.location.buildingCode} ${m.location.roomNumber}` : m.location.kind === "ONLINE" ? "Online" : "Room to be announced";
-                    return (
-                      <li key={m.id} className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                        <span className="font-medium">{m.component}{m.section ? ` ${m.section}` : ""}</span>
-                        <span className="text-ink-muted">
-                          {m.unscheduled ? "No scheduled time" : `${m.days.join("")} ${formatMinutesOfDay(m.start)}–${formatMinutesOfDay(m.end)}`}
-                        </span>
-                        <span className="text-ink-muted">· {where}{room?.buildingName ? ` · ${room.buildingName}` : ""}</span>
-                      </li>
-                    );
-                  })}
-                </ul>
+          <ul className="mt-8 divide-y divide-line border-y border-line">
+            {courses.map((c) => (
+              <li
+                key={c.key}
+                data-reveal
+                id={`course-${c.key}`}
+                className={cn("scroll-mt-20 py-3", selected === c.key && "bg-brand/[0.045] shadow-[inset_3px_0_0_0_var(--color-brand)]")}
+              >
+                <div className="flex items-center gap-1">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label={`Colour for ${c.code}`}
+                        className="-ml-2.5 grid size-11 shrink-0 touch-manipulation place-items-center rounded-full outline-none transition-colors duration-150 hover:bg-fill focus-visible:ring-2 focus-visible:ring-brand"
+                      >
+                        <span aria-hidden="true" className="size-3.5 rounded-full" style={{ backgroundColor: colors.get(c.key)?.rail }} />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="w-auto max-w-[17rem]">
+                      <p className="mb-2 text-[13px] font-medium leading-[18px]">Colour for {c.code}</p>
+                      <CourseColorPicker value={colors.get(c.key)?.id} courseLabel={c.code} onChange={(color) => setCourseColor(c.key, color)} />
+                    </PopoverContent>
+                  </Popover>
+                  <button
+                    type="button"
+                    onClick={() => setSelected((k) => (k === c.key ? undefined : c.key))}
+                    aria-expanded={selected === c.key}
+                    className="flex min-h-11 min-w-0 flex-1 touch-manipulation items-center justify-between gap-3 rounded-lg text-left outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                  >
+                    <h2 className="text-[16px] font-semibold leading-[22px]">{c.code}</h2>
+                    {c.university === "WLU" && <Badge variant="wlu">Laurier{c.laurierCode ? ` · ${c.laurierCode}` : ""}</Badge>}
+                  </button>
+                </div>
 
-                {selected === c.key && (
-                  <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-sm">
-                    <dt className="text-ink-muted">Campus</dt>
-                    <dd>{c.university === "WLU" ? "Wilfrid Laurier" : "University of Waterloo"}</dd>
-                    {c.laurierCode && <><dt className="text-ink-muted">Laurier code</dt><dd>{c.laurierCode}</dd></>}
-                    {c.title && <><dt className="text-ink-muted">Title</dt><dd>{c.title}</dd></>}
-                    <dt className="text-ink-muted">Sections</dt>
-                    <dd>{c.meetings.map((m) => `${m.component}${m.section ? ` ${m.section}` : ""}`).join(", ")}</dd>
-                    <dt className="text-ink-muted">Instructor</dt>
-                    <dd>{c.instructors.length ? c.instructors.join(", ") : "Not known"}</dd>
-                  </dl>
-                )}
+                <div className="pl-[38px]">
+                  {c.title && <p className="text-[14px] leading-5 text-ink-muted">{c.title}</p>}
+                  {c.instructors.length > 0 && <p className="mt-0.5 text-[14px] leading-5 text-ink-muted">{c.instructors.join(", ")}</p>}
 
-                {c.needsLaurierInfo && (
-                  <p className="mt-2 text-xs text-warn">
-                    Quest does not carry Laurier rooms or professors. Add them with an optional LORIS import from Update schedule.
-                  </p>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
-      </Reveal>
-    </main>
+                  <ul className="mt-2 space-y-1 text-[14px] leading-5">
+                    {c.meetings.map((m) => {
+                      const room = parseRawLocation(m.location, m.university);
+                      const where = m.location.kind === "ROOM" ? `${m.location.buildingCode} ${m.location.roomNumber}` : m.location.kind === "ONLINE" ? "Online" : "Room to be announced";
+                      return (
+                        <li key={m.id} className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                          <span className="font-medium">{m.component}{m.section ? ` ${m.section}` : ""}</span>
+                          <span className="text-ink-muted">
+                            {m.unscheduled ? "No scheduled time" : `${m.days.join("")} ${formatMinutesOfDay(m.start)}–${formatMinutesOfDay(m.end)}`}
+                          </span>
+                          <span className="text-ink-muted">· {where}{room?.buildingName ? ` · ${room.buildingName}` : ""}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+
+                  {selected === c.key && (
+                    <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-[14px] leading-5">
+                      <dt className="text-ink-muted">Campus</dt>
+                      <dd>{c.university === "WLU" ? "Wilfrid Laurier" : "University of Waterloo"}</dd>
+                      {c.laurierCode && <><dt className="text-ink-muted">Laurier code</dt><dd>{c.laurierCode}</dd></>}
+                      {c.title && <><dt className="text-ink-muted">Title</dt><dd>{c.title}</dd></>}
+                      <dt className="text-ink-muted">Sections</dt>
+                      <dd>{c.meetings.map((m) => `${m.component}${m.section ? ` ${m.section}` : ""}`).join(", ")}</dd>
+                      <dt className="text-ink-muted">Instructor</dt>
+                      <dd>{c.instructors.length ? c.instructors.join(", ") : "Not known"}</dd>
+                    </dl>
+                  )}
+
+                  {c.needsLaurierInfo && (
+                    <p className="mt-2 text-[13px] leading-[18px] text-warn">
+                      Quest does not carry Laurier rooms or professors. Add them with an optional LORIS import from Update schedule.
+                    </p>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </Reveal>
+      </main>
+      <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} />
+    </>
   );
 }
