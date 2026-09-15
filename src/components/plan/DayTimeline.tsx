@@ -68,8 +68,8 @@ function WalkChoiceRow({ label, r, chosen, note, onSelect }: { label: string; r:
       onClick={(e) => { e.stopPropagation(); onSelect(); }}
       className={cn("flex w-full cursor-pointer items-baseline justify-between gap-2 rounded-lg px-2 py-1 text-left", chosen ? "bg-brand-soft text-brand" : "text-ink-muted")}
     >
-      <span><span className="font-semibold">{label}</span> · {formatDuration(r.durationMinutes)}</span>
-      <span className="text-xs">{note}</span>
+      <span className="shrink-0"><span className="font-semibold">{label}</span> · {formatDuration(r.durationMinutes)}</span>
+      <span className="min-w-0 text-right text-xs">{note}</span>
     </button>
   );
 }

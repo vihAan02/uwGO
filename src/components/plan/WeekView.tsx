@@ -15,7 +15,8 @@ import { usePacLive } from "@/lib/usePacLive";
 import { useClosures } from "@/lib/ClosuresProvider";
 import { RemindersProvider, useReminders } from "@/lib/useReminders";
 import { CROWD_LABELS, estimateFromPct, waitLabel } from "@/data/pac/crowd";
-import { formatISODate, mondayOfWeek, todayISO, torontoDate, weekdayOf } from "@/time/toronto";
+import { formatDuration, formatISODate, mondayOfWeek, todayISO, torontoDate, weekdayOf } from "@/time/toronto";
+import { cn } from "@/lib/utils";
 import { campusGraphGeoJSON } from "@/engine/campusDebug";
 import { explainCampusDecision } from "@/engine/campusRoute";
 import { PROVENANCE_WORDS, describeProvenance, provenanceKinds, segmentProvenance } from "@/engine/campusProvenance";
@@ -25,6 +26,7 @@ import { Reveal } from "@/components/ui/reveal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Wordmark } from "@/components/ui/wordmark";
 import { AppTabs } from "@/components/nav/AppTabs";
+import { BOTTOM_NAV_PAD, BottomNav } from "@/components/nav/BottomNav";
 import { DayTimeline } from "./DayTimeline";
 import { NextClassCard } from "./NextClassCard";
 import { QuickRoute } from "./QuickRoute";
@@ -111,6 +113,10 @@ export function WeekView() {
   const destinationLabel = !startable ? "" : startable.to.name.length <= 18 ? startable.to.name : (startable.to.buildingCode ?? startable.to.name);
 
   const goToday = () => { setWeekStart(mondayOfWeek(todayISO())); const d = weekdayOf(todayISO()); setDay(d === "S" || d === "Su" ? "M" : d); setPicked(undefined); };
+  const startTrip = () => {
+    if (!startable) return;
+    setTrip({ label: startable.label, from: startable.from, to: startable.to, route: startable.route!, walkFallback: startable.walkFallback, preference: state.routePreference ?? "FASTEST" });
+  };
 
   const mapBlock = (
     <div className="space-y-2">
@@ -119,12 +125,9 @@ export function WeekView() {
         <span className="min-w-0 truncate font-medium">{selection.label}</span>
         {picked && <Button variant="link" size="xs" onClick={() => setPicked(undefined)}>Show whole day</Button>}
       </div>
+      {/* On a phone the same button floats at the bottom of the screen instead, where the thumb is and whatever the timeline is scrolled to. */}
       {startable && (
-        <Button
-          size="lg"
-          className="w-full"
-          onClick={() => setTrip({ label: startable.label, from: startable.from, to: startable.to, route: startable.route!, walkFallback: startable.walkFallback, preference: state.routePreference ?? "FASTEST" })}
-        >
+        <Button size="lg" className="hidden w-full lg:flex" onClick={startTrip}>
           <Navigation /> Start trip to {destinationLabel}
         </Button>
       )}
@@ -137,7 +140,7 @@ export function WeekView() {
   return (
     <RemindersProvider plan={plan}>
     <Tabs value={day} onValueChange={(d) => { setDay(d as DayOfWeek); setPicked(undefined); }} asChild>
-    <main className="app mx-auto w-full max-w-6xl pb-16">
+    <main className={cn("app mx-auto w-full max-w-6xl", BOTTOM_NAV_PAD)}>
       <ReminderBanner />
       <header className="sticky top-0 z-10 border-b border-line bg-canvas/90 backdrop-blur">
         <div className="flex h-14 items-center justify-between gap-2 px-4 sm:px-6">
@@ -153,8 +156,9 @@ export function WeekView() {
           </div>
           <Button variant="outline" size="icon-sm" aria-label="Settings" onClick={() => setSettingsOpen(true)}><SlidersHorizontal /></Button>
         </div>
-        <div className="px-4 pb-2 sm:px-6"><AppTabs /></div>
-        <TabsList className="px-4 pb-3 sm:px-6" aria-label="Day of the week">
+        {/* Plan/Courses live in the bottom bar on a phone; here only where the header has room for them. */}
+        <div className="hidden px-4 pb-2 sm:px-6 lg:block"><AppTabs /></div>
+        <TabsList className="overflow-x-auto px-4 pb-3 [scrollbar-width:none] sm:px-6 [&::-webkit-scrollbar]:hidden" aria-label="Day of the week">
           {visibleDays.map((d) => {
             const count = plan?.days[d]?.classes.length ?? 0;
             return (
@@ -220,6 +224,16 @@ export function WeekView() {
         </TabsContent>
       </div>
 
+      {/* Where am I going, and go: the one action of this screen, always under the thumb once a leg is picked. */}
+      {startable && !trip && (
+        <div className="fixed inset-x-0 z-20 px-3 lg:hidden" style={{ bottom: "calc(3.5rem + env(safe-area-inset-bottom) + 0.625rem)" }}>
+          <Button size="lg" className="mx-auto flex w-full max-w-md shadow-[0_10px_30px_-10px_rgb(29_78_216/0.6)]" onClick={startTrip}>
+            <Navigation /> Start trip to {destinationLabel}
+            <span className="font-normal text-white/80">· {formatDuration(startable.route!.durationMinutes)}</span>
+          </Button>
+        </div>
+      )}
+      <BottomNav />
       <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} />
       {trip && <TripMode trip={trip} onEnd={() => setTrip(undefined)} />}
     </main>

@@ -18,6 +18,7 @@ import { Reveal } from "@/components/ui/reveal";
 import { Wordmark } from "@/components/ui/wordmark";
 import { cn } from "@/lib/utils";
 import { AppTabs } from "@/components/nav/AppTabs";
+import { BOTTOM_NAV_PAD, BottomNav } from "@/components/nav/BottomNav";
 import { CourseColorPicker } from "./CourseColorPicker";
 import { Timetable } from "./Timetable";
 
@@ -56,13 +57,14 @@ export function CoursesView() {
   if (account.status === "error" && !meetings?.length) return <AccountLoadError />;
 
   return (
-    <main className="app mx-auto w-full max-w-5xl px-4 pb-16 sm:px-6">
+    <main className={cn("app mx-auto w-full max-w-5xl px-4 sm:px-6", BOTTOM_NAV_PAD)}>
       <header className="sticky top-0 z-10 -mx-4 border-b border-line bg-canvas/90 px-4 backdrop-blur sm:-mx-6 sm:px-6">
         <div className="flex h-14 items-center justify-between gap-2">
           <Wordmark />
-          <AppTabs />
+          <AppTabs className="hidden lg:flex" />
         </div>
       </header>
+      <BottomNav />
 
       <div className="pt-4 empty:hidden"><AccountSyncNotice /></div>
 
