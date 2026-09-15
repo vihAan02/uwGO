@@ -43,7 +43,7 @@ export function ManualClassForm({ defaultUniversity, onAdd }: { defaultUniversit
         </NativeSelect>
       </div>
       <ToggleGroup type="multiple" value={days} onValueChange={(v) => setDays(v as DayOfWeek[])} aria-label="Days">
-        {DAYS_IN_ORDER.map((d) => <ToggleGroupItem key={d} value={d} className="min-h-10 flex-none px-3">{DAY_LABELS[d]}</ToggleGroupItem>)}
+        {DAYS_IN_ORDER.map((d) => <ToggleGroupItem key={d} value={d} className="flex-none px-3">{DAY_LABELS[d]}</ToggleGroupItem>)}
       </ToggleGroup>
       <div className="grid grid-cols-2 gap-2">
         <Input aria-label="Start time" placeholder="Start, e.g. 2:30PM" value={start} onChange={(e) => setStart(e.target.value)} />
@@ -57,7 +57,7 @@ export function ManualClassForm({ defaultUniversity, onAdd }: { defaultUniversit
         <Input aria-label="Room" placeholder="Room, e.g. 1001" value={roomNumber} onChange={(e) => setRoomNumber(e.target.value)} />
       </div>
       {errors.length > 0 && <ul className="rounded-xl bg-bad-soft p-3 text-sm text-bad">{errors.map((e) => <li key={e}>{e}</li>)}</ul>}
-      <Button variant="outline" className="w-full" onClick={submit}>Add class</Button>
+      <Button variant="outline" size="touch" className="w-full" onClick={submit}>Add class</Button>
     </div>
   );
 }

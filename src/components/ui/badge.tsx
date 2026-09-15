@@ -8,7 +8,8 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        neutral: "bg-line/70 text-ink-muted",
+        // Ink on the quiet fill: muted grey on grey would fall under 4.5:1.
+        neutral: "bg-fill text-ink",
         outline: "border border-line text-ink-muted",
         brand: "bg-brand-soft text-brand",
         ok: "bg-ok-soft text-ok",

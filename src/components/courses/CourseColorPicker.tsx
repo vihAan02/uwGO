@@ -4,7 +4,8 @@ import { COURSE_COLORS, type CourseColorId } from "@/lib/courseColors";
 
 /**
  * The course colour palette. A fixed set rather than a free picker, so every choice keeps the
- * timetable readable; the chosen swatch carries a check and a ring, never colour alone.
+ * timetable readable; the chosen swatch carries a check and a ring, never colour alone. Each swatch is
+ * a full 44px target, with room between them.
  */
 export function CourseColorPicker({ value, onChange, courseLabel }: { value: CourseColorId | undefined; onChange: (color: CourseColorId) => void; courseLabel: string }) {
   return (
@@ -19,10 +20,10 @@ export function CourseColorPicker({ value, onChange, courseLabel }: { value: Cou
             aria-label={c.name}
             aria-pressed={on}
             onClick={() => onChange(c.id)}
-            className="grid size-7 place-items-center rounded-full outline-none ring-offset-2 ring-offset-surface transition-transform duration-150 hover:scale-110 focus-visible:ring-2 focus-visible:ring-brand/60 aria-pressed:ring-2 aria-pressed:ring-ink motion-reduce:transition-none motion-reduce:hover:scale-100"
+            className="grid size-11 touch-manipulation place-items-center rounded-full outline-none ring-offset-2 ring-offset-surface transition-[scale] duration-150 hover:scale-105 focus-visible:ring-2 focus-visible:ring-brand/60 aria-pressed:ring-2 aria-pressed:ring-ink motion-reduce:transition-none motion-reduce:hover:scale-100"
             style={{ backgroundColor: c.rail }}
           >
-            {on && <Check className="size-4 text-white" strokeWidth={3} aria-hidden="true" />}
+            {on && <Check className="size-5 text-white" strokeWidth={3} aria-hidden="true" />}
           </button>
         );
       })}

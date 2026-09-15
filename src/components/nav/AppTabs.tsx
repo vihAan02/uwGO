@@ -25,7 +25,7 @@ export function AppTabs({ className }: { className?: string }) {
             href={href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-sm font-semibold outline-none transition-[background-color,color,border-color] duration-150 focus-visible:ring-[3px] focus-visible:ring-brand/35",
+              "inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-sm font-semibold outline-none transition-[background-color,color,border-color] duration-150 focus-visible:ring-2 focus-visible:ring-brand",
               active ? "border-ink bg-ink text-white" : "border-line bg-surface text-ink hover:bg-canvas",
             )}
           >

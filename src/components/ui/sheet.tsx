@@ -36,7 +36,7 @@ function SheetContent({ className, children, ...props }: React.ComponentProps<ty
       <SheetPrimitive.Content
         data-slot="sheet-content"
         className={cn(
-          "fixed z-50 flex flex-col bg-canvas text-ink shadow-[0_-8px_40px_-12px_rgb(15_23_42/0.25)] outline-none",
+          "fixed z-50 flex flex-col bg-surface text-ink shadow-[0_-8px_40px_-12px_rgb(15_23_42/0.25)] outline-none",
           "inset-x-0 bottom-0 max-h-[92dvh] rounded-t-3xl",
           "sm:inset-y-0 sm:right-0 sm:left-auto sm:h-full sm:max-h-none sm:w-[26rem] sm:rounded-none sm:border-l sm:border-line sm:shadow-[-8px_0_40px_-12px_rgb(15_23_42/0.2)]",
           "motion-safe:data-[state=open]:animate-[sheet-in-bottom_260ms_cubic-bezier(0.2,0.8,0.2,1)] motion-safe:data-[state=closed]:animate-[sheet-out-bottom_180ms_ease-in]",
@@ -53,11 +53,11 @@ function SheetContent({ className, children, ...props }: React.ComponentProps<ty
 
 function SheetHeader({ className, children, ...props }: React.ComponentProps<"div">) {
   return (
-    <div data-slot="sheet-header" className={cn("flex items-center justify-between gap-3 px-5 pt-4 pb-3 sm:pt-5", className)} {...props}>
+    <div data-slot="sheet-header" className={cn("flex items-center justify-between gap-3 border-b border-line px-4 pt-3 pb-2 sm:px-5 sm:pt-4", className)} {...props}>
       {children}
       <SheetPrimitive.Close asChild>
-        <Button variant="ghost" size="icon-sm" aria-label="Close">
-          <X />
+        <Button variant="ghost" size="icon-touch" className="-mr-2 rounded-full" aria-label="Close">
+          <X className="size-5" />
         </Button>
       </SheetPrimitive.Close>
     </div>
@@ -65,7 +65,7 @@ function SheetHeader({ className, children, ...props }: React.ComponentProps<"di
 }
 
 function SheetBody({ className, ...props }: React.ComponentProps<"div">) {
-  return <div data-slot="sheet-body" className={cn("min-h-0 flex-1 overflow-y-auto px-5 pb-[max(2.5rem,env(safe-area-inset-bottom))]", className)} {...props} />;
+  return <div data-slot="sheet-body" className={cn("min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] sm:px-5", className)} {...props} />;
 }
 
 function SheetTitle({ className, ...props }: React.ComponentProps<typeof SheetPrimitive.Title>) {
