@@ -34,6 +34,8 @@ export interface PlanExtras {
 
 export function usePlan(meetings: CourseMeeting[] | undefined, home: UserHome | undefined, config: PlannerConfig, mondayISO: string, extras: PlanExtras = {}) {
   const [result, setResult] = useState<{ key: string; plan?: WeekPlan; error?: string } | undefined>();
+  // Bumped by "Retry" after a failed build: part of the key, so the same inputs are built again.
+  const [attempt, setAttempt] = useState(0);
   // Live PAC readings drift by the minute; the plan only needs rebuilding when the picture
   // of "how busy" actually moves (a 10-point step), and only if the gym is in play at all.
   const liveKey = extras.gym?.enabled && extras.pacLive ? `${Math.round(extras.pacLive.occupancyPct / 10)}@${Math.floor(extras.pacLive.at.getTime() / 900_000)}` : "";
@@ -52,8 +54,8 @@ export function usePlan(meetings: CourseMeeting[] | undefined, home: UserHome | 
   const closureKey = useMemo(() => [...(extras.closedEdgeIds ?? [])].sort().join(","), [extras.closedEdgeIds]);
 
   const key = useMemo(
-    () => JSON.stringify({ m: meetings?.map((x) => [x.id, x.includeInPlan]), h: home, c: config, w: mondayISO, g: extras.gym, r: extras.routePreference ?? "FASTEST", e: extras.endOfDay ?? "HOME", l: liveKey, gc: gapChoiceKey, cl: closureKey }),
-    [meetings, home, config, mondayISO, extras.gym, extras.routePreference, extras.endOfDay, liveKey, gapChoiceKey, closureKey],
+    () => JSON.stringify({ m: meetings?.map((x) => [x.id, x.includeInPlan]), h: home, c: config, w: mondayISO, g: extras.gym, r: extras.routePreference ?? "FASTEST", e: extras.endOfDay ?? "HOME", l: liveKey, gc: gapChoiceKey, cl: closureKey, a: attempt }),
+    [meetings, home, config, mondayISO, extras.gym, extras.routePreference, extras.endOfDay, liveKey, gapChoiceKey, closureKey, attempt],
   );
 
   useEffect(() => {
@@ -68,5 +70,5 @@ export function usePlan(meetings: CourseMeeting[] | undefined, home: UserHome | 
 
   const loading = Boolean(meetings) && result?.key !== key;
   // Keep showing the previous plan while a new one is computed.
-  return { plan: result?.plan, loading, error: result?.key === key ? result?.error : undefined };
+  return { plan: result?.plan, loading, error: result?.key === key ? result?.error : undefined, retry: () => setAttempt((n) => n + 1) };
 }

@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
  * "selected", everything else is quiet. Source: https://ui.shadcn.com/docs/components/button
  */
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl font-medium outline-none transition-[background-color,color,box-shadow,transform,opacity] duration-150 ease-out focus-visible:ring-[3px] focus-visible:ring-brand/35 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "inline-flex shrink-0 touch-manipulation items-center justify-center gap-2 whitespace-nowrap rounded-xl font-medium outline-none transition-[background-color,color,box-shadow,scale,opacity] duration-150 ease-out focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-canvas motion-safe:active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
@@ -21,6 +21,8 @@ const buttonVariants = cva(
         destructive: "border border-line bg-surface text-bad hover:bg-bad-soft",
         inverse: "bg-white text-ink hover:bg-white/90",
         "inverse-soft": "bg-white/15 text-white hover:bg-white/25",
+        /** A white control floating on the map: header pills, locate, recenter. DESIGN.md §8. */
+        float: "bg-surface text-ink shadow-float hover:bg-canvas",
       },
       size: {
         default: "h-10 px-4 text-sm",
@@ -30,8 +32,16 @@ const buttonVariants = cva(
         xl: "h-14 px-7 text-[1.0625rem]",
         icon: "size-10",
         "icon-sm": "size-9 rounded-lg",
+        /** DESIGN.md §11: 44px for anything a phone user taps, 48px for the primary action. */
+        touch: "h-11 px-4 text-[15px]",
+        "icon-touch": "size-11",
+        primary: "h-12 px-5 text-base font-semibold",
       },
     },
+    compoundVariants: [
+      // A link reads as text: the size's height, padding and radius must not turn it into a box.
+      { variant: "link", class: "h-auto rounded-none px-0 motion-safe:active:scale-100" },
+    ],
     defaultVariants: { variant: "default", size: "default" },
   },
 );

@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
  * one in ink. Replaces the old `Seg` and the ad-hoc btn-primary/btn-secondary pairs.
  */
 const toggleItemVariants = cva(
-  "inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border border-line bg-surface px-3 text-sm font-medium text-ink outline-none transition-[background-color,color,border-color,box-shadow] duration-150 hover:bg-canvas focus-visible:z-10 focus-visible:ring-[3px] focus-visible:ring-brand/35 disabled:pointer-events-none disabled:opacity-45 data-[state=on]:border-ink data-[state=on]:bg-ink data-[state=on]:text-white data-[state=on]:hover:bg-ink [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex min-h-11 flex-1 touch-manipulation items-center justify-center gap-1.5 rounded-xl border border-line bg-surface px-3 text-sm font-medium text-ink outline-none transition-[background-color,color,border-color,box-shadow,scale] duration-150 hover:bg-canvas focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-brand motion-safe:active:scale-[0.97] active:not-data-[state=on]:bg-fill disabled:pointer-events-none disabled:opacity-45 data-[state=on]:border-ink data-[state=on]:bg-ink data-[state=on]:text-white data-[state=on]:hover:bg-ink [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       layout: {
@@ -40,4 +40,45 @@ function ToggleGroupItem({ className, children, layout, ...props }: React.Compon
   );
 }
 
-export { ToggleGroup, ToggleGroupItem, toggleItemVariants };
+/**
+ * A segmented control on the same primitive: a quiet track with the chosen segment lifted to white,
+ * ink on surface rather than a coloured fill (DESIGN.md §7). Every label stays ink: the muted grey on the
+ * grey track would fall under the contrast DESIGN.md §18 asks for. Single choice only, and pressing the
+ * chosen segment again keeps it chosen: Radix reports "" for that, which would otherwise leave nothing
+ * selected (and, for a route, nothing on the map).
+ */
+function SegmentedControl({ value, onValueChange, label, className, children }: {
+  value: string;
+  onValueChange: (value: string) => void;
+  label: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <ToggleGroupPrimitive.Root
+      type="single"
+      data-slot="segmented-control"
+      value={value}
+      onValueChange={(v) => { if (v) onValueChange(v); }}
+      aria-label={label}
+      className={cn("grid auto-cols-fr grid-flow-col gap-0.5 rounded-xl bg-fill p-0.5", className)}
+    >
+      {children}
+    </ToggleGroupPrimitive.Root>
+  );
+}
+
+function SegmentedItem({ className, ...props }: React.ComponentProps<typeof ToggleGroupPrimitive.Item>) {
+  return (
+    <ToggleGroupPrimitive.Item
+      data-slot="segmented-item"
+      className={cn(
+        "flex min-h-11 min-w-0 touch-manipulation flex-col items-center justify-center rounded-[10px] px-2 py-1 text-ink outline-none transition-[background-color,color,box-shadow,scale] duration-150 ease-standard focus-visible:ring-2 focus-visible:ring-brand motion-safe:active:scale-[0.97] active:not-data-[state=on]:bg-surface/60 disabled:pointer-events-none disabled:opacity-45 data-[state=on]:bg-surface data-[state=on]:text-ink data-[state=on]:shadow-[0_1px_2px_rgb(15_23_42/0.12),0_0_0_0.5px_rgb(15_23_42/0.04)]",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export { ToggleGroup, ToggleGroupItem, toggleItemVariants, SegmentedControl, SegmentedItem };

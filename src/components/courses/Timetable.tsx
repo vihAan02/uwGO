@@ -18,6 +18,7 @@ import { BLOCK_TITLE_COLOR, COURSE_COLORS, type CourseColor, type CourseColorId 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverClose, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { SegmentedControl, SegmentedItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 import { CourseColorPicker } from "./CourseColorPicker";
 
@@ -136,28 +137,18 @@ export function Timetable({ meetings, colors, onColorChange, onShowCourse }: Tim
             {subtitle && <p className="text-sm text-ink-muted">{subtitle}</p>}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <div role="group" aria-label="Calendar view" className="inline-flex rounded-xl border border-line bg-canvas p-0.5">
+            {/* The planner's segmented control: a white lift on a quiet track (DESIGN.md §7). */}
+            <SegmentedControl value={view} onValueChange={(v) => setChosenView(v as CalendarView)} label="Calendar view">
               {VIEWS.map((v) => (
-                <button
-                  key={v.id}
-                  type="button"
-                  aria-pressed={view === v.id}
-                  onClick={() => setChosenView(v.id)}
-                  className={cn(
-                    "h-8 rounded-[10px] px-3 text-sm font-medium outline-none transition-colors duration-150 focus-visible:ring-[3px] focus-visible:ring-brand/35",
-                    view === v.id ? "bg-ink text-white" : "text-ink hover:bg-surface",
-                  )}
-                >
-                  {v.label}
-                </button>
+                <SegmentedItem key={v.id} value={v.id} className="px-3 text-sm font-medium">{v.label}</SegmentedItem>
               ))}
-            </div>
+            </SegmentedControl>
             <div className="flex items-center gap-1.5">
-              <Button variant="outline" size="sm" onClick={() => setAnchor(today)}>{CURRENT_LABEL[view]}</Button>
-              <Button variant="outline" size="icon-sm" aria-label={`Previous ${view}`} onClick={() => setAnchor((a) => stepAnchor(view, a, -1, today))}>
+              <Button variant="outline" size="touch" onClick={() => setAnchor(today)}>{CURRENT_LABEL[view]}</Button>
+              <Button variant="outline" size="icon-touch" aria-label={`Previous ${view}`} onClick={() => setAnchor((a) => stepAnchor(view, a, -1, today))}>
                 <ChevronLeft />
               </Button>
-              <Button variant="outline" size="icon-sm" aria-label={`Next ${view}`} onClick={() => setAnchor((a) => stepAnchor(view, a, 1, today))}>
+              <Button variant="outline" size="icon-touch" aria-label={`Next ${view}`} onClick={() => setAnchor((a) => stepAnchor(view, a, 1, today))}>
                 <ChevronRight />
               </Button>
             </div>
@@ -185,7 +176,7 @@ function TimeGrid({ days, bounds, actions, showDayHeader = true }: { days: Calen
           <div className="flex border-b border-line">
             <div className="sticky left-0 z-20 shrink-0 bg-surface" style={{ width: GUTTER }} />
             {days.map((d) => (
-              <div key={d.date} className="min-w-0 flex-1 border-l border-line py-2 text-center text-xs font-semibold uppercase tracking-wide">
+              <div key={d.date} className="min-w-0 flex-1 border-l border-line py-2 text-center text-[13px] font-medium">
                 <span className={cn("rounded-full px-2 py-0.5", d.isToday ? "bg-brand-soft text-brand" : "text-ink-muted")}>{d.label}</span>
               </div>
             ))}
@@ -195,7 +186,7 @@ function TimeGrid({ days, bounds, actions, showDayHeader = true }: { days: Calen
         <div className="relative flex" style={{ height: gridHeight(bounds) }}>
           <div aria-hidden="true" className="sticky left-0 z-20 shrink-0 bg-surface" style={{ width: GUTTER }}>
             {hours.map((h) => (
-              <div key={h} className="absolute inset-x-0 border-t border-line px-2 pt-1 text-[11px] leading-none tabular-nums text-ink-muted" style={{ top: timeToY(h * 60, bounds) }}>
+              <div key={h} className="absolute inset-x-0 border-t border-line px-2 pt-1 text-[12px] leading-none tabular-nums text-ink-muted" style={{ top: timeToY(h * 60, bounds) }}>
                 {formatHourLabel(h)}
               </div>
             ))}
@@ -265,7 +256,8 @@ function ClassBlock({ occurrence, height, style, actions }: { occurrence: ClassO
             {lines.map((line) => (
               <span
                 key={line}
-                className={cn("block truncate", line === "code" ? "text-xs font-semibold" : "text-[11px]")}
+                // Font size can rise to 12px without moving anything: blockLines measures by these line heights.
+                className={cn("block truncate", line === "code" ? "text-xs font-semibold" : "text-[12px]")}
                 style={{ lineHeight: `${line === "code" ? TITLE_LINE : DETAIL_LINE}px`, color: line === "code" ? BLOCK_TITLE_COLOR : color.text }}
               >
                 {text[line]}
@@ -316,7 +308,7 @@ function ClassDetails({ occurrence, color, actions }: { occurrence: ClassOccurre
       </div>
       {actions.onShowCourse && (
         <PopoverClose asChild>
-          <Button variant="outline" size="sm" className="w-full" onClick={() => actions.onShowCourse?.(key)}>Course details</Button>
+          <Button variant="outline" size="touch" className="w-full" onClick={() => actions.onShowCourse?.(key)}>Course details</Button>
         </PopoverClose>
       )}
     </div>
@@ -326,7 +318,8 @@ function ClassDetails({ occurrence, color, actions }: { occurrence: ClassOccurre
 /** The day view's week at a glance: pick a day, see at a dot which days have classes. */
 function DayStrip({ week, selected, colorOf, onPick }: { week: CalendarDay[]; selected: string; colorOf: BlockActions["colorOf"]; onPick: (date: string) => void }) {
   return (
-    <div className="grid grid-cols-7 gap-1 border-b border-line p-2">
+    // A 2px gap leaves each of seven days at least 44px wide on a 375px phone.
+    <div className="grid grid-cols-7 gap-0.5 border-b border-line p-2">
       {week.map((d) => {
         const on = d.date === selected;
         const [weekday, dayNumber] = d.label.split(" ");
@@ -339,12 +332,12 @@ function DayStrip({ week, selected, colorOf, onPick }: { week: CalendarDay[]; se
             aria-label={`${formatDateRange(d.date, d.date)}, ${d.occurrences.length} class${d.occurrences.length === 1 ? "" : "es"}`}
             onClick={() => onPick(d.date)}
             className={cn(
-              "flex flex-col items-center rounded-xl py-1.5 outline-none transition-colors duration-150 focus-visible:ring-[3px] focus-visible:ring-brand/35",
-              on ? "bg-ink text-white" : "hover:bg-canvas",
+              "flex min-h-11 touch-manipulation flex-col items-center justify-center rounded-xl py-1.5 outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand",
+              on ? "bg-ink text-white" : "hover:bg-canvas active:bg-fill",
               !on && d.isToday && "text-brand",
             )}
           >
-            <span className="text-[11px] font-medium uppercase tracking-wide opacity-80">{weekday}</span>
+            <span className="text-[12px] font-medium opacity-80">{weekday}</span>
             <span className="text-sm font-semibold tabular-nums">{dayNumber}</span>
             <span aria-hidden="true" className="mt-0.5 flex h-1.5 gap-0.5">
               {courses.slice(0, 3).map((o) => (
@@ -366,7 +359,7 @@ function MonthGrid({ weeks, colorOf, onPick }: { weeks: MonthCell[][]; colorOf: 
     <div>
       <div className="grid grid-cols-7 border-b border-line">
         {MONTH_HEADERS.map((d) => (
-          <div key={d} className="py-2 text-center text-xs font-semibold uppercase tracking-wide text-ink-muted">{d}</div>
+          <div key={d} className="py-2 text-center text-[13px] font-medium text-ink-muted">{d}</div>
         ))}
       </div>
       <div className="grid grid-cols-7">
@@ -377,7 +370,7 @@ function MonthGrid({ weeks, colorOf, onPick }: { weeks: MonthCell[][]; colorOf: 
             onClick={() => onPick(c.date)}
             aria-label={`${formatDateRange(c.date, c.date)}, ${c.occurrences.length} class${c.occurrences.length === 1 ? "" : "es"}`}
             className={cn(
-              "flex min-h-16 min-w-0 flex-col gap-1 border-line p-1 text-left outline-none transition-colors duration-150 hover:bg-canvas focus-visible:relative focus-visible:ring-[3px] focus-visible:ring-inset focus-visible:ring-brand/35 sm:min-h-24 sm:p-1.5",
+              "flex min-h-16 min-w-0 flex-col gap-1 border-line p-1 text-left outline-none transition-colors duration-150 hover:bg-canvas active:bg-fill focus-visible:relative focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand sm:min-h-24 sm:p-1.5",
               i % 7 !== 0 && "border-l",
               i >= 7 && "border-t",
               !c.inMonth && "bg-canvas/60 text-ink-muted",
@@ -395,12 +388,12 @@ function MonthGrid({ weeks, colorOf, onPick }: { weeks: MonthCell[][]; colorOf: 
               {c.occurrences.slice(0, MONTH_CHIPS).map((o) => {
                 const color = colorOf(o.meeting);
                 return (
-                  <span key={o.id} className="block truncate rounded-[4px] border-l-2 px-1 text-[11px] leading-4" style={{ backgroundColor: color.fill, borderLeftColor: color.rail, color: BLOCK_TITLE_COLOR }}>
+                  <span key={o.id} className="block truncate rounded-[4px] border-l-2 px-1 text-[12px] leading-4" style={{ backgroundColor: color.fill, borderLeftColor: color.rail, color: BLOCK_TITLE_COLOR }}>
                     <span className="tabular-nums" style={{ color: color.text }}>{formatShortTime(o.start)}</span> {formatCourseCode(o.meeting.courseCode)}
                   </span>
                 );
               })}
-              {c.occurrences.length > MONTH_CHIPS && <span className="px-1 text-[11px] leading-4 text-ink-muted">+{c.occurrences.length - MONTH_CHIPS} more</span>}
+              {c.occurrences.length > MONTH_CHIPS && <span className="px-1 text-[12px] leading-4 text-ink-muted">+{c.occurrences.length - MONTH_CHIPS} more</span>}
             </span>
           </button>
         ))}

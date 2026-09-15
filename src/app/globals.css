@@ -4,7 +4,8 @@
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --color-ink: #0f172a;
-  --color-ink-muted: #64748b;
+  /* 5.0:1 on canvas and 5.4:1 on white: the previous #64748b fell under 4.5:1 on canvas. */
+  --color-ink-muted: #5b6b80;
   --color-surface: #ffffff;
   --color-canvas: #f4f5f7;
   --color-line: #e2e8f0;
@@ -18,6 +19,24 @@
   --color-bad-soft: #fee2e2;
   --color-wlu: #6d28d9;
   --color-wlu-soft: #ede9fe;
+  /* DESIGN.md §6-§8, §14: the ground under the map, the quiet fill of a segmented track, two shadows, three curves. */
+  --color-map-ground: #e9ecef;
+  --color-fill: #eef0f3;
+  --shadow-float: 0 1px 2px rgb(15 23 42 / 0.08), 0 2px 8px rgb(15 23 42 / 0.14);
+  --shadow-sheet: 0 -1px 0 rgb(15 23 42 / 0.05), 0 -8px 24px -8px rgb(15 23 42 / 0.18);
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-enter: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --ease-exit: cubic-bezier(0.3, 0, 0.8, 0.15);
+}
+
+/* The phone planner is a map with a sheet over it: nothing behind it may scroll, bounce or
+   pull-to-refresh. Scoped by :has so no script writes styles onto the document. */
+@media (max-width: 63.999rem) {
+  html:has([data-plan-shell]),
+  html:has([data-plan-shell]) body {
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
 }
 
 html {
@@ -29,6 +48,21 @@ body {
   background: var(--color-canvas);
   color: var(--color-ink);
   font-family: var(--font-sans);
+}
+
+/* Tailwind 4's preflight leaves buttons with the arrow cursor. Anything a student can press shows the
+   hand under a mouse; in the base layer, so a utility such as cursor-not-allowed still wins. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="tab"],
+  [role="radio"],
+  [role="switch"],
+  summary,
+  label[for],
+  select {
+    cursor: pointer;
+  }
 }
 
 /* ---------- Motion (shared UI kit) ----------

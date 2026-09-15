@@ -27,16 +27,40 @@ export function offsetPoint(p: Point, meters: number, bearingDeg: number): Point
 /** How far ahead of the student the camera looks when the map is heading-up. */
 export const LOOK_AHEAD_METERS = 45;
 
+/** Ground metres per screen pixel at a latitude and zoom (Web Mercator, 256 px tiles). */
+export function metersPerPixel(lat: number, zoom: number): number {
+  return (156543.03392 * Math.cos((lat * Math.PI) / 180)) / 2 ** zoom;
+}
+
+/**
+ * How much of the map is under the trip's own panels. The camera aims for the middle of what
+ * is left, not the middle of the map, so the student is never hidden under the bottom sheet.
+ */
+export interface Insets { topPx: number; bottomPx: number }
+
+/** Metres the map centre must sit behind the visible centre so that the visible centre is where it should be. */
+export function centreShiftMeters(lat: number, zoom: number, insets: Insets | undefined): number {
+  if (!insets) return 0;
+  return ((insets.bottomPx - insets.topPx) / 2) * metersPerPixel(lat, zoom);
+}
+
 /**
  * Where the live-navigation camera wants to be. Heading-up puts the student a little below
- * centre with the way ahead filling the screen; north-up simply centres them.
+ * the visible centre with the way ahead filling the screen; north-up centres them in what
+ * is visible. `shiftMeters` is how far the visible centre sits above the map's own centre.
  */
-export function navigationPose(user: Point, heading: number | undefined, zoom = NAV_ZOOM): CameraPose {
-  if (heading === undefined) return { center: user, heading: 0, zoom };
-  return { center: offsetPoint(user, LOOK_AHEAD_METERS, heading), heading: normalizeDegrees(heading), zoom };
+export function navigationPose(user: Point, heading: number | undefined, zoom = NAV_ZOOM, shiftMeters = 0): CameraPose {
+  if (heading === undefined) return { center: shiftMeters === 0 ? user : offsetPoint(user, shiftMeters, 180), heading: 0, zoom };
+  return { center: offsetPoint(user, LOOK_AHEAD_METERS - shiftMeters, heading), heading: normalizeDegrees(heading), zoom };
 }
 
 export interface Bounds { north: number; south: number; east: number; west: number }
+
+/** The bounds with the strips under the panels taken off the top and bottom, as fractions of the height. */
+export function visibleBounds(b: Bounds, topFrac = 0, bottomFrac = 0): Bounds {
+  const h = b.north - b.south;
+  return { north: b.north - h * topFrac, south: b.south + h * bottomFrac, east: b.east, west: b.west };
+}
 
 /**
  * True while the point sits inside the middle `inner` share of the viewport, in each axis.

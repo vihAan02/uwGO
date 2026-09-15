@@ -8,7 +8,8 @@ function Switch({ className, ...props }: React.ComponentProps<typeof SwitchPrimi
     <SwitchPrimitive.Root
       data-slot="switch"
       className={cn(
-        "peer inline-flex h-6 w-10 shrink-0 items-center rounded-full border border-transparent bg-line outline-none transition-colors duration-150 focus-visible:ring-[3px] focus-visible:ring-brand/35 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-ink",
+        // A 24px track with an invisible 44px target around it (DESIGN.md §11).
+        "peer relative inline-flex h-6 w-10 shrink-0 touch-manipulation items-center rounded-full border border-transparent bg-line outline-none after:absolute after:-inset-2.5 after:content-[''] transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-ink",
         className,
       )}
       {...props}

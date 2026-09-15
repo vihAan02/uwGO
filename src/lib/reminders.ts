@@ -1,12 +1,13 @@
 /**
  * Leave-time reminders. Pure data and a scheduler; the browser bits live in useReminders.
  *
- * A reminder is keyed by the leg it belongs to (date + transition id), so when the plan is
- * recomputed and that leg's departure moves, the reminder follows it instead of firing at
- * a time that no longer means anything.
+ * A reminder is keyed by the leg it belongs to (date + transition id), and by the way to make it
+ * when the student chose one over the plan's pick, so when the plan is recomputed and that
+ * departure moves, the reminder follows it instead of firing at a time that no longer means anything.
  */
 import type { ClassTransition, DayPlan } from "@/domain/types";
 import { formatClock, formatDuration } from "@/time/toronto";
+import { routeChoices, type RouteChoice } from "./routeChoices";
 
 export interface Reminder {
   id: string;
@@ -24,8 +25,8 @@ export const MAX_LATE_MINUTES = 10;
 /** A departure that moved by at least this much rewrites the reminder. */
 export const MATERIAL_CHANGE_MINUTES = 1;
 
-export function reminderIdFor(day: DayPlan, t: ClassTransition): string {
-  return `${day.date}|${t.id}`;
+export function reminderIdFor(day: DayPlan, t: ClassTransition, choice?: Pick<RouteChoice, "key">): string {
+  return choice && choice.key !== "best" ? `${day.date}|${t.id}|${choice.key}` : `${day.date}|${t.id}`;
 }
 
 function destinationLabel(t: ClassTransition, day: DayPlan): { course?: string; room?: string } {
@@ -35,10 +36,14 @@ function destinationLabel(t: ClassTransition, day: DayPlan): { course?: string; 
   return { course: m.courseCode, room: m.location.kind === "ROOM" ? `${m.location.buildingCode} ${m.location.roomNumber}` : undefined };
 }
 
-/** The notification text for a leg: "Leave now for MATH 135" / "12 min to MC 2065". */
-export function reminderFor(day: DayPlan, t: ClassTransition): Reminder | undefined {
-  if (!t.recommendedDeparture || !t.recommendedRoute) return undefined;
-  const r = t.recommendedRoute;
+/**
+ * The notification for a leg, made the plan's way or the way the student chose: "Leave now for
+ * MATH 135" / "12 min to MC 2065 · 12 min walk".
+ */
+export function reminderFor(day: DayPlan, t: ClassTransition, choice?: RouteChoice): Reminder | undefined {
+  const r = choice ? choice.route : t.recommendedRoute;
+  const leaveAt = choice ? choice.leaveAt : t.recommendedDeparture;
+  if (!leaveAt || !r) return undefined;
   const { course, room } = destinationLabel(t, day);
   const where = room ?? t.to.buildingCode ?? t.to.name;
   const title = t.hasDeadline ? `Leave now for ${course ?? t.to.name}` : `Leave ${t.from.name} now`;
@@ -49,17 +54,26 @@ export function reminderFor(day: DayPlan, t: ClassTransition): Reminder | undefi
   const body = t.hasDeadline
     ? `${formatDuration(r.durationMinutes)} to ${where} · ${how}${t.from.kind === "HOME" ? " · from home" : ""}`
     : `${formatDuration(r.durationMinutes)} home · ${how}`;
-  return { id: reminderIdFor(day, t), at: t.recommendedDeparture.toISOString(), title, body };
+  // A UTC instant whatever kind of Date the planner made: a zoned one prints its offset from toISOString.
+  return { id: reminderIdFor(day, t, choice), at: new Date(leaveAt.getTime()).toISOString(), title, body };
 }
 
-/** Every leg of a plan the student could set a reminder on, keyed by reminder id. */
-export function remindableLegs(days: Iterable<DayPlan | undefined>): Map<string, Reminder> {
+/**
+ * Every reminder the student could set on a plan, keyed by reminder id: each leg's, and, given the arrival
+ * buffer the other ways to go are timed with, one for each of those ways.
+ */
+export function remindableLegs(days: Iterable<DayPlan | undefined>, bufferMinutes?: number): Map<string, Reminder> {
   const out = new Map<string, Reminder>();
   for (const day of days) {
     if (!day) continue;
     for (const t of day.transitions) {
       const r = reminderFor(day, t);
       if (r) out.set(r.id, r);
+      if (bufferMinutes === undefined) continue;
+      for (const c of routeChoices(t, bufferMinutes)) {
+        const alt = c.recommended ? undefined : reminderFor(day, t, c);
+        if (alt) out.set(alt.id, alt);
+      }
     }
   }
   return out;

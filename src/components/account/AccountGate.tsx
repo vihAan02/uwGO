@@ -39,7 +39,7 @@ export function AccountLoadError() {
         <Button size="lg" className="mt-8 w-full" onClick={account.retry}>
           <RotateCw /> Try again
         </Button>
-        <Button variant="ghost" className="mt-2 w-full" onClick={account.continueOffline}>
+        <Button variant="ghost" size="touch" className="mt-2 w-full" onClick={account.continueOffline}>
           Set up on this device instead
         </Button>
       </div>
@@ -60,7 +60,7 @@ export function AccountSyncNotice() {
           {unreachable ? "Can’t reach your account. Changes stay on this device for now." : "Your latest changes aren’t saved to your account yet."}
         </span>
       </span>
-      <Button variant="outline" size="xs" className="shrink-0" onClick={account.retry}>Retry</Button>
+      <Button variant="outline" size="touch" className="shrink-0" onClick={account.retry}>Retry</Button>
     </div>
   );
 }

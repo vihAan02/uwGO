@@ -1,12 +1,13 @@
-import { describe, expect, it, vi } from "vitest";
-import { createElement, isValidElement, type ReactElement, type ReactNode } from "react";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { createElement, isValidElement, type ComponentProps, type ReactElement, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import type { CampusLocation, ClassTransition, RouteOption } from "@/domain/types";
-import { buildingLocation, findBuilding } from "@/data/buildings";
-import { indoorRouteBetween } from "@/engine/indoorRoute";
-import { IndoorComparison, pressable, type Selectable } from "./DayTimeline";
+import type { CampusLocation, ClassTransition, DayPlan, RouteOption, ScheduledClass } from "@/domain/types";
+import { RemindersProvider } from "@/lib/useReminders";
+import { classRowId, legRowId } from "@/lib/planFocus";
+import { routeChoices } from "@/lib/routeChoices";
+import { ClassRow, DayTimeline, LeaveRow, legTitle } from "./DayTimeline";
 
-type El = ReactElement<{ children?: ReactNode; onClick?: (e: unknown) => void; "aria-pressed"?: boolean; type?: string }>;
+type El = ReactElement<{ children?: ReactNode; onClick?: (e: unknown) => void; type?: string; "aria-label"?: string; "aria-current"?: string }>;
 
 /** Expands hook-free components into host elements, so a handler can be called the way a click calls it. */
 function expand(node: ReactNode): ReactNode {
@@ -24,90 +25,127 @@ function buttons(node: ReactNode): El[] {
   return [...(el.type === "button" ? [el] : []), ...buttons(el.props.children)];
 }
 
-function text(node: ReactNode): string {
-  if (Array.isArray(node)) return node.map(text).join("");
-  if (typeof node === "string" || typeof node === "number") return String(node);
-  return isValidElement(node) ? text((node as El).props.children) : "";
-}
+const at = (hhmm: string) => new Date(`2026-09-15T${hhmm}:00-04:00`);
+const place = (code: string, kind: CampusLocation["kind"] = "BUILDING"): CampusLocation => ({ id: code, name: kind === "HOME" ? "Village 1" : `${code} building`, latitude: 43.47, longitude: -80.54, kind, buildingCode: kind === "BUILDING" ? code : undefined });
+const walk = (minutes: number): RouteOption => ({ mode: "WALK", durationMinutes: minutes, polyline: `walk-${minutes}`, provider: "google-routes", computedAt: "", isEstimate: false });
 
-const place = (code: string): CampusLocation => buildingLocation(findBuilding("UW", code)!)!;
-
-/** STC -> MC: Google's 4 minute walk, with the STC -> B2 -> QNC -> MC tunnel as the winter alternative. */
-async function stcToMc(): Promise<ClassTransition> {
-  const from = place("STC");
-  const to = place("MC");
-  const fastest: RouteOption = { mode: "WALK", durationMinutes: 4, distanceMeters: 300, polyline: "google", provider: "google-routes", computedAt: "x", isEstimate: false };
+function scheduled(id: string, code: string, building: string, room: string, start: string, end: string, component: ScheduledClass["meeting"]["component"] = "LEC"): ScheduledClass {
   return {
-    id: "stc->mc", kind: "CLASS_TO_CLASS", from, to,
-    departAfter: new Date("2026-09-11T15:20:00Z"), arriveBy: new Date("2026-09-11T15:30:00Z"), hasDeadline: true, availableMinutes: 10,
-    walkingRoute: fastest, indoorRoute: await indoorRouteBetween(from, to), recommendedRoute: fastest,
-    recommendedDeparture: new Date("2026-09-11T15:21:00Z"), expectedArrival: new Date("2026-09-11T15:25:00Z"),
-    feasibility: "TIGHT", crossCampus: false,
+    id, day: "T", date: "2026-09-15", start: at(start), end: at(end), location: place(building),
+    meeting: { id, university: "UW", courseCode: code, component, days: ["T"], start: 0, end: 0, location: { kind: "ROOM", buildingCode: building, roomNumber: room }, source: "QUEST", includeInPlan: true },
+    room: { raw: `${building} ${room}`, buildingCode: building, roomNumber: room, floor: "unknown", resolved: true },
   };
 }
 
-const LABEL = "MATH 137 (STC) → CS 135 (MC)";
+const home = place("home", "HOME");
+const math = scheduled("math:T", "MATH 137", "STC", "0010", "10:30", "11:20");
+const cs = scheduled("cs:T", "CS 135", "MC", "4020", "11:30", "12:20", "TUT");
+const toMath: ClassTransition = {
+  id: "home->math:T", kind: "HOME_TO_CLASS", from: home, to: math.location, departAfter: at("08:00"), arriveBy: at("10:30"), hasDeadline: true, availableMinutes: 150,
+  walkingRoute: walk(12), recommendedRoute: walk(12), recommendedDeparture: at("10:08"), expectedArrival: at("10:20"), feasibility: "COMFORTABLE", crossCampus: false,
+};
+const toCs: ClassTransition = {
+  id: "math:T->cs:T", kind: "CLASS_TO_CLASS", from: math.location, to: cs.location, departAfter: at("11:20"), arriveBy: at("11:30"), hasDeadline: true, availableMinutes: 10,
+  walkingRoute: walk(8), recommendedRoute: walk(8), recommendedDeparture: at("11:20"), expectedArrival: at("11:28"), feasibility: "TIGHT", crossCampus: false,
+};
+const day: DayPlan = {
+  day: "T", date: "2026-09-15", classes: [math, cs], transitions: [toMath, toCs], warnings: [], gym: [],
+  items: [
+    { kind: "LEAVE", at: toMath.recommendedDeparture!, from: home, transition: toMath },
+    { kind: "ARRIVE", at: toMath.expectedArrival!, to: math.location, transition: toMath },
+    { kind: "CLASS", scheduledClass: math },
+    { kind: "LEAVE", at: toCs.recommendedDeparture!, from: math.location, transition: toCs },
+    { kind: "ARRIVE", at: toCs.expectedArrival!, to: cs.location, transition: toCs },
+    { kind: "CLASS", scheduledClass: cs },
+  ],
+};
 
-describe("the Fastest / Winter route choice on a leg", () => {
-  it("Winter route is a button that shows the indoor path, and the leg row underneath does not take the click", async () => {
-    const t = await stcToMc();
-    expect(t.indoorRoute?.indoorPath).toEqual(["STC", "B2", "QNC", "MC"]);
-    const onSelect = vi.fn();
-    const sel: Selectable = { selectedId: undefined, onSelect };
-    const [fastest, winter] = buttons(expand(createElement(IndoorComparison, { t, id: "leg-3", label: LABEL, sel })));
-    expect(text(fastest)).toMatch(/^Fastest · 4 min/);
-    expect(text(winter)).toMatch(/^Winter route · \d+ min/);
+// The provider's props type requires children, which createElement takes as its third argument.
+const render = (focusId?: string) => renderToStaticMarkup(
+  createElement(
+    RemindersProvider,
+    { plan: undefined } as ComponentProps<typeof RemindersProvider>,
+    createElement(DayTimeline, { plan: day, home: undefined, busy: false, focusId, onPickLeg: () => {}, onPickClass: () => {} }),
+  ),
+);
 
-    const stopPropagation = vi.fn();
-    winter.props.onClick!({ stopPropagation });
-    expect(stopPropagation).toHaveBeenCalled();
-    expect(onSelect).toHaveBeenCalledWith("leg-3-winter", { kind: "LEG", label: LABEL, from: t.from, to: t.to, route: t.indoorRoute, walkFallback: t.walkingRoute });
+// A reminder is only offered for a departure still ahead: run the day from before it starts.
+beforeAll(() => { vi.useFakeTimers(); vi.setSystemTime(at("07:00")); });
+afterAll(() => { vi.useRealTimers(); });
 
-    fastest.props.onClick!({ stopPropagation });
-    expect(onSelect).toHaveBeenLastCalledWith("leg-3-fastest", { kind: "LEG", label: LABEL, from: t.from, to: t.to, route: t.walkingRoute, walkFallback: t.walkingRoute });
+describe("the day's timeline", () => {
+  it("says what each leg is in the student's words", () => {
+    expect(legTitle(day, toMath, walk(12))).toBe("12 min walk to MATH 137");
+    expect(legTitle(day, toCs, { ...walk(11), indoorPath: ["STC", "B2", "QNC", "MC"] })).toBe("11 min indoors to CS 135");
+    const home2: ClassTransition = { ...toCs, id: "cs:T->home", kind: "CLASS_TO_HOME", to: home, hasDeadline: false, arriveBy: at("12:20") };
+    expect(legTitle(day, home2, walk(9))).toBe("9 min walk home");
+    expect(legTitle(day, toCs, walk(0))).toBe("CS 135 is in the same building");
   });
 
-  it("lights the way the map is showing, and the plan's own choice until one is tapped", async () => {
-    const t = await stcToMc();
-    const pressed = (selectedId: string | undefined, tt = t) =>
-      buttons(expand(createElement(IndoorComparison, { t: tt, id: "leg-3", label: LABEL, sel: { selectedId, onSelect: () => {} } }))).map((b) => b.props["aria-pressed"]);
-    expect(pressed(undefined)).toEqual([true, false]);
-    expect(pressed("leg-3")).toEqual([true, false]);
-    expect(pressed("leg-3-winter")).toEqual([false, true]);
-    expect(pressed("leg-3-fastest")).toEqual([true, false]);
-    expect(pressed("leg-4-winter")).toEqual([true, false]);
-    // A student who prefers indoors: the plan took the tunnel, and tapping Fastest still switches.
-    const indoors = { ...t, recommendedRoute: t.indoorRoute };
-    expect(pressed(undefined, indoors)).toEqual([false, true]);
-    expect(pressed("leg-3-fastest", indoors)).toEqual([true, false]);
-
-    const html = renderToStaticMarkup(createElement(IndoorComparison, { t, id: "leg-3", label: LABEL, sel: { selectedId: "leg-3-winter", onSelect: () => {} } }));
-    expect(html.match(/<button type="button" aria-pressed="(true|false)"/g)).toEqual(['<button type="button" aria-pressed="false"', '<button type="button" aria-pressed="true"']);
-  });
-});
-
-describe("a pressable timeline row", () => {
-  const key = (k: string, onRow: boolean) => {
-    const row = {};
-    return { key: k, currentTarget: row, target: onRow ? row : {}, preventDefault: vi.fn() };
-  };
-
-  it("selects on Enter or Space pressed on the row itself", () => {
-    const select = vi.fn();
-    const { onKeyDown } = pressable(select);
-    const enter = key("Enter", true);
-    onKeyDown(enter as never);
-    onKeyDown(key(" ", true) as never);
-    expect(select).toHaveBeenCalledTimes(2);
-    expect(enter.preventDefault).toHaveBeenCalled();
+  it("renders one row per leg and class, folding each arrival and its real margin into the leg", () => {
+    const html = render();
+    expect(html.match(/<li/g)).toHaveLength(4);
+    expect(html).toContain("arrive 10:20 AM · 10 min early");
+    expect(html).not.toContain("Arrive ");
   });
 
-  it("leaves keys pressed on a control inside the row (Google Maps, Remind me, a route choice) to that control", () => {
-    const select = vi.fn();
-    const enter = key("Enter", false);
-    pressable(select).onKeyDown(enter as never);
-    pressable(select).onKeyDown(key(" ", false) as never);
-    expect(select).not.toHaveBeenCalled();
-    expect(enter.preventDefault).not.toHaveBeenCalled();
+  it("colours only the exceptions: nothing for an on-time leg, a worded warning for a tight one", () => {
+    const html = render();
+    expect(html).not.toContain("On time");
+    expect(html).toContain("Tight: 2 min to spare");
+  });
+
+  it("shows route details under the leg in focus, and under no other row", () => {
+    expect(render()).not.toContain("data-leg-details");
+    const focused = render(legRowId(toCs.id));
+    expect(focused.match(/data-leg-details/g)).toHaveLength(1);
+    expect(focused).toContain("Google Maps");
+    expect(focused).toContain("Remind me");
+    expect(focused).toMatch(/aria-current="true"[^>]*aria-label="8 min walk to CS 135/);
+    // A class in focus is highlighted but has no leg details of its own.
+    expect(render(classRowId(math.id))).not.toContain("data-leg-details");
+  });
+
+  it("makes every row one real button, with nothing interactive nested inside another control", () => {
+    const html = render(legRowId(toCs.id));
+    expect(html.match(/<button type="button"[^>]*aria-label=/g)!.length).toBeGreaterThanOrEqual(4);
+    expect(html).not.toMatch(/<button(?:(?!<\/button>)[\s\S])*<(button|a) /);
+    expect(html).not.toContain('role="button"');
+  });
+
+  it("picks a leg by its transition id and a class by its class id", () => {
+    const onPickLeg = vi.fn();
+    const [leg] = buttons(expand(createElement(LeaveRow, { t: toCs, plan: day, selected: false, onPick: onPickLeg })));
+    expect(leg.props["aria-label"]).toBe("8 min walk to CS 135, leave 11:20 AM. Tight: 2 min to spare");
+    leg.props.onClick!({});
+    expect(onPickLeg).toHaveBeenCalledWith(toCs.id);
+
+    const onPickClass = vi.fn();
+    const [row] = buttons(expand(createElement(ClassRow, { c: cs, selected: true, onPick: onPickClass })));
+    expect(row.props["aria-current"]).toBe("true");
+    row.props.onClick!({});
+    expect(onPickClass).toHaveBeenCalledWith(cs.id);
+  });
+
+  it("describes the way the student chose on the row in focus, so the day never contradicts the summary", () => {
+    const withIndoor: ClassTransition = { ...toCs, indoorRoute: { ...walk(11), polyline: "tunnel", indoorPath: ["STC", "MC"] } };
+    const indoors = routeChoices(withIndoor, 10).find((c) => c.key === "indoors")!;
+    const [row] = buttons(expand(createElement(LeaveRow, { t: withIndoor, plan: day, selected: false, choice: indoors, onPick: () => {} })));
+    expect(row.props["aria-label"]).toBe("11 min indoors to CS 135, leave 11:20 AM. This way arrives 1 min after class starts");
+
+    const html = renderToStaticMarkup(createElement(
+      RemindersProvider,
+      { plan: undefined } as ComponentProps<typeof RemindersProvider>,
+      createElement(DayTimeline, { plan: day, home: undefined, busy: false, focusId: legRowId(toCs.id), focusChoice: indoors, onPickLeg: () => {}, onPickClass: () => {} }),
+    ));
+    expect(html).toMatch(/aria-current="true"[^>]*aria-label="11 min indoors to CS 135, leave 11:20 AM/);
+    expect(html).toContain("Remind me");
+    expect(html).not.toMatch(/aria-label="(Walk|Indoors|Bus)"/);
+  });
+
+  it("tags a class only when the tag says something: a tutorial, not a lecture", () => {
+    const html = render();
+    expect(html).toContain(">TUT<");
+    expect(html).not.toContain(">LEC<");
   });
 });
